@@ -6,17 +6,16 @@ chardet==3.0.4
 Cython==0.25.2
 docutils==0.13.1
 idna==2.5
-Kivy==1.10.0
+-e git+https://github.com/kivy/kivy@7aa8b3ef521381fec4e7a9bb3d406bd4a3b109d2#egg=Kivy
 Kivy-Garden==0.1.4
 numpy==1.12.1
 olefile==0.44
 packaging==16.8
 pathtools==0.1.2
 Pillow==4.2.1
-pippi==2.0.0a3
+-e git+git@github.com:hecanjog/pippi.git@da9f2ee18ca596da4d8b139b99a9f6e8c2826bc8#egg=pippi
 PyAudio==0.2.11
 pycparser==2.17
-pygame==1.9.3
 Pygments==2.2.0
 pyparsing==2.2.0
 PySoundFile==0.9.0.post1
