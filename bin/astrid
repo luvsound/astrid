@@ -1,21 +1,51 @@
 #!/usr/bin/env python3.6
 
 import sys
+from astrid.server import AstridServer
+
+server = AstridServer('astrid', pid_dir='/tmp')
 
 if len(sys.argv) > 1 and sys.argv[1] == 'curses':
     from astrid.ui import textconsole
     console = textconsole.AstridConsole()
 
-if len(sys.argv) > 1 and sys.argv[1] == 'cmd':
+    try:
+        console.start()
+    except KeyboardInterrupt as e:
+        console.quit()
+
+
+elif len(sys.argv) > 1 and sys.argv[1] == 'cmd':
     from astrid.ui import cmdconsole
     console = cmdconsole.AstridConsole()
+
+    try:
+        console.start()
+    except KeyboardInterrupt as e:
+        console.quit()
+
+
+elif len(sys.argv) > 1 and sys.argv[1] == 'start':
+    server.start()
+    print('Started astrid server')
+
+
+elif len(sys.argv) > 1 and sys.argv[1] == 'stop':
+    server.stop()
+    print('Stopped astrid server')
+
+
+elif len(sys.argv) > 1 and sys.argv[1] == 'status':
+    print('Astrid server running' if server.is_running() else 'Astrid server stopped')
+
+
 else:
     from astrid.ui import ide
     console = ide.Astrid()
 
-try:
-    console.start()
-except KeyboardInterrupt as e:
-    console.quit()
+    try:
+        console.start()
+    except KeyboardInterrupt as e:
+        console.quit()
 
 

@@ -13,11 +13,12 @@ ALL_VOICES = 'ALL'
 
 class IOManager:
     def __init__(self):
-        self.manager = mp.Manager()
-        self.session = self.manager.Namespace()
         self.voices = {}
         self.last_voice_id = 0
 
+    def setup(self):
+        self.manager = mp.Manager()
+        self.session = self.manager.Namespace()
         self.context = zmq.Context()
         self.sender = self.context.socket(zmq.PUSH)
         self.sender.bind('tcp://*:{}'.format(BROADCAST_PORT))
@@ -25,6 +26,9 @@ class IOManager:
     def get_voice_id(self):
         self.last_voice_id += 1
         return self.last_voice_id
+
+    def reload_config(self):
+        pass
 
     def open_stream(self, samplerate=44100, channels=2, device='default'):
         p = pyaudio.PyAudio()
