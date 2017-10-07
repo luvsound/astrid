@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import importlib
 import importlib.util
 import logging
@@ -5,13 +6,50 @@ from logging.handlers import SysLogHandler
 import os
 import threading
 
+import msgpack
 import numpy as np
 from service import find_syslog
 import sounddevice as sd
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+import zmq
 
 ORC_DIR = 'orc'
+
+class EventContext:
+    def __init__(self, params=None):
+        self.logger = logging.getLogger('astrid')
+        self.logger.addHandler(SysLogHandler(address=find_syslog(), facility=SysLogHandler.LOG_DAEMON))
+        self.logger.setLevel(logging.INFO)
+        self._params = params
+
+    @property
+    def params(self):
+        return self._params 
+
+    @contextmanager
+    def get_client(self):
+        self.logger.info('Creating client context')
+        context = zmq.Context()
+
+        self.logger.info('Creating client socket')
+        client = context.socket(zmq.REQ)
+
+        address = 'tcp://{}:{}'.format(MSG_HOST, MSG_PORT)
+        self.logger.info('Connecting client to %s' % address)
+        client.connect(address)
+        yield client
+        context.destroy()
+
+    def msg(self, cmd):
+        msg = msgpack.packb(cmd)
+        with self.get_client() as client:
+            client.send(msg)
+            resp = client.recv()
+            self.logger.info('msg resp %s' % msgpack.unpackb(resp))
+
+    def log(self, msg):
+        self.logger.info(msg)
 
 class InstrumentNotFoundError(Exception):
     def __init__(self, instrument_name, *args, **kwargs):
@@ -89,20 +127,17 @@ class Instrument:
             self.logger.error(e.message)
             raise InstrumentNotFoundError(self.name) from e
 
-    def render(params=None):
-        if params is None:
-            params = {}
-
-        self.buffer = self.renderer.play(params)
-
     def play(self, params=None):
         voice = Voice(self, params)
         voice.start()
 
     def _play(self, params=None):
-        renderer = self.renderer.play(params)
+        ctx = EventContext(params)
+        self.logger.info('init _play renderer')
+        renderer = self.renderer.play(ctx)
 
         with sd.Stream(channels=2, samplerate=44100, dtype='float32') as stream:
+            self.logger.info('loop over instrument generator in stream ctx')
             for snd in renderer:
                 self.logger.info('Writing sound to stream')
                 stream.write(np.asarray(snd.frames, dtype='float32'))

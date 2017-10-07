@@ -1,5 +1,5 @@
 import cmd
-from astrid.io import IOManager
+from astrid.server import AstridServer
 
 class AstridConsole(cmd.Cmd):
     """ Astrid Console 
@@ -11,34 +11,27 @@ class AstridConsole(cmd.Cmd):
     def __init__(self):
         cmd.Cmd.__init__(self)
 
-        self.io = IOManager()
+        self.server = AstridServer('astrid', pid_dir='/tmp')
+        if not self.server.is_running():
+            self.server.start()
 
     def do_p(self, cmd):
-        pass
+        self.server.send_cmd(['play'] + cmd.split(' '))
+
+    def do_a(self, cmd):
+        self.server.send_cmd(['add'] + cmd.split(' '))
 
     def do_i(self, cmd):
-        """List the number of voices for currently running instrument scripts.
-        """
-        voice_info = self.io.get_voice_info()
-
-        if len(voice_info) > 0:
-            print('voices playing:')
-            for voice_id, instrument_name in voice_info.iteritems():
-                print('    {} - {}'.format(voice_id, instrument_name))
-            print()
+        try:
+            for instrument in self.server.list_instruments():
+                if isinstance(instrument, bytes):
+                    instrument = instrument.decode('ascii')
+                print(instrument)
+        except TypeError:
+            pass
 
     def do_s(self, voice_id):
-        if voice_id == '':
-            for voice_id, inst in self.io.get_voice_info().iteritems():
-                self.params.set('%s-loop' % voice_id, False)
-        else:
-            self.params.set('%s-loop' % voice_id, False)
-
-    def do_reload(self, opt):
-        if opt == 'on':
-            setattr(self.io.ns, 'reload', True)
-        else:
-            setattr(self.io.ns, 'reload', False)
+        self.server.send_cmd(['stop'] + cmd.split(' '))
 
     def do_quit(self, cmd):
         self.quit()
@@ -53,5 +46,6 @@ class AstridConsole(cmd.Cmd):
         self.cmdloop()
 
     def quit(self):
+        self.server.stop()
         exit()
 

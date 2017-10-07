@@ -109,6 +109,7 @@ class AstridServer(Service):
             raise orc.InstrumentNotFoundError(name) from e
 
     def _play_instrument(self, instrument, *params):
+        self.logger.info('calling play() on instrument %s' % instrument)
         self.instruments[instrument].play()        
 
     def _render(self, instrument, params=None):
