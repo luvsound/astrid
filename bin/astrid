@@ -1,7 +1,9 @@
 #!/usr/bin/env python3.6
 
 import sys
+import time
 from astrid.server import AstridServer
+from astrid import orc
 
 server = AstridServer('astrid', pid_dir='/tmp')
 
@@ -14,7 +16,6 @@ if len(sys.argv) > 1 and sys.argv[1] == 'curses':
     except KeyboardInterrupt as e:
         console.quit()
 
-
 elif len(sys.argv) > 1 and sys.argv[1] == 'cmd':
     from astrid.ui import cmdconsole
     console = cmdconsole.AstridConsole()
@@ -24,20 +25,50 @@ elif len(sys.argv) > 1 and sys.argv[1] == 'cmd':
     except KeyboardInterrupt as e:
         console.quit()
 
-
 elif len(sys.argv) > 1 and sys.argv[1] == 'start':
+    if server.is_running():
+        print('Server is already running at PID %s' % server.get_pid())
+        exit(1)
+
     server.start()
     print('Started astrid server')
 
-
 elif len(sys.argv) > 1 and sys.argv[1] == 'stop':
+    if not server.is_running():
+        print('The server is already stopped')
+        exit(1)
+
     server.stop()
+    if server.is_running():
+        server.kill()
+        if server.is_running():
+            print('Could not stop astrid server')
+            exit(1)
+
     print('Stopped astrid server')
 
-
 elif len(sys.argv) > 1 and sys.argv[1] == 'status':
-    print('Astrid server running' if server.is_running() else 'Astrid server stopped')
+    if server.is_running():
+        print('Astrid server running at PID %s' % server.get_pid())
+    else:
+        print('Astrid server stopped')
 
+    for instrument in server.list_instruments():
+        if isinstance(instrument, bytes):
+            instrument = instrument.decode('ascii')
+        print(instrument)
+
+elif len(sys.argv) > 1:
+    if not server.is_running():
+        print('Starting astrid...')
+        server.start()
+
+        while not server.is_running():
+            time.sleep(0.01)
+
+        print('started')
+
+    server.send_cmd(sys.argv[1:])
 
 else:
     from astrid.ui import ide
