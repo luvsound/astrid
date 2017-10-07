@@ -3,6 +3,7 @@ import importlib.util
 import logging
 from logging.handlers import SysLogHandler
 import os
+import threading
 
 import numpy as np
 from service import find_syslog
@@ -28,6 +29,16 @@ class InstrumentHandler(FileSystemEventHandler):
         if path in self.instruments:
             # Signal reload
             pass
+
+
+class Voice(threading.Thread):
+    def __init__(self, instrument, params, *args, **kwargs):
+        super(Voice, self).__init__(*args, **kwargs)
+        self.instrument = instrument
+        self.params = params
+
+    def run(self):
+        self.instrument._play(self.params)
 
 class Instrument:
     def __init__(self, name, path=None):
@@ -85,6 +96,10 @@ class Instrument:
         self.buffer = self.renderer.play(params)
 
     def play(self, params=None):
+        voice = Voice(self, params)
+        voice.start()
+
+    def _play(self, params=None):
         renderer = self.renderer.play(params)
 
         with sd.Stream(channels=2, samplerate=44100, dtype='float32') as stream:
