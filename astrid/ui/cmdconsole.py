@@ -8,22 +8,32 @@ class AstridConsole(cmd.Cmd):
     prompt = '^_- '
     intro = 'Astrid Console'
 
-    def __init__(self):
+    def __init__(self, server=None, client=None):
         cmd.Cmd.__init__(self)
 
-        self.server = AstridServer('astrid', pid_dir='/tmp')
+        if server is None:
+            self.server = AstridServer('astrid', pid_dir='/tmp')
+        else:
+            self.server = server
+
         if not self.server.is_running():
             self.server.start()
+            print('Started astrid server')
+
+        if client is None:
+            self.client = AstridClient()
+        else:
+            self.client = client
 
     def do_p(self, cmd):
-        self.server.send_cmd(['play'] + cmd.split(' '))
+        self.client.send_cmd(['play'] + cmd.split(' '))
 
     def do_a(self, cmd):
-        self.server.send_cmd(['add'] + cmd.split(' '))
+        self.client.send_cmd(['add'] + cmd.split(' '))
 
     def do_i(self, cmd):
         try:
-            for instrument in self.server.list_instruments():
+            for instrument in self.client.list_instruments():
                 if isinstance(instrument, bytes):
                     instrument = instrument.decode('ascii')
                 print(instrument)
@@ -31,7 +41,21 @@ class AstridConsole(cmd.Cmd):
             pass
 
     def do_s(self, voice_id):
-        self.server.send_cmd(['stop'] + cmd.split(' '))
+        self.client.send_cmd(['stop'] + cmd.split(' '))
+
+    def do_start(self, cmd):
+        if not self.server.is_running():
+            self.server.start()
+            print('Started astrid server')
+        else:
+            print('Astrid server is already running')
+
+    def do_stop(self, cmd):
+        if self.server.is_running():
+            self.server.stop()
+            print('Stopped astrid server')
+        else:
+            print('Astrid server is already stopped')
 
     def do_quit(self, cmd):
         self.quit()
@@ -46,6 +70,6 @@ class AstridConsole(cmd.Cmd):
         self.cmdloop()
 
     def quit(self):
-        self.server.stop()
-        exit()
+        if self.server.is_running():
+            self.server.stop()
 

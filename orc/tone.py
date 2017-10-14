@@ -1,21 +1,21 @@
 import random
 
-from pippi import oscs
+from pippi import oscs, tune
 
 def play(ctx):
-    ctx.log('init play')
     osc = oscs.Osc()
+    freqs = tune.chord('i9')
 
-    for _ in range(4):
-        freq = random.triangular(220, 440)
-        out = osc.play(freq=freq, length=random.randint(4410, 44100 * 3))
+    for _ in range(3):
+        freq = random.choice(freqs) * 2**random.randint(0, 8)
+        out = osc.play(freq=freq, length=random.randint(4410, 50000))
         out = out.env('random')
+        out = out.env('phasor')
         out = out.pan(random.random())
 
-        ctx.log('push sound to stream')
-        yield out * random.triangular(0.75, 1)
+        yield out * random.triangular(0.25, 0.35)
 
-def pre(ctx):
+def before(ctx):
     ctx.log('before play')
 
 def done(ctx):

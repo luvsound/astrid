@@ -3,9 +3,11 @@
 import sys
 import time
 from astrid.server import AstridServer
+from astrid.client import AstridClient
 from astrid import orc
 
 server = AstridServer('astrid', pid_dir='/tmp')
+client = AstridClient()
 
 if len(sys.argv) > 1 and sys.argv[1] == 'curses':
     from astrid.ui import textconsole
@@ -16,9 +18,9 @@ if len(sys.argv) > 1 and sys.argv[1] == 'curses':
     except KeyboardInterrupt as e:
         console.quit()
 
-elif len(sys.argv) > 1 and sys.argv[1] == 'cmd':
+elif len(sys.argv) > 1 and sys.argv[1] == 'console':
     from astrid.ui import cmdconsole
-    console = cmdconsole.AstridConsole()
+    console = cmdconsole.AstridConsole(server, client)
 
     try:
         console.start()
@@ -53,30 +55,21 @@ elif len(sys.argv) > 1 and sys.argv[1] == 'status':
     else:
         print('Astrid server stopped')
 
-    for instrument in server.list_instruments():
+    for instrument in client.list_instruments():
         if isinstance(instrument, bytes):
             instrument = instrument.decode('ascii')
         print(instrument)
 
-elif len(sys.argv) > 1:
-    if not server.is_running():
-        print('Starting astrid...')
-        server.start()
+elif len(sys.argv) > 1 and sys.argv[1] == 'cmd':
+    client.send_cmd(sys.argv[1:])
 
-        while not server.is_running():
-            time.sleep(0.01)
-
-        print('started')
-
-    server.send_cmd(sys.argv[1:])
-
-else:
+elif len(sys.argv) > 1 and sys.argv[1] == 'ide':
     from astrid.ui import ide
-    console = ide.Astrid()
+    ide = ide.Astrid()
 
     try:
-        console.start()
+        ide.start()
     except KeyboardInterrupt as e:
-        console.quit()
+        ide.quit()
 
 
