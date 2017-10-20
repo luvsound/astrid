@@ -31,6 +31,9 @@ class AstridConsole(cmd.Cmd):
     def do_a(self, cmd):
         self.client.send_cmd(['add'] + cmd.split(' '))
 
+    def do_r(self, cmd):
+        self.client.send_cmd(['reload'] + cmd.split(' '))
+
     def do_i(self, cmd):
         try:
             for instrument in self.client.list_instruments():
@@ -41,7 +44,8 @@ class AstridConsole(cmd.Cmd):
             pass
 
     def do_s(self, voice_id):
-        self.client.send_cmd(['stop'] + cmd.split(' '))
+        print('Stopping all voices')
+        self.client.send_cmd(['stopall'])
 
     def do_start(self, cmd):
         if not self.server.is_running():
@@ -52,8 +56,8 @@ class AstridConsole(cmd.Cmd):
 
     def do_stop(self, cmd):
         if self.server.is_running():
-            self.server.stop()
-            print('Stopped astrid server')
+            self.client.send_cmd(['shutdown'])
+            print('Sent shutdown signal')
         else:
             print('Astrid server is already stopped')
 
