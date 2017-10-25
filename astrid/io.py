@@ -11,80 +11,134 @@ import warnings
 import numpy as np
 from service import find_syslog
 import sounddevice as sd
+from aubio import pitch
 
-from . import server
+from astrid import server
 
 warnings.simplefilter('always')
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('astrid')
 logger.addHandler(SysLogHandler(address=find_syslog(), facility=SysLogHandler.LOG_DAEMON))
 
-def sequenced(renderer, ctx):
-    generator = renderer.play(ctx)
+def pitch_tracker(bus, shutdown_signal, sr=44100, channels=1):
+    window_size = 4096
+    hop_size = 512
+    tolerance = 0.8
+
+    tracker = pitch('yin', window_size, hop_size, sr)
+    tracker.set_unit('freq')
+    tracker.set_tolerance(tolerance)
+
+    with sd.Stream(channels=channels, samplerate=sr, dtype='float32') as stream:
+        while True:
+            if shutdown_signal.is_set():
+                break
+
+            snd, _ = stream.read(hop_size)
+            p = tracker(snd.flatten())[0]
+            if tracker.get_confidence() >= tolerance:
+                logger.debug('pitch %s' % p)
+                setattr(bus, 'input_pitch', p)
+
+def play_stream(player, ctx):
+    """ Blocking loop over renderer generator, 
+        good for streams and non-overlapping sequences 
+        of unknown segment lengths
+    """
+    generator = player(ctx)
     with sd.Stream(channels=2, samplerate=44100, dtype='float32') as stream:
-        logger.info('Stream %s' % stream)
+        logger.debug('play_stream %s' % stream)
         for snd in generator:
-            logger.info('Writing sound to stream %s' % snd)
             stream.write(np.asarray(snd.frames, dtype='float32'))
             if ctx.stop_all.is_set() or ctx.stop_me.is_set():
                 break
 
-def oneshot(snd, onset, delay):
-    if onset > 0:
-        delay.wait(timeout=onset)
-
-    with sd.Stream(channels=2, samplerate=44100, dtype='float32') as stream:
-        logger.info('Stream %s' % stream)
+def oneshot(snd):
+    """ Oneshot blocking playback
+    """
+    with sd.Stream(channels=snd.channels, samplerate=snd.samplerate, dtype='float32') as stream:
+        logger.debug('oneshot %s' % stream)
         stream.write(np.asarray(snd.frames, dtype='float32'))
 
+def play_sequence(event_loop, executor, player, ctx, onsets):
+    """ Schedule a sequence of overlapping oneshots
+    """
+    if not isinstance(onsets, collections.Iterable):
+        try: 
+            onsets = onsets(ctx)
+        except TypeError as e:
+            raise RuntimeError('Invalid onset callback') from e
+
+    delay = threading.Event()
+    generator = player(ctx)
+
+    count = 0
+    start_time = event_loop.time()
+    for snd in generator:
+        onset = onsets[count % len(onsets)]
+        elapsed = event_loop.time() - start_time
+        delay_time = onset - elapsed
+
+        if delay_time > 0:
+            delay.wait(timeout=delay_time)
+
+        event_loop.run_in_executor(executor, oneshot, snd)
+
+        if ctx.stop_all.is_set() or ctx.stop_me.is_set():
+            ctx.running.clear()
+            break
+
+        count += 1
+
 def start_voice(event_loop, executor, renderer, ctx):
-    logger.info('start voice %s' % ctx)
+    logger.debug('start voice %s' % ctx)
     ctx.running.set()
 
     if hasattr(renderer, 'before'):
+        # before callback blocks so it can make its 
+        # results available to voices
+        # TODO maybe an additional async before_noblock
+        # or something would be nice, too, with results
+        # sent to the bus instead.
         ctx.before = renderer.before(ctx)
 
     loop = False
     if hasattr(renderer, 'loop'):
         loop = renderer.loop
 
-    onsets = None
-    if hasattr(renderer, 'onsets'):
-        if isinstance(renderer.onsets, collections.Iterable):
-            onsets = renderer.onsets
+    # find all play methods
+    players = set()
+
+    # The simplest case is a single play method 
+    # with an optional onset list or callback
+    if hasattr(renderer, 'play'):
+        onsets = getattr(renderer, 'onsets', None)
+        players.add((renderer.play, onsets))
+
+    # Play methods can also be registered via 
+    # an @player.init decorator, which also registers 
+    # an optional onset list or callback
+    if hasattr(renderer, 'player') \
+        and hasattr(renderer.player, 'players') \
+        and isinstance(renderer.player.players, set):
+        players |= renderer.player.players
+
+    for player, onsets in players:
+        if onsets is not None:
+            event_loop.run_in_executor(executor, play_sequence, player, ctx, onsets)
         else:
-            try: 
-                onsets = renderer.onsets(ctx)
-            except TypeError:
-                pass
-
-    futures = []
-    if onsets is not None:
-        delay = threading.Event()
-        generator = renderer.play(ctx)
-        count = 0
-        for snd in generator:
-            onset = onsets[count % len(onsets)]
-            future = event_loop.run_in_executor(executor, oneshot, snd, onset, delay)
-            futures += [ future ]
-            count += 1
-            if ctx.stop_all.is_set() or ctx.stop_me.is_set():
-                ctx.running.clear()
-                break
-
-    else:
-        future = event_loop.run_in_executor(executor, sequenced, renderer, ctx)
-        futures += [ future ]
+            event_loop.run_in_executor(executor, play_stream, player, ctx)
 
     if hasattr(renderer, 'done'):
+        # FIXME run callbacks in thread pool
+        # FIXME trigger this with a signal / done callback
         renderer.done(ctx)
 
+    # FIXME looping should happen via done callback...?
     """
     if loop:
         msg = [server.PLAY_INSTRUMENT, ctx.instrument_name, ctx.params]
         logger.debug('retrigger msg %s' % msg)
         messg_q.put(msg)
     """
-
-    return futures
 

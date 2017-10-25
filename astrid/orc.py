@@ -15,7 +15,9 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import zmq
 
-from . import server
+from astrid import server
+from astrid import client
+from astrid import midi
 
 logger = logging.getLogger('astrid')
 logger.addHandler(SysLogHandler(address=find_syslog(), facility=SysLogHandler.LOG_DAEMON))
@@ -41,25 +43,38 @@ def load_instrument(name, path=None, cwd=None):
     if path is None:
         path = os.path.join(cwd, ORC_DIR, '%s.py' % name)
 
-    logger.info('Loading instrument %s from %s' % (name, path))
+    logger.debug('Loading instrument %s from %s' % (name, path))
 
     try:
         spec = importlib.util.spec_from_file_location(name, path)
-        logger.info('spec %s' % spec)
+        logger.debug('spec %s' % spec)
         if spec is not None:
             renderer = importlib.util.module_from_spec(spec)
-            logger.info('renderer %s' % renderer)
+            logger.debug('renderer %s' % renderer)
             try:
                 spec.loader.exec_module(renderer)
             except Exception as e:
                 logger.error(e)
-            logger.info('post exec renderer %s' % renderer)
+            logger.debug('post exec renderer %s' % renderer)
+
             return renderer
         else:
             logger.error(path)
     except (ModuleNotFoundError, TypeError) as e:
         logger.error(e)
         raise InstrumentNotFoundError(name) from e
+
+class ParamBucket:
+    """ params[key] to params.key
+    """
+    def __init__(self, params):
+        self._params = params
+
+    def __getattr__(self, key):
+        return self.get(key)
+
+    def get(self, key, default=None):
+        return self._params.get(key, default)
 
 
 class EventContext:
@@ -68,24 +83,39 @@ class EventContext:
     def __init__(self, 
             params=None, 
             instrument_name=None, 
-            msgq=None, 
             running=None,
             stop_all=None, 
-            stop_me=None
+            stop_me=None, 
+            bus=None,
+            midi_maps=None
         ):
 
-        self.params = params
+        self.m = midi.MidiBucket(midi_devices, bus)
+        self.p = ParamBucket(params)
+        self.client = client.AstridClient()
         self.instrument_name = instrument_name
-        self.msgq = msgq
         self.running = running
         self.stop_all = stop_all
         self.stop_me = stop_me
+        self.bus = bus
 
     def msg(self, msg):
-        self.msgq.put(msg)
+        self.client.send_cmd(msg)
+
+    def play(self, instrument_name, *params, **kwargs):
+        if params is not None:
+            params = params[0]
+
+        if params is None:
+            params = {}
+
+        if kwargs is not None:
+            params.update(kwargs)
+
+        self.client.send_cmd([server.PLAY_INSTRUMENT, instrument_name, params])
 
     def log(self, msg):
-        logger.info(msg)
+        logger.debug(msg)
 
 
 class InstrumentLoadOrchestrator(threading.Thread):
@@ -108,9 +138,9 @@ class InstrumentLoadOrchestrator(threading.Thread):
         """
 
         while True:
-            logger.info('waiting for load messages')
+            logger.debug('waiting for load messages')
             if self.shutdown_flag.is_set():
-                logger.info('got shutdown')
+                logger.debug('got shutdown')
                 break
 
 
@@ -125,7 +155,8 @@ class InstrumentHandler(FileSystemEventHandler):
         self.instrument_name = instrument_name
 
     def on_modified(self, event):
-        logger.info('updated %s' % event)
+        logger.debug('updated %s' % event)
         path = event.src_path
+
 
 

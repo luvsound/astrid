@@ -1,5 +1,6 @@
 import cmd
 from astrid.server import AstridServer
+from astrid.client import AstridClient
 
 class AstridConsole(cmd.Cmd):
     """ Astrid Console 
@@ -27,6 +28,9 @@ class AstridConsole(cmd.Cmd):
 
     def do_p(self, cmd):
         self.client.send_cmd(['play'] + cmd.split(' '))
+
+    def do_track(self, cmd):
+        self.client.send_cmd(['analysis'] + cmd.split(' '))
 
     def do_a(self, cmd):
         self.client.send_cmd(['add'] + cmd.split(' '))

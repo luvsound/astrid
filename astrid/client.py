@@ -21,31 +21,28 @@ class AstridClient:
         context = zmq.Context()
         client = context.socket(zmq.REQ)
         address = 'tcp://{}:{}'.format(server.MSG_HOST, server.MSG_PORT)
-        self.logger.info('Connecting client to %s' % address)
+        self.logger.debug('Connecting client to %s' % address)
         client.connect(address)
         yield client
         context.destroy()
 
     def send_cmd(self, cmd):
-        if server.ntoc(cmd[0]) == server.LOAD_INSTRUMENT:
-            cmd[2] = os.path.abspath(cmd[2])
-
         msg = msgpack.packb(cmd)
 
         with self.get_client() as client:
             client.send(msg)
             resp = client.recv()
             resp = msgpack.unpackb(resp, encoding='utf-8')
-            self.logger.info(server.cton(resp))
+            self.logger.debug(server.cton(resp))
 
     def list_instruments(self):
         with self.get_client() as client:
             msg = msgpack.packb([server.cton(server.LIST_INSTRUMENTS)])
             client.send(msg)
             instruments = client.recv()
-            self.logger.info(('!!list instruments', instruments))
+            self.logger.debug(('!!list instruments', instruments))
             instruments = msgpack.unpackb(instruments, encoding='utf-8')
-            self.logger.info(('!!list instruments', instruments))
+            self.logger.debug(('!!list instruments', instruments))
             return instruments      
 
         return {}
