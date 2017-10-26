@@ -132,7 +132,7 @@ class RenderProcess(mp.Process):
     def load_renderer(self, name):
         try:
             logger.debug('calling load inst %s' % name)
-            renderer = orc.load_instrument(name, cwd=self.cwd, bus=self.bus, stop_listening=self.stop_listening)
+            renderer = orc.load_instrument(name, cwd=self.cwd)
             logger.debug('%s %s %s' % (name, self.cwd, renderer))
             self.instruments[name] = renderer
             logger.debug('Render process loaded instrument %s' % self.instruments[name])
@@ -149,14 +149,14 @@ class RenderProcess(mp.Process):
                 break
 
             logger.debug('waiting for play messages')
-            reload_event, cmd = self.play_q.get()
+            cmd = self.play_q.get()
             logger.debug('renderer PLAY_INSTRUMENT %s' % cmd)
             instrument_name = cmd[0]
             params = None
             if len(cmd) > 1:
                 params = cmd[1]
 
-            renderer = self.get_renderer(instrument_name, reload_event)
+            renderer = self.get_renderer(instrument_name)
             logger.debug('get_renderer result %s' % renderer)
             if renderer is None:
                 logger.error('No renderer loaded for %s' % instrument_name)
@@ -194,6 +194,7 @@ class RenderProcess(mp.Process):
                         stop_all=self.stop_all, 
                         stop_me=threading.Event(),
                         bus=self.bus, 
+                        midi_devices=device_aliases, 
                         midi_maps=midi_maps, 
                     )
 
@@ -288,9 +289,9 @@ class AstridServer(Service):
                     logger.debug('LOAD_INSTRUMENT %s %s' % (action, cmd))
                     if len(cmd) > 0:
                         # FIXME Loading locally and discarding to init MIDI listener...
-                        if cmd[0] not in self.midi_listeners:
+                        if cmd[0] not in self.listeners:
                             renderer = orc.load_instrument(cmd[0], cwd=self.cwd)
-                            listener = midi.start_listener(renderer, self.bus, self.stop_listening)
+                            listener = midi.start_listener(cmd[0], renderer, self.bus, self.stop_listening)
                             self.listeners[cmd[0]] = listener
 
                 elif ntoc(action) == ANALYSIS:
@@ -312,15 +313,14 @@ class AstridServer(Service):
 
                 elif ntoc(action) == PLAY_INSTRUMENT:
                     logger.debug('PLAY_INSTRUMENT %s' % cmd)
-                    #self.play_q.put(cmd)
-                    self.play_q.put((reload_event, cmd))
+                    self.play_q.put(cmd)
 
                     # FIXME this loads the module twice when creating 
                     # a new listener -- once in the render process play 
                     # handler and again below to start the listener
                     if cmd[0] not in self.listeners:
                         renderer = orc.load_instrument(cmd[0], cwd=self.cwd)
-                        listener = midi.start_listener(renderer, self.bus, self.stop_listening)
+                        listener = midi.start_listener(cmd[0], renderer, self.bus, self.stop_listening)
                         self.listeners[cmd[0]] = listener
 
                 self.msgsock.send(msgpack.packb(reply or MSG_OK))

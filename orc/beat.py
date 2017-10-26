@@ -1,11 +1,11 @@
-simport rando2
+import random
 import glob
 from pippi import dsp, oscs, tune, rhythm
 from astrid import player
 
 BPM = 80 * 4
 MIDI = 'MPK'
-TRIG = (60, 61)
+TRIG = -1
 
 def snarep(ctx):
     offset = 0 if ctx.m.note == 60 else 4

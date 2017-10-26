@@ -40,6 +40,22 @@ def pitch_tracker(bus, shutdown_signal, sr=44100, channels=1):
                 logger.debug('pitch %s' % p)
                 setattr(bus, 'input_pitch', p)
 
+def envelope_follower(bus, shutdown_signal, sr=44100, channels=1, window_size=None):
+    if window_size is None:
+        window_size = 0.015
+
+    window_size = sr // window_size
+    with sd.Stream(channels=channels, samplerate=sr, dtype='float32') as stream:
+        while True:
+            if shutdown_signal.is_set():
+                break
+
+            snd, _ = stream.read(window_size)
+            a = np.amax(snd.frames)
+            logger.info('amplitude %s' % a)
+            setattr(bus, 'input_amp', a)
+
+
 def play_stream(player, ctx):
     """ Blocking loop over renderer generator, 
         good for streams and non-overlapping sequences 
@@ -47,7 +63,7 @@ def play_stream(player, ctx):
     """
     generator = player(ctx)
     with sd.Stream(channels=2, samplerate=44100, dtype='float32') as stream:
-        logger.debug('play_stream %s' % stream)
+        logger.info('play_stream %s' % stream)
         for snd in generator:
             stream.write(np.asarray(snd.frames, dtype='float32'))
             if ctx.stop_all.is_set() or ctx.stop_me.is_set():
@@ -57,7 +73,7 @@ def oneshot(snd):
     """ Oneshot blocking playback
     """
     with sd.Stream(channels=snd.channels, samplerate=snd.samplerate, dtype='float32') as stream:
-        logger.debug('oneshot %s' % stream)
+        logger.info('oneshot %s' % stream)
         stream.write(np.asarray(snd.frames, dtype='float32'))
 
 def play_sequence(event_loop, executor, player, ctx, onsets):
@@ -91,7 +107,7 @@ def play_sequence(event_loop, executor, player, ctx, onsets):
         count += 1
 
 def start_voice(event_loop, executor, renderer, ctx):
-    logger.debug('start voice %s' % ctx)
+    logger.info('start voice %s' % ctx)
     ctx.running.set()
 
     if hasattr(renderer, 'before'):
@@ -138,7 +154,7 @@ def start_voice(event_loop, executor, renderer, ctx):
     """
     if loop:
         msg = [server.PLAY_INSTRUMENT, ctx.instrument_name, ctx.params]
-        logger.debug('retrigger msg %s' % msg)
+        logger.info('retrigger msg %s' % msg)
         messg_q.put(msg)
     """
 

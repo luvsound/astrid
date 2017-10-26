@@ -87,11 +87,15 @@ class EventContext:
             stop_all=None, 
             stop_me=None, 
             bus=None,
+            midi_devices=None, 
             midi_maps=None
         ):
 
-        self.m = midi.MidiBucket(midi_devices, bus)
+        logger.info('MidiBUcket')
+        self.m = midi.MidiBucket(midi_devices, midi_maps, bus)
+        logger.info('ParamBucket')
         self.p = ParamBucket(params)
+        logger.info('client')
         self.client = client.AstridClient()
         self.instrument_name = instrument_name
         self.running = running

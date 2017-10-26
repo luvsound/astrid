@@ -60,19 +60,23 @@ class MidiDeviceBucket:
 
 
 class MidiBucket:
-    def __init__(self, devices, bus):
+    def __init__(self, devices, mappings, bus):
+        logger.info((self, devices, mappings, bus))
         self.bus = bus
-        self.devices = self.map_device_buckets(devices)
+        self.devices = self.map_device_buckets(devices, mappings)
         self.dummy = MidiDeviceBucket() # empty fallback
 
     def __call__(self, device_alias):
         return self.devices.get(device_alias, self.dummy)
 
-    def map_device_buckets(self, devices):
+    def map_device_buckets(self, devices, mappings=None):
+        logger.info((devices, mappings))
         device_buckets = {}
-        for device_alias, mapping in devices:
+        for device_alias in devices:
+            mapping = mappings.get(device_alias, None)
             device_buckets[device_alias] = MidiDeviceBucket(device_alias, self.bus, mapping)
 
+        logger.info(device_buckets)
         return device_buckets
 
 
@@ -115,7 +119,7 @@ class MidiListener(mp.Process):
                     value = msg.value / 127
                     setattr(self.bus, MIDI_MSG_CC_TEMPLATE.format(device=self.device, cc=msg.control), value)
 
-def start_listener(renderer, bus, stop_listening):
+def start_listener(name, renderer, bus, stop_listening):
     listener = None
     if hasattr(renderer, 'MIDI'):
         logger.debug('has MIDI %s' % renderer.MIDI)
