@@ -22,7 +22,6 @@ logger = logging.getLogger('astrid')
 logger.addHandler(SysLogHandler(address=find_syslog(), facility=SysLogHandler.LOG_DAEMON))
 
 def pitch_tracker(bus, shutdown_signal, sr=44100, channels=1):
-    logger.info('starting pitch tracker %s' % sr)
     window_size = 4096
     hop_size = 512
     tolerance = 0.8
@@ -32,7 +31,6 @@ def pitch_tracker(bus, shutdown_signal, sr=44100, channels=1):
     tracker.set_tolerance(tolerance)
 
     with sd.Stream(channels=channels, samplerate=sr, dtype='float32') as stream:
-        logger.info('streaming p tracker %s' % sr)
         while True:
             if shutdown_signal.is_set():
                 break
@@ -53,7 +51,7 @@ def envelope_follower(bus, shutdown_signal, sr=44100, channels=1, window_size=No
                 break
 
             snd, _ = stream.read(window_size)
-            a = np.amax(snd.frames)
+            a = np.amax(snd.flatten())
             logger.info('amplitude %s' % a)
             setattr(bus, 'input_amp', a)
 
@@ -65,15 +63,12 @@ def input_buffer(bus, shutdown_signal, sr=44100, channels=2):
                 break
 
             snd, _ = stream.read(sr)
-            logger.info('sampled %s %s %s' % (sr, type(snd), snd.shape))
             try:
                 snd = SoundBuffer(frames=snd, channels=channels, samplerate=sr)
             except Exception as e:
                 logger.error(e)
 
-            logger.info('soundbuf %s %s' % (sr, snd))
             setattr(bus, 'input_buffer', snd)
-            logger.info('set soundbuf %s %s' % (sr, bus))
 
 def play_stream(player, ctx):
     """ Blocking loop over renderer generator, 
@@ -82,7 +77,6 @@ def play_stream(player, ctx):
     """
     generator = player(ctx)
     with sd.Stream(channels=2, samplerate=44100, dtype='float32') as stream:
-        logger.info('play_stream %s' % stream)
         for snd in generator:
             stream.write(np.asarray(snd.frames, dtype='float32'))
             if ctx.stop_all.is_set() or ctx.stop_me.is_set():
@@ -92,7 +86,6 @@ def oneshot(snd):
     """ Oneshot blocking playback
     """
     with sd.Stream(channels=snd.channels, samplerate=snd.samplerate, dtype='float32') as stream:
-        logger.info('oneshot %s' % stream)
         stream.write(np.asarray(snd.frames, dtype='float32'))
 
 def play_sequence(event_loop, executor, player, ctx, onsets):
@@ -101,8 +94,8 @@ def play_sequence(event_loop, executor, player, ctx, onsets):
     if not isinstance(onsets, collections.Iterable):
         try: 
             onsets = onsets(ctx)
-        except TypeError as e:
-            raise RuntimeError('Invalid onset callback') from e
+        except Exception as e:
+            logger.error('Onset callback failed with msg %s' % e)
 
     delay = threading.Event()
     generator = player(ctx)
@@ -126,7 +119,6 @@ def play_sequence(event_loop, executor, player, ctx, onsets):
         count += 1
 
 def start_voice(event_loop, executor, renderer, ctx):
-    logger.info('start voice %s' % ctx)
     ctx.running.set()
 
     if hasattr(renderer, 'before'):
@@ -159,9 +151,11 @@ def start_voice(event_loop, executor, renderer, ctx):
         players |= renderer.player.players
 
     for player, onsets in players:
-        logger.info('player %s onsets %s' % (player, onsets))
         if onsets is not None:
-            event_loop.run_in_executor(executor, play_sequence, player, ctx, onsets)
+            try:
+                event_loop.run_in_executor(executor, play_sequence, event_loop, executor, player, ctx, onsets)
+            except Exception as e:
+                logger.error(e)
         else:
             event_loop.run_in_executor(executor, play_stream, player, ctx)
 
