@@ -10,6 +10,7 @@ from astrid import client
 
 MIDI_MSG_NOTE_TEMPLATE = 'midi-message-{device}-note-{note}'
 MIDI_MSG_CC_TEMPLATE = 'midi-message-{device}-cc-{cc}'
+MIDI_LISTENER_KEY_TEMPLATE = '{}-midi-listener'
 
 logger = logging.getLogger('astrid')
 if not logger.handlers:

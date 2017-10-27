@@ -14,6 +14,7 @@ import sounddevice as sd
 from aubio import pitch
 
 from astrid import server
+from pippi.soundbuffer import SoundBuffer
 
 warnings.simplefilter('always')
 logging.basicConfig(level=logging.DEBUG)
@@ -21,6 +22,7 @@ logger = logging.getLogger('astrid')
 logger.addHandler(SysLogHandler(address=find_syslog(), facility=SysLogHandler.LOG_DAEMON))
 
 def pitch_tracker(bus, shutdown_signal, sr=44100, channels=1):
+    logger.info('starting pitch tracker %s' % sr)
     window_size = 4096
     hop_size = 512
     tolerance = 0.8
@@ -30,6 +32,7 @@ def pitch_tracker(bus, shutdown_signal, sr=44100, channels=1):
     tracker.set_tolerance(tolerance)
 
     with sd.Stream(channels=channels, samplerate=sr, dtype='float32') as stream:
+        logger.info('streaming p tracker %s' % sr)
         while True:
             if shutdown_signal.is_set():
                 break
@@ -37,7 +40,6 @@ def pitch_tracker(bus, shutdown_signal, sr=44100, channels=1):
             snd, _ = stream.read(hop_size)
             p = tracker(snd.flatten())[0]
             if tracker.get_confidence() >= tolerance:
-                logger.debug('pitch %s' % p)
                 setattr(bus, 'input_pitch', p)
 
 def envelope_follower(bus, shutdown_signal, sr=44100, channels=1, window_size=None):
@@ -55,6 +57,23 @@ def envelope_follower(bus, shutdown_signal, sr=44100, channels=1, window_size=No
             logger.info('amplitude %s' % a)
             setattr(bus, 'input_amp', a)
 
+def input_buffer(bus, shutdown_signal, sr=44100, channels=2):
+    logger.info('starting input buffer rec')
+    with sd.Stream(channels=channels, samplerate=sr, dtype='float32') as stream:
+        while True:
+            if shutdown_signal.is_set():
+                break
+
+            snd, _ = stream.read(sr)
+            logger.info('sampled %s %s %s' % (sr, type(snd), snd.shape))
+            try:
+                snd = SoundBuffer(frames=snd, channels=channels, samplerate=sr)
+            except Exception as e:
+                logger.error(e)
+
+            logger.info('soundbuf %s %s' % (sr, snd))
+            setattr(bus, 'input_buffer', snd)
+            logger.info('set soundbuf %s %s' % (sr, bus))
 
 def play_stream(player, ctx):
     """ Blocking loop over renderer generator, 
@@ -140,6 +159,7 @@ def start_voice(event_loop, executor, renderer, ctx):
         players |= renderer.player.players
 
     for player, onsets in players:
+        logger.info('player %s onsets %s' % (player, onsets))
         if onsets is not None:
             event_loop.run_in_executor(executor, play_sequence, player, ctx, onsets)
         else:

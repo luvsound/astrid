@@ -24,6 +24,7 @@ logger.addHandler(SysLogHandler(address=find_syslog(), facility=SysLogHandler.LO
 logger.setLevel(logging.INFO)
 
 ORC_DIR = 'orc'
+INSTRUMENT_RENDERER_KEY_TEMPLATE = '{}-renderer'
 
 def load_instrument(name, path=None, cwd=None):
     """ Loads a renderer module from the script 
@@ -63,6 +64,7 @@ def load_instrument(name, path=None, cwd=None):
     except (ModuleNotFoundError, TypeError) as e:
         logger.error(e)
         raise InstrumentNotFoundError(name) from e
+
 
 class ParamBucket:
     """ params[key] to params.key
@@ -119,7 +121,7 @@ class EventContext:
         self.client.send_cmd([server.PLAY_INSTRUMENT, instrument_name, params])
 
     def log(self, msg):
-        logger.debug(msg)
+        logger.info(msg)
 
 
 class InstrumentLoadOrchestrator(threading.Thread):
