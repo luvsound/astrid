@@ -5,12 +5,12 @@ def play(ctx):
     osc = oscs.Osc('tri')
 
     while True:
-        ctx.log('play bus %s' % ctx.bus)
+        ctx.log('playing')
         if hasattr(ctx.bus, 'input_pitch'):
             hz = ctx.bus.input_pitch
         else:
             hz = random.random() * 3 + 200
-        ctx.log('play TRI %s' % hz)
+        ctx.log('play freq %s' % hz)
         out = osc.play(freq=hz, length=64)
         out = out * 0.25
         yield out

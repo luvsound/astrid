@@ -18,14 +18,17 @@ if not logger.handlers:
 logger.setLevel(logging.DEBUG)
 
 def find_device(substr, input_device=True):
-    if input_device:
-        devices = mido.get_input_names()
-    else:
-        devices = mido.get_output_names()
+    try:
+        if input_device:
+            devices = mido.get_input_names()
+        else:
+            devices = mido.get_output_names()
 
-    for device_name in devices:
-        if substr in device_name:
-            return device_name
+        for device_name in devices:
+            if substr in device_name:
+                return device_name
+    except RuntimeError as e:
+        logger.error('Could not query for devices: %s' % e)
 
     return None
 
@@ -91,13 +94,15 @@ class MidiListener(mp.Process):
         self.stop_listening = stop_listening
         self.bus = bus
         self.triggers = triggers
+        self.name = 'astrid-%s-midi-listener' % instrument_name
 
     def run(self):
         logger.debug('MidiListener run %s' % self.device)
+
         with mido.open_input(self.device) as events:
             logger.debug('waiting for events %s' % events)
             for msg in events:
-                logger.debug('got msg %s' % msg)
+                logger.info('midi: %s %s' % (self.device, msg))
                 if self.stop_listening.is_set():
                     break
 

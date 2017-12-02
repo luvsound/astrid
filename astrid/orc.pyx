@@ -15,9 +15,9 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import zmq
 
-from astrid import server
-from astrid import client
-from astrid import midi
+from . import client
+from . import midi
+from . import names
 
 logger = logging.getLogger('astrid')
 logger.addHandler(SysLogHandler(address=find_syslog(), facility=SysLogHandler.LOG_DAEMON))
@@ -118,10 +118,13 @@ class EventContext:
         if kwargs is not None:
             params.update(kwargs)
 
-        self.client.send_cmd([server.PLAY_INSTRUMENT, instrument_name, params])
+        self.client.send_cmd([names.PLAY_INSTRUMENT, instrument_name, params])
 
     def log(self, msg):
         logger.info(msg)
+
+    def get_params(self):
+        return self.p._params
 
 
 class InstrumentLoadOrchestrator(threading.Thread):
