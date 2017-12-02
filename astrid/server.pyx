@@ -14,8 +14,6 @@ import queue
 import msgpack
 from service import find_syslog, Service
 import numpy as np
-import rtmixer
-import prctl
 import zmq
 
 from pippi.soundbuffer import RingBuffer
@@ -142,6 +140,7 @@ class AstridServer(Service):
         self.observers = {}
         self.listeners = {}
 
+        """
         self.mixer = io.AstridMixer(
                             self.buf_q, 
                             self.play_q, 
@@ -156,6 +155,9 @@ class AstridServer(Service):
                             self.input_buffer_maxlen
                         )
         self.mixer.start()
+        """
+        buffer_queue_handler = io.BufferQueueHandler(self.buf_q, self.playing, self.num_playing, self.block_size, self.channels, self.samplerate)
+        buffer_queue_handler.start()
 
         #self.tracker = workers.AnalysisProcess(self.bus, self.shutdown_flag, self.input_buffer, self.record_head)
         #self.tracker.start()

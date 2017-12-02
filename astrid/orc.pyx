@@ -61,7 +61,7 @@ def load_instrument(name, path=None, cwd=None):
             return renderer
         else:
             logger.error(path)
-    except (ModuleNotFoundError, TypeError) as e:
+    except TypeError as e:
         logger.error(e)
         raise InstrumentNotFoundError(name) from e
 

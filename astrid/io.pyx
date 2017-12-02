@@ -18,6 +18,7 @@ import sounddevice as sd
 from aubio import pitch
 
 from . import names
+from .mixer import AstridMixer
 from pippi.soundbuffer import SoundBuffer
 
 warnings.simplefilter('always')
@@ -120,12 +121,13 @@ class BufferQueueHandler(threading.Thread):
         appends them to the end of the stack of playing 
         buffers.
     """
-    def __init__(self, buf_q, playing, num_playing, block_size=64):
+    def __init__(self, buf_q, playing, num_playing, block_size=64, channels=2, samplerate=44100):
         super(BufferQueueHandler, self).__init__()
         self.buf_q = buf_q
         self.playing = playing
         self.num_playing = num_playing
         self.block_size = block_size
+        self.mixer = AstridMixer(block_size, channels, samplerate)
         logger.info('started BUF QUEUE')
 
     def run(self):
@@ -137,14 +139,17 @@ class BufferQueueHandler(threading.Thread):
                 break
 
             try:
-                playbuf = PlayBuffer(snd, self.block_size)
-                logger.info('adding %s to BUF QUEUE PLAYING' % playbuf)
-                self.playing.append(playbuf)
-                self.num_playing.value = len(self.playing)
+                #playbuf = PlayBuffer(snd, self.block_size)
+                logger.info('adding %s to ASTRID MIXER' % snd)
+                #self.playing.append(playbuf)
+                #self.num_playing.value = len(self.playing)
+                self.mixer.add(snd)
             except Exception as e:
                 logger.error(e)
 
-class AstridMixer(mp.Process):
+        self.mixer.shutdown()
+
+class OldAstridMixer(mp.Process):
     # FIXME do this with cython's openmp compat
     """
     cdef public double[:,:] silence
@@ -170,7 +175,7 @@ class AstridMixer(mp.Process):
             input_buffer_maxlen=0
         ):
         logger.info('Starting AstridMixer')
-        super(AstridMixer, self).__init__()
+        super(OldAstridMixer, self).__init__()
         self.buf_q = buf_q
         self.play_q = play_q
         self.playing = playing
@@ -186,38 +191,6 @@ class AstridMixer(mp.Process):
         self.i = 0
         self._num_playing = len(self.num_playing.value)
 
-    def callback(self, indata, outdata, frames, time, status):
-        #logger.error('cpu %s' % self)
-        #logger.error('cpu %s' % self.cpu_load)
-        #if status:
-        #    logger.error((frames, time, status))
-        #logger.error('%s: %s frames %s blocksize' % (self, frames, self.block_size))
-        #logger.error(dir(self.record_head.value))
-        """
-        try:
-            self.input_buffer.append(indata)
-            self.record_head.value = (self.record_head.value + 1) % self.input_buffer_maxlen
-            #logger.info(len(indata), len(self.input_buffer), self.record_head.value)
-        except Exception as e:
-            logger.error('error rec head write %s' % e)
-        """
-
-        #logger.error(len(outdata))
-        self._num_playing = self.num_playing.value
-        outdata[:] = self.silence 
-        #outdata[:] = indata * 0.1
-        #logger.error(self.silence)
-        #logger.error(self.playing)
-        self.i = 0
-        for self.i in range(self._num_playing):
-        #for i, buf in enumerate(self.playing):
-            #logger.error((i, buf))
-            try:
-                #outdata[:] = outdata + buf.get_block()
-                outdata[:] = outdata + self.playing[self.i].get_block()
-            except BufferEndReached as e:
-                del self.playing[self.i]
-
     def run(self):
         try:
             logger.info('Starting buffer queue handler')
@@ -227,25 +200,7 @@ class AstridMixer(mp.Process):
         except Exception as e:
             logger.error(e)
 
-
-        silence = np.zeros((self.block_size, self.channels), dtype='float32')
-
-        logger.info('Opening AstridMixer stream')
-        logger.info('%s %s %s' % (self.samplerate, self.block_size, self.channels))
-        try:
-            with sd.Stream(
-                        #samplerate=self.samplerate, 
-                        blocksize=self.block_size, 
-                        #device=None, 
-                        channels=self.channels, 
-                        dtype='float32', 
-                        #latency='low', 
-                        callback=self.callback, 
-                        #finished_callback=self.finished_event.set
-                    ):        
-                self.finished_event.wait()
-        except Exception as e:
-            logger.error(e)
+        self.finished_event.wait()
 
         logger.info('shutting mixer down')
         self.buf_q.put(names.SHUTDOWN)

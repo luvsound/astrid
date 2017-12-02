@@ -1125,7 +1125,6 @@ extern int __pyx_module_is_main_astrid__orc;
 int __pyx_module_is_main_astrid__orc = 0;
 
 /* Implementation of 'astrid.orc' */
-static PyObject *__pyx_builtin_ModuleNotFoundError;
 static PyObject *__pyx_builtin_TypeError;
 static PyObject *__pyx_builtin_super;
 static const char __pyx_k_e[] = "e";
@@ -1253,7 +1252,6 @@ static const char __pyx_k_asyncio_coroutines[] = "asyncio.coroutines";
 static const char __pyx_k_cline_in_traceback[] = "cline_in_traceback";
 static const char __pyx_k_watchdog_observers[] = "watchdog.observers";
 static const char __pyx_k_EventContext___init[] = "EventContext.__init__";
-static const char __pyx_k_ModuleNotFoundError[] = "ModuleNotFoundError";
 static const char __pyx_k_post_exec_renderer_s[] = "post exec renderer %s";
 static const char __pyx_k_ParamBucket___getattr[] = "ParamBucket.__getattr__";
 static const char __pyx_k_FileSystemEventHandler[] = "FileSystemEventHandler";
@@ -1293,7 +1291,6 @@ static PyObject *__pyx_n_s_LOG_DAEMON;
 static PyObject *__pyx_kp_s_Loading_instrument_s_from_s;
 static PyObject *__pyx_n_s_MidiBUcket;
 static PyObject *__pyx_n_s_MidiBucket;
-static PyObject *__pyx_n_s_ModuleNotFoundError;
 static PyObject *__pyx_kp_s_No_instrument_named_s_found;
 static PyObject *__pyx_n_s_ORC_DIR;
 static PyObject *__pyx_n_s_Observer;
@@ -2515,7 +2512,7 @@ static PyObject *__pyx_pf_6astrid_3orc_load_instrument(CYTHON_UNUSED PyObject *_
  *             return renderer
  *         else:
  *             logger.error(path)             # <<<<<<<<<<<<<<
- *     except (ModuleNotFoundError, TypeError) as e:
+ *     except TypeError as e:
  *         logger.error(e)
  */
       /*else*/ {
@@ -2591,11 +2588,11 @@ static PyObject *__pyx_pf_6astrid_3orc_load_instrument(CYTHON_UNUSED PyObject *_
     /* "astrid/orc.pyx":64
  *         else:
  *             logger.error(path)
- *     except (ModuleNotFoundError, TypeError) as e:             # <<<<<<<<<<<<<<
+ *     except TypeError as e:             # <<<<<<<<<<<<<<
  *         logger.error(e)
  *         raise InstrumentNotFoundError(name) from e
  */
-    __pyx_t_10 = __Pyx_PyErr_ExceptionMatches(__pyx_builtin_ModuleNotFoundError) || __Pyx_PyErr_ExceptionMatches(__pyx_builtin_TypeError);
+    __pyx_t_10 = __Pyx_PyErr_ExceptionMatches(__pyx_builtin_TypeError);
     if (__pyx_t_10) {
       __Pyx_AddTraceback("astrid.orc.load_instrument", __pyx_clineno, __pyx_lineno, __pyx_filename);
       if (__Pyx_GetException(&__pyx_t_8, &__pyx_t_6, &__pyx_t_1) < 0) __PYX_ERR(0, 64, __pyx_L8_except_error)
@@ -2607,7 +2604,7 @@ static PyObject *__pyx_pf_6astrid_3orc_load_instrument(CYTHON_UNUSED PyObject *_
 
       /* "astrid/orc.pyx":65
  *             logger.error(path)
- *     except (ModuleNotFoundError, TypeError) as e:
+ *     except TypeError as e:
  *         logger.error(e)             # <<<<<<<<<<<<<<
  *         raise InstrumentNotFoundError(name) from e
  * 
@@ -2660,7 +2657,7 @@ static PyObject *__pyx_pf_6astrid_3orc_load_instrument(CYTHON_UNUSED PyObject *_
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
       /* "astrid/orc.pyx":66
- *     except (ModuleNotFoundError, TypeError) as e:
+ *     except TypeError as e:
  *         logger.error(e)
  *         raise InstrumentNotFoundError(name) from e             # <<<<<<<<<<<<<<
  * 
@@ -5367,7 +5364,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_s_Loading_instrument_s_from_s, __pyx_k_Loading_instrument_s_from_s, sizeof(__pyx_k_Loading_instrument_s_from_s), 0, 0, 1, 0},
   {&__pyx_n_s_MidiBUcket, __pyx_k_MidiBUcket, sizeof(__pyx_k_MidiBUcket), 0, 0, 1, 1},
   {&__pyx_n_s_MidiBucket, __pyx_k_MidiBucket, sizeof(__pyx_k_MidiBucket), 0, 0, 1, 1},
-  {&__pyx_n_s_ModuleNotFoundError, __pyx_k_ModuleNotFoundError, sizeof(__pyx_k_ModuleNotFoundError), 0, 0, 1, 1},
   {&__pyx_kp_s_No_instrument_named_s_found, __pyx_k_No_instrument_named_s_found, sizeof(__pyx_k_No_instrument_named_s_found), 0, 0, 1, 0},
   {&__pyx_n_s_ORC_DIR, __pyx_k_ORC_DIR, sizeof(__pyx_k_ORC_DIR), 0, 0, 1, 1},
   {&__pyx_n_s_Observer, __pyx_k_Observer, sizeof(__pyx_k_Observer), 0, 0, 1, 1},
@@ -5491,7 +5487,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_ModuleNotFoundError = __Pyx_GetBuiltinName(__pyx_n_s_ModuleNotFoundError); if (!__pyx_builtin_ModuleNotFoundError) __PYX_ERR(0, 64, __pyx_L1_error)
   __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(0, 64, __pyx_L1_error)
   __pyx_builtin_super = __Pyx_GetBuiltinName(__pyx_n_s_super); if (!__pyx_builtin_super) __PYX_ERR(0, 132, __pyx_L1_error)
   return 0;
