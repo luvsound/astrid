@@ -59,7 +59,15 @@ cdef int main_callback(const void *input,
         deleted_buffer->previous, and deleted_buffer->previous->next to 
         next_buffer... then freeing memory.
     """
+    cdef int i = 0
+    cdef int j = 0
+    cdef int c = 0
+
     cdef stream_ctx *ctx = <stream_ctx*>current_context
+
+    for i in range(<int>frameCount):
+        for c in range(ctx.channels):
+            ctx.out[i * ctx.channels + c] = 0
 
     ctx.playing_current = ctx.playing_head
     cdef int count = 0
@@ -67,10 +75,6 @@ cdef int main_callback(const void *input,
         mix_block(ctx, frameCount)
         ctx.playing_current = ctx.playing_current.next
         count += 1
-
-    cdef int i = 0
-    cdef int j = 0
-    cdef int c = 0
 
     cdef float *out = <float*>output
 
