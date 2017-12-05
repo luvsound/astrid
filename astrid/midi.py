@@ -73,8 +73,11 @@ class MidiBucket:
     def __call__(self, device_alias):
         return self.devices.get(device_alias, self.dummy)
 
-    def map_device_buckets(self, devices, mappings=None):
+    def map_device_buckets(self, devices=None, mappings=None):
         logger.info((devices, mappings))
+        if devices is None:
+            return {}
+
         device_buckets = {}
         for device_alias in devices:
             mapping = mappings.get(device_alias, None)

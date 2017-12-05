@@ -1,3 +1,6 @@
+""" Config values, flags, and message translations
+"""
+
 LOAD_INSTRUMENT = 1
 LIST_INSTRUMENTS = 2
 PLAY_INSTRUMENT = 3
@@ -7,6 +10,9 @@ RELOAD_INSTRUMENT = 6
 STOP_ALL_VOICES = 7
 SHUTDOWN = 8
 ANALYSIS = 9
+
+MSG_PORT = 9191
+MSG_HOST = 'localhost'
 
 _cmdToName = {
     LOAD_INSTRUMENT: 'add', 

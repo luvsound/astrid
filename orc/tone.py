@@ -1,25 +1,29 @@
 import random
-from pippi import oscs, tune
+from pippi import oscs, tune, dsp
 
-#MIDI = 'MPK'
-#TRIG = -1
+MIDI = 'MPK'
+TRIG = -1
 
 def play(ctx):
     ctx.log('play voice')
-    #ctl1 = ctx.m('MPK')
-    #ctx.log('MPK CC %s' % ctl1)
+    mpk = ctx.m('MPK')
+    ctx.log('MPK CC1 %s' % mpk.cc1)
 
-    length = random.randint(44100, 44100 * 3)
-    freq = random.triangular(200, 330)
-    amp = 0.25
-    #freq = ctx.p.freq
-    #amp = ctx.p.amp
+    length = random.triangular(0.4, 1)
+    freq = ctx.p.freq or random.triangular(200, 330)
+    freqs = tune.fromdegrees([1,3,5,9], octave=6)
+    #freq = random.triangular(300, 600)
+    freq = random.choice(freqs)
+    amp = random.triangular(0.125, 0.15)
+    #amp = ctx.p.amp or 0.25
 
-    osc = oscs.Osc('tri')
+    osc = oscs.Osc(wavetable=dsp.SINE)
     out = osc.play(length=length, freq=freq, amp=amp)
-    out = out.env('phasor')
+    out = out.env(dsp.RSAW)
+    out = out.pan(random.random())
+    #out.write('listeny.wav')
 
-    #ctx.log('PLAYED %s' % ctl1)
+    ctx.log('PLAYED %s at %s' % (freq, amp))
 
     yield out
 

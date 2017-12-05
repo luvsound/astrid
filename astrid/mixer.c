@@ -24,7 +24,7 @@ END: Cython Metadata */
     #error Cython requires Python 2.6+ or Python 3.3+.
 #else
 #define CYTHON_ABI "0_27_3"
-#define CYTHON_FUTURE_DIVISION 0
+#define CYTHON_FUTURE_DIVISION 1
 #include <stddef.h>
 #ifndef offsetof
   #define offsetof(type, member) ( (size_t) & ((type*)0) -> member )
@@ -1038,7 +1038,7 @@ struct __pyx_vtabstruct_5pippi_11soundbuffer_SoundBuffer {
 static struct __pyx_vtabstruct_5pippi_11soundbuffer_SoundBuffer *__pyx_vtabptr_5pippi_11soundbuffer_SoundBuffer;
 
 
-/* "astrid/mixer.pyx":88
+/* "astrid/mixer.pyx":81
  *     return 0
  * 
  * cdef class AstridMixer:             # <<<<<<<<<<<<<<
@@ -1184,47 +1184,6 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_GetAttrStr(PyObject* obj, PyObject
 /* GetBuiltinName.proto */
 static PyObject *__Pyx_GetBuiltinName(PyObject *name);
 
-/* PyThreadStateGet.proto */
-#if CYTHON_FAST_THREAD_STATE
-#define __Pyx_PyThreadState_declare  PyThreadState *__pyx_tstate;
-#define __Pyx_PyThreadState_assign  __pyx_tstate = __Pyx_PyThreadState_Current;
-#define __Pyx_PyErr_Occurred()  __pyx_tstate->curexc_type
-#else
-#define __Pyx_PyThreadState_declare
-#define __Pyx_PyThreadState_assign
-#define __Pyx_PyErr_Occurred()  PyErr_Occurred()
-#endif
-
-/* PyErrFetchRestore.proto */
-#if CYTHON_FAST_THREAD_STATE
-#define __Pyx_PyErr_Clear() __Pyx_ErrRestore(NULL, NULL, NULL)
-#define __Pyx_ErrRestoreWithState(type, value, tb)  __Pyx_ErrRestoreInState(PyThreadState_GET(), type, value, tb)
-#define __Pyx_ErrFetchWithState(type, value, tb)    __Pyx_ErrFetchInState(PyThreadState_GET(), type, value, tb)
-#define __Pyx_ErrRestore(type, value, tb)  __Pyx_ErrRestoreInState(__pyx_tstate, type, value, tb)
-#define __Pyx_ErrFetch(type, value, tb)    __Pyx_ErrFetchInState(__pyx_tstate, type, value, tb)
-static CYTHON_INLINE void __Pyx_ErrRestoreInState(PyThreadState *tstate, PyObject *type, PyObject *value, PyObject *tb);
-static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject **type, PyObject **value, PyObject **tb);
-#if CYTHON_COMPILING_IN_CPYTHON
-#define __Pyx_PyErr_SetNone(exc) (Py_INCREF(exc), __Pyx_ErrRestore((exc), NULL, NULL))
-#else
-#define __Pyx_PyErr_SetNone(exc) PyErr_SetNone(exc)
-#endif
-#else
-#define __Pyx_PyErr_Clear() PyErr_Clear()
-#define __Pyx_PyErr_SetNone(exc) PyErr_SetNone(exc)
-#define __Pyx_ErrRestoreWithState(type, value, tb)  PyErr_Restore(type, value, tb)
-#define __Pyx_ErrFetchWithState(type, value, tb)  PyErr_Fetch(type, value, tb)
-#define __Pyx_ErrRestoreInState(tstate, type, value, tb)  PyErr_Restore(type, value, tb)
-#define __Pyx_ErrFetchInState(tstate, type, value, tb)  PyErr_Fetch(type, value, tb)
-#define __Pyx_ErrRestore(type, value, tb)  PyErr_Restore(type, value, tb)
-#define __Pyx_ErrFetch(type, value, tb)  PyErr_Fetch(type, value, tb)
-#endif
-
-/* WriteUnraisableException.proto */
-static void __Pyx_WriteUnraisable(const char *name, int clineno,
-                                  int lineno, const char *filename,
-                                  int full_traceback, int nogil);
-
 /* RaiseDoubleKeywords.proto */
 static void __Pyx_RaiseDoubleKeywordsError(const char* func_name, PyObject* kw_name);
 
@@ -1236,6 +1195,13 @@ static int __Pyx_ParseOptionalKeywords(PyObject *kwds, PyObject **argnames[],\
 /* RaiseArgTupleInvalid.proto */
 static void __Pyx_RaiseArgtupleInvalid(const char* func_name, int exact,
     Py_ssize_t num_min, Py_ssize_t num_max, Py_ssize_t num_found);
+
+/* PyObjectCall.proto */
+#if CYTHON_COMPILING_IN_CPYTHON
+static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw);
+#else
+#define __Pyx_PyObject_Call(func, arg, kw) PyObject_Call(func, arg, kw)
+#endif
 
 /* MemviewSliceInit.proto */
 #define __Pyx_BUF_MAX_NDIMS %(BUF_MAX_NDIMS)d
@@ -1272,11 +1238,40 @@ static void __Pyx_RaiseBufferIndexError(int axis);
         __Pyx__ArgTypeTest(obj, type, name, exact))
 static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *name, int exact);
 
-/* PyObjectCall.proto */
-#if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw);
+/* PyThreadStateGet.proto */
+#if CYTHON_FAST_THREAD_STATE
+#define __Pyx_PyThreadState_declare  PyThreadState *__pyx_tstate;
+#define __Pyx_PyThreadState_assign  __pyx_tstate = __Pyx_PyThreadState_Current;
+#define __Pyx_PyErr_Occurred()  __pyx_tstate->curexc_type
 #else
-#define __Pyx_PyObject_Call(func, arg, kw) PyObject_Call(func, arg, kw)
+#define __Pyx_PyThreadState_declare
+#define __Pyx_PyThreadState_assign
+#define __Pyx_PyErr_Occurred()  PyErr_Occurred()
+#endif
+
+/* PyErrFetchRestore.proto */
+#if CYTHON_FAST_THREAD_STATE
+#define __Pyx_PyErr_Clear() __Pyx_ErrRestore(NULL, NULL, NULL)
+#define __Pyx_ErrRestoreWithState(type, value, tb)  __Pyx_ErrRestoreInState(PyThreadState_GET(), type, value, tb)
+#define __Pyx_ErrFetchWithState(type, value, tb)    __Pyx_ErrFetchInState(PyThreadState_GET(), type, value, tb)
+#define __Pyx_ErrRestore(type, value, tb)  __Pyx_ErrRestoreInState(__pyx_tstate, type, value, tb)
+#define __Pyx_ErrFetch(type, value, tb)    __Pyx_ErrFetchInState(__pyx_tstate, type, value, tb)
+static CYTHON_INLINE void __Pyx_ErrRestoreInState(PyThreadState *tstate, PyObject *type, PyObject *value, PyObject *tb);
+static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject **type, PyObject **value, PyObject **tb);
+#if CYTHON_COMPILING_IN_CPYTHON
+#define __Pyx_PyErr_SetNone(exc) (Py_INCREF(exc), __Pyx_ErrRestore((exc), NULL, NULL))
+#else
+#define __Pyx_PyErr_SetNone(exc) PyErr_SetNone(exc)
+#endif
+#else
+#define __Pyx_PyErr_Clear() PyErr_Clear()
+#define __Pyx_PyErr_SetNone(exc) PyErr_SetNone(exc)
+#define __Pyx_ErrRestoreWithState(type, value, tb)  PyErr_Restore(type, value, tb)
+#define __Pyx_ErrFetchWithState(type, value, tb)  PyErr_Fetch(type, value, tb)
+#define __Pyx_ErrRestoreInState(tstate, type, value, tb)  PyErr_Restore(type, value, tb)
+#define __Pyx_ErrFetchInState(tstate, type, value, tb)  PyErr_Fetch(type, value, tb)
+#define __Pyx_ErrRestore(type, value, tb)  PyErr_Restore(type, value, tb)
+#define __Pyx_ErrFetch(type, value, tb)  PyErr_Fetch(type, value, tb)
 #endif
 
 /* RaiseException.proto */
@@ -1488,6 +1483,11 @@ static CYTHON_INLINE void __Pyx_RaiseUnboundLocalError(const char *varname);
 /* None.proto */
 static CYTHON_INLINE long __Pyx_div_long(long, long);
 
+/* WriteUnraisableException.proto */
+static void __Pyx_WriteUnraisable(const char *name, int clineno,
+                                  int lineno, const char *filename,
+                                  int full_traceback, int nogil);
+
 /* PyObjectCallMethO.proto */
 #if CYTHON_COMPILING_IN_CPYTHON
 static CYTHON_INLINE PyObject* __Pyx_PyObject_CallMethO(PyObject *func, PyObject *arg);
@@ -1540,13 +1540,6 @@ static void __Pyx_AddTraceback(const char *funcname, int c_line,
 /* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value);
 
-/* Print.proto */
-static int __Pyx_Print(PyObject*, PyObject *, int);
-#if CYTHON_COMPILING_IN_PYPY || PY_MAJOR_VERSION >= 3
-static PyObject* __pyx_print = 0;
-static PyObject* __pyx_print_kwargs = 0;
-#endif
-
 #if PY_MAJOR_VERSION < 3
     static int __Pyx_GetBuffer(PyObject *obj, Py_buffer *view, int flags);
     static void __Pyx_ReleaseBuffer(Py_buffer *view);
@@ -1585,10 +1578,7 @@ static CYTHON_INLINE PyObject *__pyx_capsule_create(void *p, const char *sig);
 static CYTHON_INLINE int __Pyx_PyInt_As_int(PyObject *);
 
 /* CIntFromPy.proto */
-static CYTHON_INLINE long __Pyx_PyInt_As_long(PyObject *);
-
-/* PrintOne.proto */
-static int __Pyx_PrintOne(PyObject* stream, PyObject *o);
+static CYTHON_INLINE unsigned long __Pyx_PyInt_As_unsigned_long(PyObject *);
 
 /* MemviewSliceCopyTemplate.proto */
 static __Pyx_memviewslice
@@ -1596,6 +1586,9 @@ __pyx_memoryview_copy_new_contig(const __Pyx_memviewslice *from_mvs,
                                  const char *mode, int ndim,
                                  size_t sizeof_dtype, int contig_flag,
                                  int dtype_is_object);
+
+/* CIntFromPy.proto */
+static CYTHON_INLINE long __Pyx_PyInt_As_long(PyObject *);
 
 /* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value);
@@ -1715,6 +1708,7 @@ int __pyx_module_is_main_astrid__mixer = 0;
 
 /* Implementation of 'astrid.mixer' */
 static PyObject *__pyx_builtin_range;
+static PyObject *__pyx_builtin_print;
 static PyObject *__pyx_builtin_TypeError;
 static PyObject *__pyx_builtin_ValueError;
 static PyObject *__pyx_builtin_MemoryError;
@@ -1725,12 +1719,10 @@ static PyObject *__pyx_builtin_IndexError;
 static const char __pyx_k_O[] = "O";
 static const char __pyx_k_c[] = "c";
 static const char __pyx_k_id[] = "id";
-static const char __pyx_k_end[] = "end";
 static const char __pyx_k_new[] = "__new__";
 static const char __pyx_k_obj[] = "obj";
 static const char __pyx_k_base[] = "base";
 static const char __pyx_k_dict[] = "__dict__";
-static const char __pyx_k_file[] = "file";
 static const char __pyx_k_main[] = "__main__";
 static const char __pyx_k_mode[] = "mode";
 static const char __pyx_k_name[] = "name";
@@ -1779,7 +1771,6 @@ static const char __pyx_k_MemoryError[] = "MemoryError";
 static const char __pyx_k_PickleError[] = "PickleError";
 static const char __pyx_k_pyx_checksum[] = "__pyx_checksum";
 static const char __pyx_k_stringsource[] = "stringsource";
-static const char __pyx_k_end_of_buffer[] = "end of buffer";
 static const char __pyx_k_pyx_getbuffer[] = "__pyx_getbuffer";
 static const char __pyx_k_reduce_cython[] = "__reduce_cython__";
 static const char __pyx_k_Terminate_err_s[] = "Terminate err: %s";
@@ -1821,25 +1812,25 @@ static PyObject *__pyx_n_s_ASCII;
 static PyObject *__pyx_kp_s_Buffer_view_does_not_expose_stri;
 static PyObject *__pyx_kp_s_Can_only_create_a_buffer_that_is;
 static PyObject *__pyx_kp_s_Cannot_index_with_type_s;
-static PyObject *__pyx_kp_s_Close_stream_err_s;
+static PyObject *__pyx_kp_u_Close_stream_err_s;
 static PyObject *__pyx_n_s_Ellipsis;
 static PyObject *__pyx_kp_s_Empty_shape_tuple_for_cython_arr;
 static PyObject *__pyx_kp_s_Incompatible_checksums_s_vs_0xb0;
 static PyObject *__pyx_n_s_IndexError;
 static PyObject *__pyx_kp_s_Indirect_dimensions_not_supporte;
-static PyObject *__pyx_kp_s_Initialize_err_s;
+static PyObject *__pyx_kp_u_Initialize_err_s;
 static PyObject *__pyx_kp_s_Invalid_mode_expected_c_or_fortr;
 static PyObject *__pyx_kp_s_Invalid_shape_in_axis_d_d;
 static PyObject *__pyx_n_s_MemoryError;
 static PyObject *__pyx_kp_s_MemoryView_of_r_at_0x_x;
 static PyObject *__pyx_kp_s_MemoryView_of_r_object;
 static PyObject *__pyx_n_b_O;
-static PyObject *__pyx_kp_s_Open_default_stream_err_s;
+static PyObject *__pyx_kp_u_Open_default_stream_err_s;
 static PyObject *__pyx_kp_s_Out_of_bounds_on_buffer_access_a;
 static PyObject *__pyx_n_s_PickleError;
-static PyObject *__pyx_kp_s_Start_stream_err_s;
-static PyObject *__pyx_kp_s_Stop_stream_err_s;
-static PyObject *__pyx_kp_s_Terminate_err_s;
+static PyObject *__pyx_kp_u_Start_stream_err_s;
+static PyObject *__pyx_kp_u_Stop_stream_err_s;
+static PyObject *__pyx_kp_u_Terminate_err_s;
 static PyObject *__pyx_n_s_TypeError;
 static PyObject *__pyx_kp_s_Unable_to_convert_item_to_object;
 static PyObject *__pyx_n_s_ValueError;
@@ -1857,11 +1848,8 @@ static PyObject *__pyx_kp_s_contiguous_and_indirect;
 static PyObject *__pyx_n_s_dict;
 static PyObject *__pyx_n_s_dtype_is_object;
 static PyObject *__pyx_n_s_encode;
-static PyObject *__pyx_n_s_end;
-static PyObject *__pyx_kp_s_end_of_buffer;
 static PyObject *__pyx_n_s_enumerate;
 static PyObject *__pyx_n_s_error;
-static PyObject *__pyx_n_s_file;
 static PyObject *__pyx_n_s_flags;
 static PyObject *__pyx_n_s_format;
 static PyObject *__pyx_n_s_fortran;
@@ -1917,7 +1905,7 @@ static PyObject *__pyx_n_s_update;
 static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6astrid_5mixer_AstridMixer *__pyx_v_self, int __pyx_v_block_size, int __pyx_v_channels, int __pyx_v_samplerate); /* proto */
 static void __pyx_pf_6astrid_5mixer_11AstridMixer_2__dealloc__(struct __pyx_obj_6astrid_5mixer_AstridMixer *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_6astrid_5mixer_11AstridMixer_4add(struct __pyx_obj_6astrid_5mixer_AstridMixer *__pyx_v_self, struct __pyx_obj_5pippi_11soundbuffer_SoundBuffer *__pyx_v_snd); /* proto */
-static PyObject *__pyx_pf_6astrid_5mixer_11AstridMixer_6sleep(CYTHON_UNUSED struct __pyx_obj_6astrid_5mixer_AstridMixer *__pyx_v_self, long __pyx_v_msec); /* proto */
+static PyObject *__pyx_pf_6astrid_5mixer_11AstridMixer_6sleep(CYTHON_UNUSED struct __pyx_obj_6astrid_5mixer_AstridMixer *__pyx_v_self, unsigned long __pyx_v_msec); /* proto */
 static PyObject *__pyx_pf_6astrid_5mixer_11AstridMixer_8shutdown(struct __pyx_obj_6astrid_5mixer_AstridMixer *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_6astrid_5mixer_11AstridMixer_10block_size___get__(struct __pyx_obj_6astrid_5mixer_AstridMixer *__pyx_v_self); /* proto */
 static int __pyx_pf_6astrid_5mixer_11AstridMixer_10block_size_2__set__(struct __pyx_obj_6astrid_5mixer_AstridMixer *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
@@ -2007,7 +1995,7 @@ static PyObject *__pyx_tuple__26;
 static PyObject *__pyx_tuple__27;
 static PyObject *__pyx_codeobj__28;
 
-/* "astrid/mixer.pyx":9
+/* "astrid/mixer.pyx":12
  * #@cython.boundscheck(False)
  * #@cython.wraparound(False)
  * cdef int mix_block(stream_ctx *ctx, unsigned long block_size):             # <<<<<<<<<<<<<<
@@ -2026,10 +2014,9 @@ static int __pyx_f_6astrid_5mixer_mix_block(struct __pyx_t_6astrid_5mixer_stream
   int __pyx_t_4;
   int __pyx_t_5;
   int __pyx_t_6;
-  struct __pyx_t_6astrid_5mixer_playbuf *__pyx_t_7;
   __Pyx_RefNannySetupContext("mix_block", 0);
 
-  /* "astrid/mixer.pyx":14
+  /* "astrid/mixer.pyx":17
  *         if no more frames are available.
  *     """
  *     cdef int i = 0             # <<<<<<<<<<<<<<
@@ -2038,7 +2025,7 @@ static int __pyx_f_6astrid_5mixer_mix_block(struct __pyx_t_6astrid_5mixer_stream
  */
   __pyx_v_i = 0;
 
-  /* "astrid/mixer.pyx":15
+  /* "astrid/mixer.pyx":18
  *     """
  *     cdef int i = 0
  *     cdef int c = 0             # <<<<<<<<<<<<<<
@@ -2047,7 +2034,7 @@ static int __pyx_f_6astrid_5mixer_mix_block(struct __pyx_t_6astrid_5mixer_stream
  */
   __pyx_v_c = 0;
 
-  /* "astrid/mixer.pyx":17
+  /* "astrid/mixer.pyx":20
  *     cdef int c = 0
  * 
  *     for i in range(<int>block_size):             # <<<<<<<<<<<<<<
@@ -2058,7 +2045,7 @@ static int __pyx_f_6astrid_5mixer_mix_block(struct __pyx_t_6astrid_5mixer_stream
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_i = __pyx_t_2;
 
-    /* "astrid/mixer.pyx":18
+    /* "astrid/mixer.pyx":21
  * 
  *     for i in range(<int>block_size):
  *         if ctx.playing_current.pos < ctx.playing_current.length:             # <<<<<<<<<<<<<<
@@ -2068,38 +2055,29 @@ static int __pyx_f_6astrid_5mixer_mix_block(struct __pyx_t_6astrid_5mixer_stream
     __pyx_t_3 = ((__pyx_v_ctx->playing_current->pos < __pyx_v_ctx->playing_current->length) != 0);
     if (__pyx_t_3) {
 
-      /* "astrid/mixer.pyx":19
+      /* "astrid/mixer.pyx":22
  *     for i in range(<int>block_size):
  *         if ctx.playing_current.pos < ctx.playing_current.length:
  *             for c in range(ctx.channels):             # <<<<<<<<<<<<<<
  *                 ctx.out[i * ctx.channels + c] += ctx.playing_current.frames[ctx.playing_current.pos * ctx.channels + c]
- *             ctx.playing_current.pos += 1
+ *         else:
  */
       __pyx_t_4 = __pyx_v_ctx->channels;
       for (__pyx_t_5 = 0; __pyx_t_5 < __pyx_t_4; __pyx_t_5+=1) {
         __pyx_v_c = __pyx_t_5;
 
-        /* "astrid/mixer.pyx":20
+        /* "astrid/mixer.pyx":23
  *         if ctx.playing_current.pos < ctx.playing_current.length:
  *             for c in range(ctx.channels):
  *                 ctx.out[i * ctx.channels + c] += ctx.playing_current.frames[ctx.playing_current.pos * ctx.channels + c]             # <<<<<<<<<<<<<<
- *             ctx.playing_current.pos += 1
  *         else:
+ *             break
  */
         __pyx_t_6 = ((__pyx_v_i * __pyx_v_ctx->channels) + __pyx_v_c);
         (__pyx_v_ctx->out[__pyx_t_6]) = ((__pyx_v_ctx->out[__pyx_t_6]) + (__pyx_v_ctx->playing_current->frames[((__pyx_v_ctx->playing_current->pos * __pyx_v_ctx->channels) + __pyx_v_c)]));
       }
 
       /* "astrid/mixer.pyx":21
- *             for c in range(ctx.channels):
- *                 ctx.out[i * ctx.channels + c] += ctx.playing_current.frames[ctx.playing_current.pos * ctx.channels + c]
- *             ctx.playing_current.pos += 1             # <<<<<<<<<<<<<<
- *         else:
- *             print('end of buffer')
- */
-      __pyx_v_ctx->playing_current->pos = (__pyx_v_ctx->playing_current->pos + 1);
-
-      /* "astrid/mixer.pyx":18
  * 
  *     for i in range(<int>block_size):
  *         if ctx.playing_current.pos < ctx.playing_current.length:             # <<<<<<<<<<<<<<
@@ -2109,162 +2087,31 @@ static int __pyx_f_6astrid_5mixer_mix_block(struct __pyx_t_6astrid_5mixer_stream
       goto __pyx_L5;
     }
 
-    /* "astrid/mixer.pyx":23
- *             ctx.playing_current.pos += 1
+    /* "astrid/mixer.pyx":25
+ *                 ctx.out[i * ctx.channels + c] += ctx.playing_current.frames[ctx.playing_current.pos * ctx.channels + c]
  *         else:
- *             print('end of buffer')             # <<<<<<<<<<<<<<
- *             # Remove playbuf from stack
- *             if ctx.playing_current.prev != NULL:
+ *             break             # <<<<<<<<<<<<<<
+ *         ctx.playing_current.pos = ctx.playing_current.pos + 1
+ * 
  */
     /*else*/ {
-      if (__Pyx_PrintOne(0, __pyx_kp_s_end_of_buffer) < 0) __PYX_ERR(0, 23, __pyx_L1_error)
-
-      /* "astrid/mixer.pyx":25
- *             print('end of buffer')
- *             # Remove playbuf from stack
- *             if ctx.playing_current.prev != NULL:             # <<<<<<<<<<<<<<
- *                 ctx.playing_current.prev.next = ctx.playing_current.next
- * 
- */
-      __pyx_t_3 = ((__pyx_v_ctx->playing_current->prev != NULL) != 0);
-      if (__pyx_t_3) {
-
-        /* "astrid/mixer.pyx":26
- *             # Remove playbuf from stack
- *             if ctx.playing_current.prev != NULL:
- *                 ctx.playing_current.prev.next = ctx.playing_current.next             # <<<<<<<<<<<<<<
- * 
- *             if ctx.playing_current.next != NULL:
- */
-        __pyx_t_7 = __pyx_v_ctx->playing_current->next;
-        __pyx_v_ctx->playing_current->prev->next = __pyx_t_7;
-
-        /* "astrid/mixer.pyx":25
- *             print('end of buffer')
- *             # Remove playbuf from stack
- *             if ctx.playing_current.prev != NULL:             # <<<<<<<<<<<<<<
- *                 ctx.playing_current.prev.next = ctx.playing_current.next
- * 
- */
-      }
-
-      /* "astrid/mixer.pyx":28
- *                 ctx.playing_current.prev.next = ctx.playing_current.next
- * 
- *             if ctx.playing_current.next != NULL:             # <<<<<<<<<<<<<<
- *                 ctx.playing_current.next.prev = ctx.playing_current.prev
- * 
- */
-      __pyx_t_3 = ((__pyx_v_ctx->playing_current->next != NULL) != 0);
-      if (__pyx_t_3) {
-
-        /* "astrid/mixer.pyx":29
- * 
- *             if ctx.playing_current.next != NULL:
- *                 ctx.playing_current.next.prev = ctx.playing_current.prev             # <<<<<<<<<<<<<<
- * 
- *             if ctx.done_head == NULL:
- */
-        __pyx_t_7 = __pyx_v_ctx->playing_current->prev;
-        __pyx_v_ctx->playing_current->next->prev = __pyx_t_7;
-
-        /* "astrid/mixer.pyx":28
- *                 ctx.playing_current.prev.next = ctx.playing_current.next
- * 
- *             if ctx.playing_current.next != NULL:             # <<<<<<<<<<<<<<
- *                 ctx.playing_current.next.prev = ctx.playing_current.prev
- * 
- */
-      }
-
-      /* "astrid/mixer.pyx":31
- *                 ctx.playing_current.next.prev = ctx.playing_current.prev
- * 
- *             if ctx.done_head == NULL:             # <<<<<<<<<<<<<<
- *                 ctx.done_head = ctx.playing_current
- *                 ctx.done_tail = ctx.playing_current
- */
-      __pyx_t_3 = ((__pyx_v_ctx->done_head == NULL) != 0);
-      if (__pyx_t_3) {
-
-        /* "astrid/mixer.pyx":32
- * 
- *             if ctx.done_head == NULL:
- *                 ctx.done_head = ctx.playing_current             # <<<<<<<<<<<<<<
- *                 ctx.done_tail = ctx.playing_current
- *             else:
- */
-        __pyx_t_7 = __pyx_v_ctx->playing_current;
-        __pyx_v_ctx->done_head = __pyx_t_7;
-
-        /* "astrid/mixer.pyx":33
- *             if ctx.done_head == NULL:
- *                 ctx.done_head = ctx.playing_current
- *                 ctx.done_tail = ctx.playing_current             # <<<<<<<<<<<<<<
- *             else:
- *                 ctx.playing_current.prev = ctx.done_tail
- */
-        __pyx_t_7 = __pyx_v_ctx->playing_current;
-        __pyx_v_ctx->done_tail = __pyx_t_7;
-
-        /* "astrid/mixer.pyx":31
- *                 ctx.playing_current.next.prev = ctx.playing_current.prev
- * 
- *             if ctx.done_head == NULL:             # <<<<<<<<<<<<<<
- *                 ctx.done_head = ctx.playing_current
- *                 ctx.done_tail = ctx.playing_current
- */
-        goto __pyx_L10;
-      }
-
-      /* "astrid/mixer.pyx":35
- *                 ctx.done_tail = ctx.playing_current
- *             else:
- *                 ctx.playing_current.prev = ctx.done_tail             # <<<<<<<<<<<<<<
- *                 ctx.done_tail.next = ctx.playing_current
- *                 ctx.done_tail = ctx.playing_current
- */
-      /*else*/ {
-        __pyx_t_7 = __pyx_v_ctx->done_tail;
-        __pyx_v_ctx->playing_current->prev = __pyx_t_7;
-
-        /* "astrid/mixer.pyx":36
- *             else:
- *                 ctx.playing_current.prev = ctx.done_tail
- *                 ctx.done_tail.next = ctx.playing_current             # <<<<<<<<<<<<<<
- *                 ctx.done_tail = ctx.playing_current
- * 
- */
-        __pyx_t_7 = __pyx_v_ctx->playing_current;
-        __pyx_v_ctx->done_tail->next = __pyx_t_7;
-
-        /* "astrid/mixer.pyx":37
- *                 ctx.playing_current.prev = ctx.done_tail
- *                 ctx.done_tail.next = ctx.playing_current
- *                 ctx.done_tail = ctx.playing_current             # <<<<<<<<<<<<<<
- * 
- *             break
- */
-        __pyx_t_7 = __pyx_v_ctx->playing_current;
-        __pyx_v_ctx->done_tail = __pyx_t_7;
-      }
-      __pyx_L10:;
-
-      /* "astrid/mixer.pyx":39
- *                 ctx.done_tail = ctx.playing_current
- * 
- *             break             # <<<<<<<<<<<<<<
- * 
- *     return 0
- */
       goto __pyx_L4_break;
     }
     __pyx_L5:;
+
+    /* "astrid/mixer.pyx":26
+ *         else:
+ *             break
+ *         ctx.playing_current.pos = ctx.playing_current.pos + 1             # <<<<<<<<<<<<<<
+ * 
+ *     return 0
+ */
+    __pyx_v_ctx->playing_current->pos = (__pyx_v_ctx->playing_current->pos + 1);
   }
   __pyx_L4_break:;
 
-  /* "astrid/mixer.pyx":41
- *             break
+  /* "astrid/mixer.pyx":28
+ *         ctx.playing_current.pos = ctx.playing_current.pos + 1
  * 
  *     return 0             # <<<<<<<<<<<<<<
  * 
@@ -2273,7 +2120,7 @@ static int __pyx_f_6astrid_5mixer_mix_block(struct __pyx_t_6astrid_5mixer_stream
   __pyx_r = 0;
   goto __pyx_L0;
 
-  /* "astrid/mixer.pyx":9
+  /* "astrid/mixer.pyx":12
  * #@cython.boundscheck(False)
  * #@cython.wraparound(False)
  * cdef int mix_block(stream_ctx *ctx, unsigned long block_size):             # <<<<<<<<<<<<<<
@@ -2282,15 +2129,12 @@ static int __pyx_f_6astrid_5mixer_mix_block(struct __pyx_t_6astrid_5mixer_stream
  */
 
   /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_WriteUnraisable("astrid.mixer.mix_block", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 0);
-  __pyx_r = 0;
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "astrid/mixer.pyx":45
+/* "astrid/mixer.pyx":32
  * @cython.boundscheck(False)
  * @cython.wraparound(False)
  * cdef int main_callback(const void *input,             # <<<<<<<<<<<<<<
@@ -2315,7 +2159,7 @@ static int __pyx_f_6astrid_5mixer_main_callback(CYTHON_UNUSED void const *__pyx_
   int __pyx_t_6;
   __Pyx_RefNannySetupContext("main_callback", 0);
 
-  /* "astrid/mixer.pyx":62
+  /* "astrid/mixer.pyx":49
  *         next_buffer... then freeing memory.
  *     """
  *     cdef int i = 0             # <<<<<<<<<<<<<<
@@ -2324,7 +2168,7 @@ static int __pyx_f_6astrid_5mixer_main_callback(CYTHON_UNUSED void const *__pyx_
  */
   __pyx_v_i = 0;
 
-  /* "astrid/mixer.pyx":63
+  /* "astrid/mixer.pyx":50
  *     """
  *     cdef int i = 0
  *     cdef int j = 0             # <<<<<<<<<<<<<<
@@ -2333,7 +2177,7 @@ static int __pyx_f_6astrid_5mixer_main_callback(CYTHON_UNUSED void const *__pyx_
  */
   __pyx_v_j = 0;
 
-  /* "astrid/mixer.pyx":64
+  /* "astrid/mixer.pyx":51
  *     cdef int i = 0
  *     cdef int j = 0
  *     cdef int c = 0             # <<<<<<<<<<<<<<
@@ -2342,7 +2186,7 @@ static int __pyx_f_6astrid_5mixer_main_callback(CYTHON_UNUSED void const *__pyx_
  */
   __pyx_v_c = 0;
 
-  /* "astrid/mixer.pyx":66
+  /* "astrid/mixer.pyx":53
  *     cdef int c = 0
  * 
  *     cdef stream_ctx *ctx = <stream_ctx*>current_context             # <<<<<<<<<<<<<<
@@ -2351,7 +2195,7 @@ static int __pyx_f_6astrid_5mixer_main_callback(CYTHON_UNUSED void const *__pyx_
  */
   __pyx_v_ctx = ((struct __pyx_t_6astrid_5mixer_stream_ctx *)__pyx_v_current_context);
 
-  /* "astrid/mixer.pyx":68
+  /* "astrid/mixer.pyx":55
  *     cdef stream_ctx *ctx = <stream_ctx*>current_context
  * 
  *     for i in range(<int>frameCount):             # <<<<<<<<<<<<<<
@@ -2362,7 +2206,7 @@ static int __pyx_f_6astrid_5mixer_main_callback(CYTHON_UNUSED void const *__pyx_
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_i = __pyx_t_2;
 
-    /* "astrid/mixer.pyx":69
+    /* "astrid/mixer.pyx":56
  * 
  *     for i in range(<int>frameCount):
  *         for c in range(ctx.channels):             # <<<<<<<<<<<<<<
@@ -2373,7 +2217,7 @@ static int __pyx_f_6astrid_5mixer_main_callback(CYTHON_UNUSED void const *__pyx_
     for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
       __pyx_v_c = __pyx_t_4;
 
-      /* "astrid/mixer.pyx":70
+      /* "astrid/mixer.pyx":57
  *     for i in range(<int>frameCount):
  *         for c in range(ctx.channels):
  *             ctx.out[i * ctx.channels + c] = 0             # <<<<<<<<<<<<<<
@@ -2384,7 +2228,7 @@ static int __pyx_f_6astrid_5mixer_main_callback(CYTHON_UNUSED void const *__pyx_
     }
   }
 
-  /* "astrid/mixer.pyx":72
+  /* "astrid/mixer.pyx":59
  *             ctx.out[i * ctx.channels + c] = 0
  * 
  *     ctx.playing_current = ctx.playing_head             # <<<<<<<<<<<<<<
@@ -2394,57 +2238,76 @@ static int __pyx_f_6astrid_5mixer_main_callback(CYTHON_UNUSED void const *__pyx_
   __pyx_t_5 = __pyx_v_ctx->playing_head;
   __pyx_v_ctx->playing_current = __pyx_t_5;
 
-  /* "astrid/mixer.pyx":73
+  /* "astrid/mixer.pyx":60
  * 
  *     ctx.playing_current = ctx.playing_head
  *     cdef int count = 0             # <<<<<<<<<<<<<<
  *     while ctx.playing_current != NULL:
- *         mix_block(ctx, frameCount)
+ *         if ctx.playing_current.pos < ctx.playing_current.length:
  */
   __pyx_v_count = 0;
 
-  /* "astrid/mixer.pyx":74
+  /* "astrid/mixer.pyx":61
  *     ctx.playing_current = ctx.playing_head
  *     cdef int count = 0
  *     while ctx.playing_current != NULL:             # <<<<<<<<<<<<<<
- *         mix_block(ctx, frameCount)
- *         ctx.playing_current = ctx.playing_current.next
+ *         if ctx.playing_current.pos < ctx.playing_current.length:
+ *             mix_block(ctx, frameCount)
  */
   while (1) {
     __pyx_t_6 = ((__pyx_v_ctx->playing_current != NULL) != 0);
     if (!__pyx_t_6) break;
 
-    /* "astrid/mixer.pyx":75
+    /* "astrid/mixer.pyx":62
  *     cdef int count = 0
  *     while ctx.playing_current != NULL:
- *         mix_block(ctx, frameCount)             # <<<<<<<<<<<<<<
- *         ctx.playing_current = ctx.playing_current.next
- *         count += 1
- */
-    __pyx_f_6astrid_5mixer_mix_block(__pyx_v_ctx, __pyx_v_frameCount);
-
-    /* "astrid/mixer.pyx":76
- *     while ctx.playing_current != NULL:
- *         mix_block(ctx, frameCount)
- *         ctx.playing_current = ctx.playing_current.next             # <<<<<<<<<<<<<<
- *         count += 1
+ *         if ctx.playing_current.pos < ctx.playing_current.length:             # <<<<<<<<<<<<<<
+ *             mix_block(ctx, frameCount)
  * 
+ */
+    __pyx_t_6 = ((__pyx_v_ctx->playing_current->pos < __pyx_v_ctx->playing_current->length) != 0);
+    if (__pyx_t_6) {
+
+      /* "astrid/mixer.pyx":63
+ *     while ctx.playing_current != NULL:
+ *         if ctx.playing_current.pos < ctx.playing_current.length:
+ *             mix_block(ctx, frameCount)             # <<<<<<<<<<<<<<
+ * 
+ *         ctx.playing_current = ctx.playing_current.next
+ */
+      __pyx_f_6astrid_5mixer_mix_block(__pyx_v_ctx, __pyx_v_frameCount);
+
+      /* "astrid/mixer.pyx":62
+ *     cdef int count = 0
+ *     while ctx.playing_current != NULL:
+ *         if ctx.playing_current.pos < ctx.playing_current.length:             # <<<<<<<<<<<<<<
+ *             mix_block(ctx, frameCount)
+ * 
+ */
+    }
+
+    /* "astrid/mixer.pyx":65
+ *             mix_block(ctx, frameCount)
+ * 
+ *         ctx.playing_current = ctx.playing_current.next             # <<<<<<<<<<<<<<
+ * 
+ *         count += 1
  */
     __pyx_t_5 = __pyx_v_ctx->playing_current->next;
     __pyx_v_ctx->playing_current = __pyx_t_5;
 
-    /* "astrid/mixer.pyx":77
- *         mix_block(ctx, frameCount)
+    /* "astrid/mixer.pyx":67
  *         ctx.playing_current = ctx.playing_current.next
+ * 
  *         count += 1             # <<<<<<<<<<<<<<
  * 
- *     cdef float *out = <float*>output
+ *     #if ctx.playing_current == NULL:
  */
     __pyx_v_count = (__pyx_v_count + 1);
   }
 
-  /* "astrid/mixer.pyx":79
- *         count += 1
+  /* "astrid/mixer.pyx":72
+ *     #    print('end of stack')
  * 
  *     cdef float *out = <float*>output             # <<<<<<<<<<<<<<
  * 
@@ -2452,7 +2315,7 @@ static int __pyx_f_6astrid_5mixer_main_callback(CYTHON_UNUSED void const *__pyx_
  */
   __pyx_v_out = ((float *)__pyx_v_output);
 
-  /* "astrid/mixer.pyx":81
+  /* "astrid/mixer.pyx":74
  *     cdef float *out = <float*>output
  * 
  *     for i in range(<int>frameCount):             # <<<<<<<<<<<<<<
@@ -2463,7 +2326,7 @@ static int __pyx_f_6astrid_5mixer_main_callback(CYTHON_UNUSED void const *__pyx_
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_i = __pyx_t_2;
 
-    /* "astrid/mixer.pyx":82
+    /* "astrid/mixer.pyx":75
  * 
  *     for i in range(<int>frameCount):
  *         for c in range(ctx.channels):             # <<<<<<<<<<<<<<
@@ -2474,7 +2337,7 @@ static int __pyx_f_6astrid_5mixer_main_callback(CYTHON_UNUSED void const *__pyx_
     for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
       __pyx_v_c = __pyx_t_4;
 
-      /* "astrid/mixer.pyx":83
+      /* "astrid/mixer.pyx":76
  *     for i in range(<int>frameCount):
  *         for c in range(ctx.channels):
  *             out[j] = <float>ctx.out[i * ctx.channels + c]             # <<<<<<<<<<<<<<
@@ -2483,7 +2346,7 @@ static int __pyx_f_6astrid_5mixer_main_callback(CYTHON_UNUSED void const *__pyx_
  */
       (__pyx_v_out[__pyx_v_j]) = ((float)(__pyx_v_ctx->out[((__pyx_v_i * __pyx_v_ctx->channels) + __pyx_v_c)]));
 
-      /* "astrid/mixer.pyx":84
+      /* "astrid/mixer.pyx":77
  *         for c in range(ctx.channels):
  *             out[j] = <float>ctx.out[i * ctx.channels + c]
  *             j += 1             # <<<<<<<<<<<<<<
@@ -2494,7 +2357,7 @@ static int __pyx_f_6astrid_5mixer_main_callback(CYTHON_UNUSED void const *__pyx_
     }
   }
 
-  /* "astrid/mixer.pyx":86
+  /* "astrid/mixer.pyx":79
  *             j += 1
  * 
  *     return 0             # <<<<<<<<<<<<<<
@@ -2504,7 +2367,7 @@ static int __pyx_f_6astrid_5mixer_main_callback(CYTHON_UNUSED void const *__pyx_
   __pyx_r = 0;
   goto __pyx_L0;
 
-  /* "astrid/mixer.pyx":45
+  /* "astrid/mixer.pyx":32
  * @cython.boundscheck(False)
  * @cython.wraparound(False)
  * cdef int main_callback(const void *input,             # <<<<<<<<<<<<<<
@@ -2518,7 +2381,7 @@ static int __pyx_f_6astrid_5mixer_main_callback(CYTHON_UNUSED void const *__pyx_
   return __pyx_r;
 }
 
-/* "astrid/mixer.pyx":89
+/* "astrid/mixer.pyx":82
  * 
  * cdef class AstridMixer:
  *     def __cinit__(self, int block_size=64, int channels=2, int samplerate=44100):             # <<<<<<<<<<<<<<
@@ -2572,7 +2435,7 @@ static int __pyx_pw_6astrid_5mixer_11AstridMixer_1__cinit__(PyObject *__pyx_v_se
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 89, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 82, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -2587,24 +2450,24 @@ static int __pyx_pw_6astrid_5mixer_11AstridMixer_1__cinit__(PyObject *__pyx_v_se
       }
     }
     if (values[0]) {
-      __pyx_v_block_size = __Pyx_PyInt_As_int(values[0]); if (unlikely((__pyx_v_block_size == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 89, __pyx_L3_error)
+      __pyx_v_block_size = __Pyx_PyInt_As_int(values[0]); if (unlikely((__pyx_v_block_size == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 82, __pyx_L3_error)
     } else {
       __pyx_v_block_size = ((int)64);
     }
     if (values[1]) {
-      __pyx_v_channels = __Pyx_PyInt_As_int(values[1]); if (unlikely((__pyx_v_channels == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 89, __pyx_L3_error)
+      __pyx_v_channels = __Pyx_PyInt_As_int(values[1]); if (unlikely((__pyx_v_channels == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 82, __pyx_L3_error)
     } else {
       __pyx_v_channels = ((int)2);
     }
     if (values[2]) {
-      __pyx_v_samplerate = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_samplerate == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 89, __pyx_L3_error)
+      __pyx_v_samplerate = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_samplerate == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 82, __pyx_L3_error)
     } else {
       __pyx_v_samplerate = ((int)0xAC44);
     }
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 0, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 89, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 0, 0, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 82, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("astrid.mixer.AstridMixer.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -2628,7 +2491,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "astrid/mixer.pyx":90
+  /* "astrid/mixer.pyx":83
  * cdef class AstridMixer:
  *     def __cinit__(self, int block_size=64, int channels=2, int samplerate=44100):
  *         self.block_size = block_size             # <<<<<<<<<<<<<<
@@ -2637,7 +2500,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   __pyx_v_self->block_size = __pyx_v_block_size;
 
-  /* "astrid/mixer.pyx":91
+  /* "astrid/mixer.pyx":84
  *     def __cinit__(self, int block_size=64, int channels=2, int samplerate=44100):
  *         self.block_size = block_size
  *         self.channels = channels             # <<<<<<<<<<<<<<
@@ -2646,7 +2509,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   __pyx_v_self->channels = __pyx_v_channels;
 
-  /* "astrid/mixer.pyx":92
+  /* "astrid/mixer.pyx":85
  *         self.block_size = block_size
  *         self.channels = channels
  *         self.samplerate = samplerate             # <<<<<<<<<<<<<<
@@ -2655,7 +2518,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   __pyx_v_self->samplerate = __pyx_v_samplerate;
 
-  /* "astrid/mixer.pyx":98
+  /* "astrid/mixer.pyx":91
  *         cdef PaStreamCallback* cb
  * 
  *         self.ctx = <stream_ctx*>malloc(sizeof(stream_ctx))             # <<<<<<<<<<<<<<
@@ -2664,7 +2527,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   __pyx_v_self->ctx = ((struct __pyx_t_6astrid_5mixer_stream_ctx *)malloc((sizeof(struct __pyx_t_6astrid_5mixer_stream_ctx))));
 
-  /* "astrid/mixer.pyx":99
+  /* "astrid/mixer.pyx":92
  * 
  *         self.ctx = <stream_ctx*>malloc(sizeof(stream_ctx))
  *         self.ctx.out = <double*>calloc(block_size * channels, sizeof(double))             # <<<<<<<<<<<<<<
@@ -2673,7 +2536,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   __pyx_v_self->ctx->out = ((double *)calloc((__pyx_v_block_size * __pyx_v_channels), (sizeof(double))));
 
-  /* "astrid/mixer.pyx":100
+  /* "astrid/mixer.pyx":93
  *         self.ctx = <stream_ctx*>malloc(sizeof(stream_ctx))
  *         self.ctx.out = <double*>calloc(block_size * channels, sizeof(double))
  *         self.ctx.channels = channels             # <<<<<<<<<<<<<<
@@ -2682,7 +2545,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   __pyx_v_self->ctx->channels = __pyx_v_channels;
 
-  /* "astrid/mixer.pyx":101
+  /* "astrid/mixer.pyx":94
  *         self.ctx.out = <double*>calloc(block_size * channels, sizeof(double))
  *         self.ctx.channels = channels
  *         self.ctx.playing_head = NULL             # <<<<<<<<<<<<<<
@@ -2691,7 +2554,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   __pyx_v_self->ctx->playing_head = NULL;
 
-  /* "astrid/mixer.pyx":102
+  /* "astrid/mixer.pyx":95
  *         self.ctx.channels = channels
  *         self.ctx.playing_head = NULL
  *         self.ctx.playing_tail = NULL             # <<<<<<<<<<<<<<
@@ -2700,7 +2563,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   __pyx_v_self->ctx->playing_tail = NULL;
 
-  /* "astrid/mixer.pyx":103
+  /* "astrid/mixer.pyx":96
  *         self.ctx.playing_head = NULL
  *         self.ctx.playing_tail = NULL
  *         self.ctx.playing_current = NULL             # <<<<<<<<<<<<<<
@@ -2709,7 +2572,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   __pyx_v_self->ctx->playing_current = NULL;
 
-  /* "astrid/mixer.pyx":104
+  /* "astrid/mixer.pyx":97
  *         self.ctx.playing_tail = NULL
  *         self.ctx.playing_current = NULL
  *         self.ctx.done_head = NULL             # <<<<<<<<<<<<<<
@@ -2718,7 +2581,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   __pyx_v_self->ctx->done_head = NULL;
 
-  /* "astrid/mixer.pyx":105
+  /* "astrid/mixer.pyx":98
  *         self.ctx.playing_current = NULL
  *         self.ctx.done_head = NULL
  *         self.ctx.done_tail = NULL             # <<<<<<<<<<<<<<
@@ -2727,7 +2590,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   __pyx_v_self->ctx->done_tail = NULL;
 
-  /* "astrid/mixer.pyx":107
+  /* "astrid/mixer.pyx":100
  *         self.ctx.done_tail = NULL
  * 
  *         cb = <PaStreamCallback*>&main_callback             # <<<<<<<<<<<<<<
@@ -2736,7 +2599,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   __pyx_v_cb = ((PaStreamCallback *)(&__pyx_f_6astrid_5mixer_main_callback));
 
-  /* "astrid/mixer.pyx":109
+  /* "astrid/mixer.pyx":102
  *         cb = <PaStreamCallback*>&main_callback
  * 
  *         err = Pa_Initialize()             # <<<<<<<<<<<<<<
@@ -2745,7 +2608,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   __pyx_v_err = Pa_Initialize();
 
-  /* "astrid/mixer.pyx":110
+  /* "astrid/mixer.pyx":103
  * 
  *         err = Pa_Initialize()
  *         if(err != paNoError):             # <<<<<<<<<<<<<<
@@ -2755,22 +2618,29 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
   __pyx_t_1 = ((__pyx_v_err != paNoError) != 0);
   if (__pyx_t_1) {
 
-    /* "astrid/mixer.pyx":111
+    /* "astrid/mixer.pyx":104
  *         err = Pa_Initialize()
  *         if(err != paNoError):
  *             print("Initialize err: %s" % Pa_GetErrorText(err))             # <<<<<<<<<<<<<<
  * 
  *         err = Pa_OpenDefaultStream(
  */
-    __pyx_t_2 = __Pyx_PyBytes_FromString(Pa_GetErrorText(__pyx_v_err)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 111, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyBytes_FromString(Pa_GetErrorText(__pyx_v_err)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 104, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyString_Format(__pyx_kp_s_Initialize_err_s, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 111, __pyx_L1_error)
+    __pyx_t_3 = PyUnicode_Format(__pyx_kp_u_Initialize_err_s, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 104, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (__Pyx_PrintOne(0, __pyx_t_3) < 0) __PYX_ERR(0, 111, __pyx_L1_error)
+    __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 104, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_GIVEREF(__pyx_t_3);
+    PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_3);
+    __pyx_t_3 = 0;
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 104, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "astrid/mixer.pyx":110
+    /* "astrid/mixer.pyx":103
  * 
  *         err = Pa_Initialize()
  *         if(err != paNoError):             # <<<<<<<<<<<<<<
@@ -2779,7 +2649,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   }
 
-  /* "astrid/mixer.pyx":113
+  /* "astrid/mixer.pyx":106
  *             print("Initialize err: %s" % Pa_GetErrorText(err))
  * 
  *         err = Pa_OpenDefaultStream(             # <<<<<<<<<<<<<<
@@ -2788,7 +2658,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   __pyx_v_err = Pa_OpenDefaultStream((&__pyx_v_stream), 0, __pyx_v_channels, paFloat32, __pyx_v_samplerate, __pyx_v_block_size, __pyx_v_cb, __pyx_v_self->ctx);
 
-  /* "astrid/mixer.pyx":118
+  /* "astrid/mixer.pyx":111
  *                 cb, self.ctx
  *             )
  *         if(err != paNoError):             # <<<<<<<<<<<<<<
@@ -2798,22 +2668,29 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
   __pyx_t_1 = ((__pyx_v_err != paNoError) != 0);
   if (__pyx_t_1) {
 
-    /* "astrid/mixer.pyx":119
+    /* "astrid/mixer.pyx":112
  *             )
  *         if(err != paNoError):
  *             print("Open default stream err: %s" % Pa_GetErrorText(err))             # <<<<<<<<<<<<<<
  * 
  *         self.ctx.stream = stream
  */
-    __pyx_t_3 = __Pyx_PyBytes_FromString(Pa_GetErrorText(__pyx_v_err)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 119, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyBytes_FromString(Pa_GetErrorText(__pyx_v_err)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 112, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_2 = __Pyx_PyString_Format(__pyx_kp_s_Open_default_stream_err_s, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 119, __pyx_L1_error)
+    __pyx_t_2 = PyUnicode_Format(__pyx_kp_u_Open_default_stream_err_s, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 112, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (__Pyx_PrintOne(0, __pyx_t_2) < 0) __PYX_ERR(0, 119, __pyx_L1_error)
+    __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 112, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_GIVEREF(__pyx_t_2);
+    PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2);
+    __pyx_t_2 = 0;
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 112, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "astrid/mixer.pyx":118
+    /* "astrid/mixer.pyx":111
  *                 cb, self.ctx
  *             )
  *         if(err != paNoError):             # <<<<<<<<<<<<<<
@@ -2822,7 +2699,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   }
 
-  /* "astrid/mixer.pyx":121
+  /* "astrid/mixer.pyx":114
  *             print("Open default stream err: %s" % Pa_GetErrorText(err))
  * 
  *         self.ctx.stream = stream             # <<<<<<<<<<<<<<
@@ -2831,7 +2708,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   __pyx_v_self->ctx->stream = __pyx_v_stream;
 
-  /* "astrid/mixer.pyx":123
+  /* "astrid/mixer.pyx":116
  *         self.ctx.stream = stream
  * 
  *         err = Pa_StartStream(stream)             # <<<<<<<<<<<<<<
@@ -2840,7 +2717,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   __pyx_v_err = Pa_StartStream(__pyx_v_stream);
 
-  /* "astrid/mixer.pyx":124
+  /* "astrid/mixer.pyx":117
  * 
  *         err = Pa_StartStream(stream)
  *         if(err != paNoError):             # <<<<<<<<<<<<<<
@@ -2850,22 +2727,29 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
   __pyx_t_1 = ((__pyx_v_err != paNoError) != 0);
   if (__pyx_t_1) {
 
-    /* "astrid/mixer.pyx":125
+    /* "astrid/mixer.pyx":118
  *         err = Pa_StartStream(stream)
  *         if(err != paNoError):
  *             print("Start stream err: %s" % Pa_GetErrorText(err))             # <<<<<<<<<<<<<<
  * 
- *     def __dealloc__(self):
+ *         #print('started stream')
  */
-    __pyx_t_2 = __Pyx_PyBytes_FromString(Pa_GetErrorText(__pyx_v_err)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 125, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyBytes_FromString(Pa_GetErrorText(__pyx_v_err)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 118, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyString_Format(__pyx_kp_s_Start_stream_err_s, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 125, __pyx_L1_error)
+    __pyx_t_3 = PyUnicode_Format(__pyx_kp_u_Start_stream_err_s, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 118, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (__Pyx_PrintOne(0, __pyx_t_3) < 0) __PYX_ERR(0, 125, __pyx_L1_error)
+    __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 118, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_GIVEREF(__pyx_t_3);
+    PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_3);
+    __pyx_t_3 = 0;
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 118, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "astrid/mixer.pyx":124
+    /* "astrid/mixer.pyx":117
  * 
  *         err = Pa_StartStream(stream)
  *         if(err != paNoError):             # <<<<<<<<<<<<<<
@@ -2874,7 +2758,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  */
   }
 
-  /* "astrid/mixer.pyx":89
+  /* "astrid/mixer.pyx":82
  * 
  * cdef class AstridMixer:
  *     def __cinit__(self, int block_size=64, int channels=2, int samplerate=44100):             # <<<<<<<<<<<<<<
@@ -2895,8 +2779,8 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
   return __pyx_r;
 }
 
-/* "astrid/mixer.pyx":127
- *             print("Start stream err: %s" % Pa_GetErrorText(err))
+/* "astrid/mixer.pyx":122
+ *         #print('started stream')
  * 
  *     def __dealloc__(self):             # <<<<<<<<<<<<<<
  *         free(self.ctx.out)
@@ -2918,7 +2802,7 @@ static void __pyx_pf_6astrid_5mixer_11AstridMixer_2__dealloc__(struct __pyx_obj_
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__dealloc__", 0);
 
-  /* "astrid/mixer.pyx":128
+  /* "astrid/mixer.pyx":123
  * 
  *     def __dealloc__(self):
  *         free(self.ctx.out)             # <<<<<<<<<<<<<<
@@ -2927,7 +2811,7 @@ static void __pyx_pf_6astrid_5mixer_11AstridMixer_2__dealloc__(struct __pyx_obj_
  */
   free(__pyx_v_self->ctx->out);
 
-  /* "astrid/mixer.pyx":129
+  /* "astrid/mixer.pyx":124
  *     def __dealloc__(self):
  *         free(self.ctx.out)
  *         free(self.ctx)             # <<<<<<<<<<<<<<
@@ -2936,8 +2820,8 @@ static void __pyx_pf_6astrid_5mixer_11AstridMixer_2__dealloc__(struct __pyx_obj_
  */
   free(__pyx_v_self->ctx);
 
-  /* "astrid/mixer.pyx":127
- *             print("Start stream err: %s" % Pa_GetErrorText(err))
+  /* "astrid/mixer.pyx":122
+ *         #print('started stream')
  * 
  *     def __dealloc__(self):             # <<<<<<<<<<<<<<
  *         free(self.ctx.out)
@@ -2948,7 +2832,7 @@ static void __pyx_pf_6astrid_5mixer_11AstridMixer_2__dealloc__(struct __pyx_obj_
   __Pyx_RefNannyFinishContext();
 }
 
-/* "astrid/mixer.pyx":131
+/* "astrid/mixer.pyx":126
  *         free(self.ctx)
  * 
  *     cdef void _flush(self) except *:             # <<<<<<<<<<<<<<
@@ -2964,7 +2848,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__flush(struct __pyx_obj_6astrid
   int __pyx_t_2;
   __Pyx_RefNannySetupContext("_flush", 0);
 
-  /* "astrid/mixer.pyx":132
+  /* "astrid/mixer.pyx":127
  * 
  *     cdef void _flush(self) except *:
  *         cdef playbuf *current = self.ctx.playing_head             # <<<<<<<<<<<<<<
@@ -2974,7 +2858,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__flush(struct __pyx_obj_6astrid
   __pyx_t_1 = __pyx_v_self->ctx->playing_head;
   __pyx_v_current = __pyx_t_1;
 
-  /* "astrid/mixer.pyx":133
+  /* "astrid/mixer.pyx":128
  *     cdef void _flush(self) except *:
  *         cdef playbuf *current = self.ctx.playing_head
  *         cdef playbuf *tofree = NULL             # <<<<<<<<<<<<<<
@@ -2983,7 +2867,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__flush(struct __pyx_obj_6astrid
  */
   __pyx_v_tofree = NULL;
 
-  /* "astrid/mixer.pyx":134
+  /* "astrid/mixer.pyx":129
  *         cdef playbuf *current = self.ctx.playing_head
  *         cdef playbuf *tofree = NULL
  *         while current != NULL:             # <<<<<<<<<<<<<<
@@ -2994,7 +2878,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__flush(struct __pyx_obj_6astrid
     __pyx_t_2 = ((__pyx_v_current != NULL) != 0);
     if (!__pyx_t_2) break;
 
-    /* "astrid/mixer.pyx":135
+    /* "astrid/mixer.pyx":130
  *         cdef playbuf *tofree = NULL
  *         while current != NULL:
  *             tofree = current             # <<<<<<<<<<<<<<
@@ -3003,7 +2887,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__flush(struct __pyx_obj_6astrid
  */
     __pyx_v_tofree = __pyx_v_current;
 
-    /* "astrid/mixer.pyx":136
+    /* "astrid/mixer.pyx":131
  *         while current != NULL:
  *             tofree = current
  *             current = current.next             # <<<<<<<<<<<<<<
@@ -3013,7 +2897,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__flush(struct __pyx_obj_6astrid
     __pyx_t_1 = __pyx_v_current->next;
     __pyx_v_current = __pyx_t_1;
 
-    /* "astrid/mixer.pyx":137
+    /* "astrid/mixer.pyx":132
  *             tofree = current
  *             current = current.next
  *             if tofree.frames != NULL:             # <<<<<<<<<<<<<<
@@ -3023,7 +2907,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__flush(struct __pyx_obj_6astrid
     __pyx_t_2 = ((__pyx_v_tofree->frames != NULL) != 0);
     if (__pyx_t_2) {
 
-      /* "astrid/mixer.pyx":138
+      /* "astrid/mixer.pyx":133
  *             current = current.next
  *             if tofree.frames != NULL:
  *                 free(tofree.frames)             # <<<<<<<<<<<<<<
@@ -3032,7 +2916,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__flush(struct __pyx_obj_6astrid
  */
       free(__pyx_v_tofree->frames);
 
-      /* "astrid/mixer.pyx":137
+      /* "astrid/mixer.pyx":132
  *             tofree = current
  *             current = current.next
  *             if tofree.frames != NULL:             # <<<<<<<<<<<<<<
@@ -3041,7 +2925,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__flush(struct __pyx_obj_6astrid
  */
     }
 
-    /* "astrid/mixer.pyx":139
+    /* "astrid/mixer.pyx":134
  *             if tofree.frames != NULL:
  *                 free(tofree.frames)
  *             free(tofree)             # <<<<<<<<<<<<<<
@@ -3051,7 +2935,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__flush(struct __pyx_obj_6astrid
     free(__pyx_v_tofree);
   }
 
-  /* "astrid/mixer.pyx":141
+  /* "astrid/mixer.pyx":136
  *             free(tofree)
  * 
  *         self.ctx.done_head = NULL             # <<<<<<<<<<<<<<
@@ -3060,7 +2944,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__flush(struct __pyx_obj_6astrid
  */
   __pyx_v_self->ctx->done_head = NULL;
 
-  /* "astrid/mixer.pyx":142
+  /* "astrid/mixer.pyx":137
  * 
  *         self.ctx.done_head = NULL
  *         self.ctx.done_tail = NULL             # <<<<<<<<<<<<<<
@@ -3069,7 +2953,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__flush(struct __pyx_obj_6astrid
  */
   __pyx_v_self->ctx->done_tail = NULL;
 
-  /* "astrid/mixer.pyx":131
+  /* "astrid/mixer.pyx":126
  *         free(self.ctx)
  * 
  *     cdef void _flush(self) except *:             # <<<<<<<<<<<<<<
@@ -3081,7 +2965,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__flush(struct __pyx_obj_6astrid
   __Pyx_RefNannyFinishContext();
 }
 
-/* "astrid/mixer.pyx":144
+/* "astrid/mixer.pyx":139
  *         self.ctx.done_tail = NULL
  * 
  *     cdef void _add(self, SoundBuffer snd) except *:             # <<<<<<<<<<<<<<
@@ -3108,17 +2992,17 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__add(struct __pyx_obj_6astrid_5
   struct __pyx_t_6astrid_5mixer_playbuf *__pyx_t_10;
   __Pyx_RefNannySetupContext("_add", 0);
 
-  /* "astrid/mixer.pyx":145
+  /* "astrid/mixer.pyx":140
  * 
  *     cdef void _add(self, SoundBuffer snd) except *:
  *         cdef int length = len(snd)             # <<<<<<<<<<<<<<
  *         cdef int channels = snd.channels
  * 
  */
-  __pyx_t_1 = PyObject_Length(((PyObject *)__pyx_v_snd)); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(0, 145, __pyx_L1_error)
+  __pyx_t_1 = PyObject_Length(((PyObject *)__pyx_v_snd)); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(0, 140, __pyx_L1_error)
   __pyx_v_length = __pyx_t_1;
 
-  /* "astrid/mixer.pyx":146
+  /* "astrid/mixer.pyx":141
  *     cdef void _add(self, SoundBuffer snd) except *:
  *         cdef int length = len(snd)
  *         cdef int channels = snd.channels             # <<<<<<<<<<<<<<
@@ -3128,7 +3012,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__add(struct __pyx_obj_6astrid_5
   __pyx_t_2 = __pyx_v_snd->channels;
   __pyx_v_channels = __pyx_t_2;
 
-  /* "astrid/mixer.pyx":148
+  /* "astrid/mixer.pyx":143
  *         cdef int channels = snd.channels
  * 
  *         cdef playbuf *buf = <playbuf*>malloc(sizeof(playbuf))             # <<<<<<<<<<<<<<
@@ -3137,7 +3021,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__add(struct __pyx_obj_6astrid_5
  */
   __pyx_v_buf = ((struct __pyx_t_6astrid_5mixer_playbuf *)malloc((sizeof(struct __pyx_t_6astrid_5mixer_playbuf))));
 
-  /* "astrid/mixer.pyx":149
+  /* "astrid/mixer.pyx":144
  * 
  *         cdef playbuf *buf = <playbuf*>malloc(sizeof(playbuf))
  *         buf.frames = <double*>calloc(length * channels, sizeof(double))             # <<<<<<<<<<<<<<
@@ -3146,7 +3030,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__add(struct __pyx_obj_6astrid_5
  */
   __pyx_v_buf->frames = ((double *)calloc((__pyx_v_length * __pyx_v_channels), (sizeof(double))));
 
-  /* "astrid/mixer.pyx":151
+  /* "astrid/mixer.pyx":146
  *         buf.frames = <double*>calloc(length * channels, sizeof(double))
  * 
  *         cdef int i = 0             # <<<<<<<<<<<<<<
@@ -3155,7 +3039,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__add(struct __pyx_obj_6astrid_5
  */
   __pyx_v_i = 0;
 
-  /* "astrid/mixer.pyx":152
+  /* "astrid/mixer.pyx":147
  * 
  *         cdef int i = 0
  *         cdef int j = 0             # <<<<<<<<<<<<<<
@@ -3164,7 +3048,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__add(struct __pyx_obj_6astrid_5
  */
   __pyx_v_j = 0;
 
-  /* "astrid/mixer.pyx":154
+  /* "astrid/mixer.pyx":149
  *         cdef int j = 0
  * 
  *         for i in range(length):             # <<<<<<<<<<<<<<
@@ -3175,7 +3059,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__add(struct __pyx_obj_6astrid_5
   for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_i = __pyx_t_3;
 
-    /* "astrid/mixer.pyx":155
+    /* "astrid/mixer.pyx":150
  * 
  *         for i in range(length):
  *             for j in range(channels):             # <<<<<<<<<<<<<<
@@ -3186,14 +3070,14 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__add(struct __pyx_obj_6astrid_5
     for (__pyx_t_5 = 0; __pyx_t_5 < __pyx_t_4; __pyx_t_5+=1) {
       __pyx_v_j = __pyx_t_5;
 
-      /* "astrid/mixer.pyx":156
+      /* "astrid/mixer.pyx":151
  *         for i in range(length):
  *             for j in range(channels):
  *                 buf.frames[i * channels + j] = snd.frames[i][j]             # <<<<<<<<<<<<<<
  * 
  *         buf.length = length
  */
-      if (unlikely(!__pyx_v_snd->frames.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 156, __pyx_L1_error)}
+      if (unlikely(!__pyx_v_snd->frames.memview)) {PyErr_SetString(PyExc_AttributeError,"Memoryview is not initialized");__PYX_ERR(0, 151, __pyx_L1_error)}
       __pyx_t_6.data = __pyx_v_snd->frames.data;
       __pyx_t_6.memview = __pyx_v_snd->frames.memview;
       __PYX_INC_MEMVIEW(&__pyx_t_6, 0);
@@ -3205,7 +3089,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__add(struct __pyx_obj_6astrid_5
         __pyx_tmp_idx += __pyx_tmp_shape;
     if (1 && (__pyx_tmp_idx < 0 || __pyx_tmp_idx >= __pyx_tmp_shape)) {
         PyErr_SetString(PyExc_IndexError, "Index out of bounds (axis 0)");
-        __PYX_ERR(0, 156, __pyx_L1_error)
+        __PYX_ERR(0, 151, __pyx_L1_error)
     }
         __pyx_t_6.data += __pyx_tmp_idx * __pyx_tmp_stride;
 }
@@ -3222,7 +3106,7 @@ __pyx_t_7 = __pyx_v_j;
       } else if (unlikely(__pyx_t_7 >= __pyx_t_6.shape[0])) __pyx_t_8 = 0;
       if (unlikely(__pyx_t_8 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_8);
-        __PYX_ERR(0, 156, __pyx_L1_error)
+        __PYX_ERR(0, 151, __pyx_L1_error)
       }
       (__pyx_v_buf->frames[((__pyx_v_i * __pyx_v_channels) + __pyx_v_j)]) = (*((double *) ( /* dim=0 */ (__pyx_t_6.data + __pyx_t_7 * __pyx_t_6.strides[0]) )));
       __PYX_XDEC_MEMVIEW(&__pyx_t_6, 1);
@@ -3231,7 +3115,7 @@ __pyx_t_7 = __pyx_v_j;
     }
   }
 
-  /* "astrid/mixer.pyx":158
+  /* "astrid/mixer.pyx":153
  *                 buf.frames[i * channels + j] = snd.frames[i][j]
  * 
  *         buf.length = length             # <<<<<<<<<<<<<<
@@ -3240,7 +3124,7 @@ __pyx_t_7 = __pyx_v_j;
  */
   __pyx_v_buf->length = __pyx_v_length;
 
-  /* "astrid/mixer.pyx":159
+  /* "astrid/mixer.pyx":154
  * 
  *         buf.length = length
  *         buf.channels = channels             # <<<<<<<<<<<<<<
@@ -3249,7 +3133,7 @@ __pyx_t_7 = __pyx_v_j;
  */
   __pyx_v_buf->channels = __pyx_v_channels;
 
-  /* "astrid/mixer.pyx":160
+  /* "astrid/mixer.pyx":155
  *         buf.length = length
  *         buf.channels = channels
  *         buf.pos = 0             # <<<<<<<<<<<<<<
@@ -3258,7 +3142,7 @@ __pyx_t_7 = __pyx_v_j;
  */
   __pyx_v_buf->pos = 0;
 
-  /* "astrid/mixer.pyx":161
+  /* "astrid/mixer.pyx":156
  *         buf.channels = channels
  *         buf.pos = 0
  *         buf.next = NULL             # <<<<<<<<<<<<<<
@@ -3267,7 +3151,7 @@ __pyx_t_7 = __pyx_v_j;
  */
   __pyx_v_buf->next = NULL;
 
-  /* "astrid/mixer.pyx":162
+  /* "astrid/mixer.pyx":157
  *         buf.pos = 0
  *         buf.next = NULL
  *         buf.prev = NULL             # <<<<<<<<<<<<<<
@@ -3276,27 +3160,27 @@ __pyx_t_7 = __pyx_v_j;
  */
   __pyx_v_buf->prev = NULL;
 
-  /* "astrid/mixer.pyx":164
+  /* "astrid/mixer.pyx":159
  *         buf.prev = NULL
  * 
  *         if self.ctx.playing_head == NULL:             # <<<<<<<<<<<<<<
+ *             #print('adding buffer to empty play queue')
  *             self.ctx.playing_head = buf
- *             self.ctx.playing_tail = buf
  */
   __pyx_t_9 = ((__pyx_v_self->ctx->playing_head == NULL) != 0);
   if (__pyx_t_9) {
 
-    /* "astrid/mixer.pyx":165
- * 
+    /* "astrid/mixer.pyx":161
  *         if self.ctx.playing_head == NULL:
+ *             #print('adding buffer to empty play queue')
  *             self.ctx.playing_head = buf             # <<<<<<<<<<<<<<
  *             self.ctx.playing_tail = buf
  * 
  */
     __pyx_v_self->ctx->playing_head = __pyx_v_buf;
 
-    /* "astrid/mixer.pyx":166
- *         if self.ctx.playing_head == NULL:
+    /* "astrid/mixer.pyx":162
+ *             #print('adding buffer to empty play queue')
  *             self.ctx.playing_head = buf
  *             self.ctx.playing_tail = buf             # <<<<<<<<<<<<<<
  * 
@@ -3304,19 +3188,19 @@ __pyx_t_7 = __pyx_v_j;
  */
     __pyx_v_self->ctx->playing_tail = __pyx_v_buf;
 
-    /* "astrid/mixer.pyx":164
+    /* "astrid/mixer.pyx":159
  *         buf.prev = NULL
  * 
  *         if self.ctx.playing_head == NULL:             # <<<<<<<<<<<<<<
+ *             #print('adding buffer to empty play queue')
  *             self.ctx.playing_head = buf
- *             self.ctx.playing_tail = buf
  */
     goto __pyx_L7;
   }
 
-  /* "astrid/mixer.pyx":169
- * 
+  /* "astrid/mixer.pyx":166
  *         else:
+ *             #print('adding buffer to non-empty play queue')
  *             buf.prev = self.ctx.playing_tail             # <<<<<<<<<<<<<<
  *             self.ctx.playing_tail.next = buf
  *             self.ctx.playing_tail = buf
@@ -3325,8 +3209,8 @@ __pyx_t_7 = __pyx_v_j;
     __pyx_t_10 = __pyx_v_self->ctx->playing_tail;
     __pyx_v_buf->prev = __pyx_t_10;
 
-    /* "astrid/mixer.pyx":170
- *         else:
+    /* "astrid/mixer.pyx":167
+ *             #print('adding buffer to non-empty play queue')
  *             buf.prev = self.ctx.playing_tail
  *             self.ctx.playing_tail.next = buf             # <<<<<<<<<<<<<<
  *             self.ctx.playing_tail = buf
@@ -3334,18 +3218,18 @@ __pyx_t_7 = __pyx_v_j;
  */
     __pyx_v_self->ctx->playing_tail->next = __pyx_v_buf;
 
-    /* "astrid/mixer.pyx":171
+    /* "astrid/mixer.pyx":168
  *             buf.prev = self.ctx.playing_tail
  *             self.ctx.playing_tail.next = buf
  *             self.ctx.playing_tail = buf             # <<<<<<<<<<<<<<
  * 
- *         #self._flush()
+ *         #print('added buffer to play queue')
  */
     __pyx_v_self->ctx->playing_tail = __pyx_v_buf;
   }
   __pyx_L7:;
 
-  /* "astrid/mixer.pyx":144
+  /* "astrid/mixer.pyx":139
  *         self.ctx.done_tail = NULL
  * 
  *     cdef void _add(self, SoundBuffer snd) except *:             # <<<<<<<<<<<<<<
@@ -3362,7 +3246,7 @@ __pyx_t_7 = __pyx_v_j;
   __Pyx_RefNannyFinishContext();
 }
 
-/* "astrid/mixer.pyx":175
+/* "astrid/mixer.pyx":173
  *         #self._flush()
  * 
  *     def add(self, SoundBuffer snd):             # <<<<<<<<<<<<<<
@@ -3376,7 +3260,7 @@ static PyObject *__pyx_pw_6astrid_5mixer_11AstridMixer_5add(PyObject *__pyx_v_se
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("add (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_snd), __pyx_ptype_5pippi_11soundbuffer_SoundBuffer, 1, "snd", 0))) __PYX_ERR(0, 175, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_snd), __pyx_ptype_5pippi_11soundbuffer_SoundBuffer, 1, "snd", 0))) __PYX_ERR(0, 173, __pyx_L1_error)
   __pyx_r = __pyx_pf_6astrid_5mixer_11AstridMixer_4add(((struct __pyx_obj_6astrid_5mixer_AstridMixer *)__pyx_v_self), ((struct __pyx_obj_5pippi_11soundbuffer_SoundBuffer *)__pyx_v_snd));
 
   /* function exit code */
@@ -3393,16 +3277,16 @@ static PyObject *__pyx_pf_6astrid_5mixer_11AstridMixer_4add(struct __pyx_obj_6as
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("add", 0);
 
-  /* "astrid/mixer.pyx":176
+  /* "astrid/mixer.pyx":174
  * 
  *     def add(self, SoundBuffer snd):
  *         self._add(snd)             # <<<<<<<<<<<<<<
  * 
- *     def sleep(self, long msec):
+ *     def sleep(self, unsigned long msec):
  */
-  ((struct __pyx_vtabstruct_6astrid_5mixer_AstridMixer *)__pyx_v_self->__pyx_vtab)->_add(__pyx_v_self, __pyx_v_snd); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 176, __pyx_L1_error)
+  ((struct __pyx_vtabstruct_6astrid_5mixer_AstridMixer *)__pyx_v_self->__pyx_vtab)->_add(__pyx_v_self, __pyx_v_snd); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 174, __pyx_L1_error)
 
-  /* "astrid/mixer.pyx":175
+  /* "astrid/mixer.pyx":173
  *         #self._flush()
  * 
  *     def add(self, SoundBuffer snd):             # <<<<<<<<<<<<<<
@@ -3422,10 +3306,10 @@ static PyObject *__pyx_pf_6astrid_5mixer_11AstridMixer_4add(struct __pyx_obj_6as
   return __pyx_r;
 }
 
-/* "astrid/mixer.pyx":178
+/* "astrid/mixer.pyx":176
  *         self._add(snd)
  * 
- *     def sleep(self, long msec):             # <<<<<<<<<<<<<<
+ *     def sleep(self, unsigned long msec):             # <<<<<<<<<<<<<<
  *         Pa_Sleep(msec)
  * 
  */
@@ -3433,12 +3317,12 @@ static PyObject *__pyx_pf_6astrid_5mixer_11AstridMixer_4add(struct __pyx_obj_6as
 /* Python wrapper */
 static PyObject *__pyx_pw_6astrid_5mixer_11AstridMixer_7sleep(PyObject *__pyx_v_self, PyObject *__pyx_arg_msec); /*proto*/
 static PyObject *__pyx_pw_6astrid_5mixer_11AstridMixer_7sleep(PyObject *__pyx_v_self, PyObject *__pyx_arg_msec) {
-  long __pyx_v_msec;
+  unsigned long __pyx_v_msec;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("sleep (wrapper)", 0);
   assert(__pyx_arg_msec); {
-    __pyx_v_msec = __Pyx_PyInt_As_long(__pyx_arg_msec); if (unlikely((__pyx_v_msec == (long)-1) && PyErr_Occurred())) __PYX_ERR(0, 178, __pyx_L3_error)
+    __pyx_v_msec = __Pyx_PyInt_As_unsigned_long(__pyx_arg_msec); if (unlikely((__pyx_v_msec == (unsigned long)-1) && PyErr_Occurred())) __PYX_ERR(0, 176, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -3446,31 +3330,31 @@ static PyObject *__pyx_pw_6astrid_5mixer_11AstridMixer_7sleep(PyObject *__pyx_v_
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_6astrid_5mixer_11AstridMixer_6sleep(((struct __pyx_obj_6astrid_5mixer_AstridMixer *)__pyx_v_self), ((long)__pyx_v_msec));
+  __pyx_r = __pyx_pf_6astrid_5mixer_11AstridMixer_6sleep(((struct __pyx_obj_6astrid_5mixer_AstridMixer *)__pyx_v_self), ((unsigned long)__pyx_v_msec));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_6astrid_5mixer_11AstridMixer_6sleep(CYTHON_UNUSED struct __pyx_obj_6astrid_5mixer_AstridMixer *__pyx_v_self, long __pyx_v_msec) {
+static PyObject *__pyx_pf_6astrid_5mixer_11AstridMixer_6sleep(CYTHON_UNUSED struct __pyx_obj_6astrid_5mixer_AstridMixer *__pyx_v_self, unsigned long __pyx_v_msec) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("sleep", 0);
 
-  /* "astrid/mixer.pyx":179
+  /* "astrid/mixer.pyx":177
  * 
- *     def sleep(self, long msec):
+ *     def sleep(self, unsigned long msec):
  *         Pa_Sleep(msec)             # <<<<<<<<<<<<<<
  * 
  *     cdef void _shutdown(self) except *:
  */
   Pa_Sleep(__pyx_v_msec);
 
-  /* "astrid/mixer.pyx":178
+  /* "astrid/mixer.pyx":176
  *         self._add(snd)
  * 
- *     def sleep(self, long msec):             # <<<<<<<<<<<<<<
+ *     def sleep(self, unsigned long msec):             # <<<<<<<<<<<<<<
  *         Pa_Sleep(msec)
  * 
  */
@@ -3482,7 +3366,7 @@ static PyObject *__pyx_pf_6astrid_5mixer_11AstridMixer_6sleep(CYTHON_UNUSED stru
   return __pyx_r;
 }
 
-/* "astrid/mixer.pyx":181
+/* "astrid/mixer.pyx":179
  *         Pa_Sleep(msec)
  * 
  *     cdef void _shutdown(self) except *:             # <<<<<<<<<<<<<<
@@ -3498,7 +3382,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__shutdown(struct __pyx_obj_6ast
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("_shutdown", 0);
 
-  /* "astrid/mixer.pyx":184
+  /* "astrid/mixer.pyx":182
  *         cdef PaError err
  * 
  *         err = Pa_StopStream(self.ctx.stream)             # <<<<<<<<<<<<<<
@@ -3507,7 +3391,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__shutdown(struct __pyx_obj_6ast
  */
   __pyx_v_err = Pa_StopStream(__pyx_v_self->ctx->stream);
 
-  /* "astrid/mixer.pyx":185
+  /* "astrid/mixer.pyx":183
  * 
  *         err = Pa_StopStream(self.ctx.stream)
  *         if(err != paNoError):             # <<<<<<<<<<<<<<
@@ -3517,22 +3401,29 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__shutdown(struct __pyx_obj_6ast
   __pyx_t_1 = ((__pyx_v_err != paNoError) != 0);
   if (__pyx_t_1) {
 
-    /* "astrid/mixer.pyx":186
+    /* "astrid/mixer.pyx":184
  *         err = Pa_StopStream(self.ctx.stream)
  *         if(err != paNoError):
  *             print("Stop stream err: %s" % Pa_GetErrorText(err))             # <<<<<<<<<<<<<<
  * 
  *         err = Pa_CloseStream(self.ctx.stream)
  */
-    __pyx_t_2 = __Pyx_PyBytes_FromString(Pa_GetErrorText(__pyx_v_err)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 186, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyBytes_FromString(Pa_GetErrorText(__pyx_v_err)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 184, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyString_Format(__pyx_kp_s_Stop_stream_err_s, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 186, __pyx_L1_error)
+    __pyx_t_3 = PyUnicode_Format(__pyx_kp_u_Stop_stream_err_s, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 184, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (__Pyx_PrintOne(0, __pyx_t_3) < 0) __PYX_ERR(0, 186, __pyx_L1_error)
+    __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 184, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_GIVEREF(__pyx_t_3);
+    PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_3);
+    __pyx_t_3 = 0;
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 184, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "astrid/mixer.pyx":185
+    /* "astrid/mixer.pyx":183
  * 
  *         err = Pa_StopStream(self.ctx.stream)
  *         if(err != paNoError):             # <<<<<<<<<<<<<<
@@ -3541,7 +3432,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__shutdown(struct __pyx_obj_6ast
  */
   }
 
-  /* "astrid/mixer.pyx":188
+  /* "astrid/mixer.pyx":186
  *             print("Stop stream err: %s" % Pa_GetErrorText(err))
  * 
  *         err = Pa_CloseStream(self.ctx.stream)             # <<<<<<<<<<<<<<
@@ -3550,7 +3441,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__shutdown(struct __pyx_obj_6ast
  */
   __pyx_v_err = Pa_CloseStream(__pyx_v_self->ctx->stream);
 
-  /* "astrid/mixer.pyx":189
+  /* "astrid/mixer.pyx":187
  * 
  *         err = Pa_CloseStream(self.ctx.stream)
  *         if(err != paNoError):             # <<<<<<<<<<<<<<
@@ -3560,22 +3451,29 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__shutdown(struct __pyx_obj_6ast
   __pyx_t_1 = ((__pyx_v_err != paNoError) != 0);
   if (__pyx_t_1) {
 
-    /* "astrid/mixer.pyx":190
+    /* "astrid/mixer.pyx":188
  *         err = Pa_CloseStream(self.ctx.stream)
  *         if(err != paNoError):
  *             print("Close stream err: %s" % Pa_GetErrorText(err))             # <<<<<<<<<<<<<<
  * 
  *         err = Pa_Terminate()
  */
-    __pyx_t_3 = __Pyx_PyBytes_FromString(Pa_GetErrorText(__pyx_v_err)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 190, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyBytes_FromString(Pa_GetErrorText(__pyx_v_err)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 188, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_2 = __Pyx_PyString_Format(__pyx_kp_s_Close_stream_err_s, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 190, __pyx_L1_error)
+    __pyx_t_2 = PyUnicode_Format(__pyx_kp_u_Close_stream_err_s, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 188, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (__Pyx_PrintOne(0, __pyx_t_2) < 0) __PYX_ERR(0, 190, __pyx_L1_error)
+    __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 188, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_GIVEREF(__pyx_t_2);
+    PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2);
+    __pyx_t_2 = 0;
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 188, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "astrid/mixer.pyx":189
+    /* "astrid/mixer.pyx":187
  * 
  *         err = Pa_CloseStream(self.ctx.stream)
  *         if(err != paNoError):             # <<<<<<<<<<<<<<
@@ -3584,7 +3482,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__shutdown(struct __pyx_obj_6ast
  */
   }
 
-  /* "astrid/mixer.pyx":192
+  /* "astrid/mixer.pyx":190
  *             print("Close stream err: %s" % Pa_GetErrorText(err))
  * 
  *         err = Pa_Terminate()             # <<<<<<<<<<<<<<
@@ -3593,7 +3491,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__shutdown(struct __pyx_obj_6ast
  */
   __pyx_v_err = Pa_Terminate();
 
-  /* "astrid/mixer.pyx":193
+  /* "astrid/mixer.pyx":191
  * 
  *         err = Pa_Terminate()
  *         if(err != paNoError):             # <<<<<<<<<<<<<<
@@ -3603,22 +3501,29 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__shutdown(struct __pyx_obj_6ast
   __pyx_t_1 = ((__pyx_v_err != paNoError) != 0);
   if (__pyx_t_1) {
 
-    /* "astrid/mixer.pyx":194
+    /* "astrid/mixer.pyx":192
  *         err = Pa_Terminate()
  *         if(err != paNoError):
  *             print("Terminate err: %s" % Pa_GetErrorText(err))             # <<<<<<<<<<<<<<
  * 
  *         #self._flush()
  */
-    __pyx_t_2 = __Pyx_PyBytes_FromString(Pa_GetErrorText(__pyx_v_err)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 194, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyBytes_FromString(Pa_GetErrorText(__pyx_v_err)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 192, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyString_Format(__pyx_kp_s_Terminate_err_s, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 194, __pyx_L1_error)
+    __pyx_t_3 = PyUnicode_Format(__pyx_kp_u_Terminate_err_s, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 192, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (__Pyx_PrintOne(0, __pyx_t_3) < 0) __PYX_ERR(0, 194, __pyx_L1_error)
+    __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 192, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_GIVEREF(__pyx_t_3);
+    PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_3);
+    __pyx_t_3 = 0;
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 192, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "astrid/mixer.pyx":193
+    /* "astrid/mixer.pyx":191
  * 
  *         err = Pa_Terminate()
  *         if(err != paNoError):             # <<<<<<<<<<<<<<
@@ -3627,7 +3532,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__shutdown(struct __pyx_obj_6ast
  */
   }
 
-  /* "astrid/mixer.pyx":181
+  /* "astrid/mixer.pyx":179
  *         Pa_Sleep(msec)
  * 
  *     cdef void _shutdown(self) except *:             # <<<<<<<<<<<<<<
@@ -3645,7 +3550,7 @@ static void __pyx_f_6astrid_5mixer_11AstridMixer__shutdown(struct __pyx_obj_6ast
   __Pyx_RefNannyFinishContext();
 }
 
-/* "astrid/mixer.pyx":198
+/* "astrid/mixer.pyx":196
  *         #self._flush()
  * 
  *     def shutdown(self):             # <<<<<<<<<<<<<<
@@ -3671,16 +3576,16 @@ static PyObject *__pyx_pf_6astrid_5mixer_11AstridMixer_8shutdown(struct __pyx_ob
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("shutdown", 0);
 
-  /* "astrid/mixer.pyx":199
+  /* "astrid/mixer.pyx":197
  * 
  *     def shutdown(self):
  *         self._shutdown()             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  ((struct __pyx_vtabstruct_6astrid_5mixer_AstridMixer *)__pyx_v_self->__pyx_vtab)->_shutdown(__pyx_v_self); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 199, __pyx_L1_error)
+  ((struct __pyx_vtabstruct_6astrid_5mixer_AstridMixer *)__pyx_v_self->__pyx_vtab)->_shutdown(__pyx_v_self); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 197, __pyx_L1_error)
 
-  /* "astrid/mixer.pyx":198
+  /* "astrid/mixer.pyx":196
  *         #self._flush()
  * 
  *     def shutdown(self):             # <<<<<<<<<<<<<<
@@ -17706,25 +17611,25 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_s_Buffer_view_does_not_expose_stri, __pyx_k_Buffer_view_does_not_expose_stri, sizeof(__pyx_k_Buffer_view_does_not_expose_stri), 0, 0, 1, 0},
   {&__pyx_kp_s_Can_only_create_a_buffer_that_is, __pyx_k_Can_only_create_a_buffer_that_is, sizeof(__pyx_k_Can_only_create_a_buffer_that_is), 0, 0, 1, 0},
   {&__pyx_kp_s_Cannot_index_with_type_s, __pyx_k_Cannot_index_with_type_s, sizeof(__pyx_k_Cannot_index_with_type_s), 0, 0, 1, 0},
-  {&__pyx_kp_s_Close_stream_err_s, __pyx_k_Close_stream_err_s, sizeof(__pyx_k_Close_stream_err_s), 0, 0, 1, 0},
+  {&__pyx_kp_u_Close_stream_err_s, __pyx_k_Close_stream_err_s, sizeof(__pyx_k_Close_stream_err_s), 0, 1, 0, 0},
   {&__pyx_n_s_Ellipsis, __pyx_k_Ellipsis, sizeof(__pyx_k_Ellipsis), 0, 0, 1, 1},
   {&__pyx_kp_s_Empty_shape_tuple_for_cython_arr, __pyx_k_Empty_shape_tuple_for_cython_arr, sizeof(__pyx_k_Empty_shape_tuple_for_cython_arr), 0, 0, 1, 0},
   {&__pyx_kp_s_Incompatible_checksums_s_vs_0xb0, __pyx_k_Incompatible_checksums_s_vs_0xb0, sizeof(__pyx_k_Incompatible_checksums_s_vs_0xb0), 0, 0, 1, 0},
   {&__pyx_n_s_IndexError, __pyx_k_IndexError, sizeof(__pyx_k_IndexError), 0, 0, 1, 1},
   {&__pyx_kp_s_Indirect_dimensions_not_supporte, __pyx_k_Indirect_dimensions_not_supporte, sizeof(__pyx_k_Indirect_dimensions_not_supporte), 0, 0, 1, 0},
-  {&__pyx_kp_s_Initialize_err_s, __pyx_k_Initialize_err_s, sizeof(__pyx_k_Initialize_err_s), 0, 0, 1, 0},
+  {&__pyx_kp_u_Initialize_err_s, __pyx_k_Initialize_err_s, sizeof(__pyx_k_Initialize_err_s), 0, 1, 0, 0},
   {&__pyx_kp_s_Invalid_mode_expected_c_or_fortr, __pyx_k_Invalid_mode_expected_c_or_fortr, sizeof(__pyx_k_Invalid_mode_expected_c_or_fortr), 0, 0, 1, 0},
   {&__pyx_kp_s_Invalid_shape_in_axis_d_d, __pyx_k_Invalid_shape_in_axis_d_d, sizeof(__pyx_k_Invalid_shape_in_axis_d_d), 0, 0, 1, 0},
   {&__pyx_n_s_MemoryError, __pyx_k_MemoryError, sizeof(__pyx_k_MemoryError), 0, 0, 1, 1},
   {&__pyx_kp_s_MemoryView_of_r_at_0x_x, __pyx_k_MemoryView_of_r_at_0x_x, sizeof(__pyx_k_MemoryView_of_r_at_0x_x), 0, 0, 1, 0},
   {&__pyx_kp_s_MemoryView_of_r_object, __pyx_k_MemoryView_of_r_object, sizeof(__pyx_k_MemoryView_of_r_object), 0, 0, 1, 0},
   {&__pyx_n_b_O, __pyx_k_O, sizeof(__pyx_k_O), 0, 0, 0, 1},
-  {&__pyx_kp_s_Open_default_stream_err_s, __pyx_k_Open_default_stream_err_s, sizeof(__pyx_k_Open_default_stream_err_s), 0, 0, 1, 0},
+  {&__pyx_kp_u_Open_default_stream_err_s, __pyx_k_Open_default_stream_err_s, sizeof(__pyx_k_Open_default_stream_err_s), 0, 1, 0, 0},
   {&__pyx_kp_s_Out_of_bounds_on_buffer_access_a, __pyx_k_Out_of_bounds_on_buffer_access_a, sizeof(__pyx_k_Out_of_bounds_on_buffer_access_a), 0, 0, 1, 0},
   {&__pyx_n_s_PickleError, __pyx_k_PickleError, sizeof(__pyx_k_PickleError), 0, 0, 1, 1},
-  {&__pyx_kp_s_Start_stream_err_s, __pyx_k_Start_stream_err_s, sizeof(__pyx_k_Start_stream_err_s), 0, 0, 1, 0},
-  {&__pyx_kp_s_Stop_stream_err_s, __pyx_k_Stop_stream_err_s, sizeof(__pyx_k_Stop_stream_err_s), 0, 0, 1, 0},
-  {&__pyx_kp_s_Terminate_err_s, __pyx_k_Terminate_err_s, sizeof(__pyx_k_Terminate_err_s), 0, 0, 1, 0},
+  {&__pyx_kp_u_Start_stream_err_s, __pyx_k_Start_stream_err_s, sizeof(__pyx_k_Start_stream_err_s), 0, 1, 0, 0},
+  {&__pyx_kp_u_Stop_stream_err_s, __pyx_k_Stop_stream_err_s, sizeof(__pyx_k_Stop_stream_err_s), 0, 1, 0, 0},
+  {&__pyx_kp_u_Terminate_err_s, __pyx_k_Terminate_err_s, sizeof(__pyx_k_Terminate_err_s), 0, 1, 0, 0},
   {&__pyx_n_s_TypeError, __pyx_k_TypeError, sizeof(__pyx_k_TypeError), 0, 0, 1, 1},
   {&__pyx_kp_s_Unable_to_convert_item_to_object, __pyx_k_Unable_to_convert_item_to_object, sizeof(__pyx_k_Unable_to_convert_item_to_object), 0, 0, 1, 0},
   {&__pyx_n_s_ValueError, __pyx_k_ValueError, sizeof(__pyx_k_ValueError), 0, 0, 1, 1},
@@ -17742,11 +17647,8 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_dict, __pyx_k_dict, sizeof(__pyx_k_dict), 0, 0, 1, 1},
   {&__pyx_n_s_dtype_is_object, __pyx_k_dtype_is_object, sizeof(__pyx_k_dtype_is_object), 0, 0, 1, 1},
   {&__pyx_n_s_encode, __pyx_k_encode, sizeof(__pyx_k_encode), 0, 0, 1, 1},
-  {&__pyx_n_s_end, __pyx_k_end, sizeof(__pyx_k_end), 0, 0, 1, 1},
-  {&__pyx_kp_s_end_of_buffer, __pyx_k_end_of_buffer, sizeof(__pyx_k_end_of_buffer), 0, 0, 1, 0},
   {&__pyx_n_s_enumerate, __pyx_k_enumerate, sizeof(__pyx_k_enumerate), 0, 0, 1, 1},
   {&__pyx_n_s_error, __pyx_k_error, sizeof(__pyx_k_error), 0, 0, 1, 1},
-  {&__pyx_n_s_file, __pyx_k_file, sizeof(__pyx_k_file), 0, 0, 1, 1},
   {&__pyx_n_s_flags, __pyx_k_flags, sizeof(__pyx_k_flags), 0, 0, 1, 1},
   {&__pyx_n_s_format, __pyx_k_format, sizeof(__pyx_k_format), 0, 0, 1, 1},
   {&__pyx_n_s_fortran, __pyx_k_fortran, sizeof(__pyx_k_fortran), 0, 0, 1, 1},
@@ -17802,7 +17704,8 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 20, __pyx_L1_error)
+  __pyx_builtin_print = __Pyx_GetBuiltinName(__pyx_n_s_print); if (!__pyx_builtin_print) __PYX_ERR(0, 104, __pyx_L1_error)
   __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(1, 2, __pyx_L1_error)
   __pyx_builtin_ValueError = __Pyx_GetBuiltinName(__pyx_n_s_ValueError); if (!__pyx_builtin_ValueError) __PYX_ERR(1, 131, __pyx_L1_error)
   __pyx_builtin_MemoryError = __Pyx_GetBuiltinName(__pyx_n_s_MemoryError); if (!__pyx_builtin_MemoryError) __PYX_ERR(1, 146, __pyx_L1_error)
@@ -18270,11 +18173,11 @@ static int __pyx_pymod_exec_mixer(PyObject *__pyx_pyinit_module)
   __pyx_vtable_6astrid_5mixer_AstridMixer._add = (void (*)(struct __pyx_obj_6astrid_5mixer_AstridMixer *, struct __pyx_obj_5pippi_11soundbuffer_SoundBuffer *))__pyx_f_6astrid_5mixer_11AstridMixer__add;
   __pyx_vtable_6astrid_5mixer_AstridMixer._flush = (void (*)(struct __pyx_obj_6astrid_5mixer_AstridMixer *))__pyx_f_6astrid_5mixer_11AstridMixer__flush;
   __pyx_vtable_6astrid_5mixer_AstridMixer._shutdown = (void (*)(struct __pyx_obj_6astrid_5mixer_AstridMixer *))__pyx_f_6astrid_5mixer_11AstridMixer__shutdown;
-  if (PyType_Ready(&__pyx_type_6astrid_5mixer_AstridMixer) < 0) __PYX_ERR(0, 88, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_6astrid_5mixer_AstridMixer) < 0) __PYX_ERR(0, 81, __pyx_L1_error)
   __pyx_type_6astrid_5mixer_AstridMixer.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_6astrid_5mixer_AstridMixer.tp_dict, __pyx_vtabptr_6astrid_5mixer_AstridMixer) < 0) __PYX_ERR(0, 88, __pyx_L1_error)
-  if (PyObject_SetAttrString(__pyx_m, "AstridMixer", (PyObject *)&__pyx_type_6astrid_5mixer_AstridMixer) < 0) __PYX_ERR(0, 88, __pyx_L1_error)
-  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_6astrid_5mixer_AstridMixer) < 0) __PYX_ERR(0, 88, __pyx_L1_error)
+  if (__Pyx_SetVtable(__pyx_type_6astrid_5mixer_AstridMixer.tp_dict, __pyx_vtabptr_6astrid_5mixer_AstridMixer) < 0) __PYX_ERR(0, 81, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "AstridMixer", (PyObject *)&__pyx_type_6astrid_5mixer_AstridMixer) < 0) __PYX_ERR(0, 81, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_6astrid_5mixer_AstridMixer) < 0) __PYX_ERR(0, 81, __pyx_L1_error)
   __pyx_ptype_6astrid_5mixer_AstridMixer = &__pyx_type_6astrid_5mixer_AstridMixer;
   __pyx_vtabptr_array = &__pyx_vtable_array;
   __pyx_vtable_array.get_memview = (PyObject *(*)(struct __pyx_array_obj *))__pyx_array_get_memview;
@@ -18322,8 +18225,8 @@ static int __pyx_pymod_exec_mixer(PyObject *__pyx_pyinit_module)
 
   /* "astrid/mixer.pyx":1
  * # distutils: libraries = portaudio             # <<<<<<<<<<<<<<
+ * # cython: language_level=3
  * 
- * from libc.stdlib cimport malloc, calloc, free
  */
   __pyx_t_1 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -18539,72 +18442,6 @@ static PyObject *__Pyx_GetBuiltinName(PyObject *name) {
     return result;
 }
 
-/* PyErrFetchRestore */
-#if CYTHON_FAST_THREAD_STATE
-static CYTHON_INLINE void __Pyx_ErrRestoreInState(PyThreadState *tstate, PyObject *type, PyObject *value, PyObject *tb) {
-    PyObject *tmp_type, *tmp_value, *tmp_tb;
-    tmp_type = tstate->curexc_type;
-    tmp_value = tstate->curexc_value;
-    tmp_tb = tstate->curexc_traceback;
-    tstate->curexc_type = type;
-    tstate->curexc_value = value;
-    tstate->curexc_traceback = tb;
-    Py_XDECREF(tmp_type);
-    Py_XDECREF(tmp_value);
-    Py_XDECREF(tmp_tb);
-}
-static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject **type, PyObject **value, PyObject **tb) {
-    *type = tstate->curexc_type;
-    *value = tstate->curexc_value;
-    *tb = tstate->curexc_traceback;
-    tstate->curexc_type = 0;
-    tstate->curexc_value = 0;
-    tstate->curexc_traceback = 0;
-}
-#endif
-
-/* WriteUnraisableException */
-static void __Pyx_WriteUnraisable(const char *name, CYTHON_UNUSED int clineno,
-                                  CYTHON_UNUSED int lineno, CYTHON_UNUSED const char *filename,
-                                  int full_traceback, CYTHON_UNUSED int nogil) {
-    PyObject *old_exc, *old_val, *old_tb;
-    PyObject *ctx;
-    __Pyx_PyThreadState_declare
-#ifdef WITH_THREAD
-    PyGILState_STATE state;
-    if (nogil)
-        state = PyGILState_Ensure();
-#ifdef _MSC_VER
-    else state = (PyGILState_STATE)-1;
-#endif
-#endif
-    __Pyx_PyThreadState_assign
-    __Pyx_ErrFetch(&old_exc, &old_val, &old_tb);
-    if (full_traceback) {
-        Py_XINCREF(old_exc);
-        Py_XINCREF(old_val);
-        Py_XINCREF(old_tb);
-        __Pyx_ErrRestore(old_exc, old_val, old_tb);
-        PyErr_PrintEx(1);
-    }
-    #if PY_MAJOR_VERSION < 3
-    ctx = PyString_FromString(name);
-    #else
-    ctx = PyUnicode_FromString(name);
-    #endif
-    __Pyx_ErrRestore(old_exc, old_val, old_tb);
-    if (!ctx) {
-        PyErr_WriteUnraisable(Py_None);
-    } else {
-        PyErr_WriteUnraisable(ctx);
-        Py_DECREF(ctx);
-    }
-#ifdef WITH_THREAD
-    if (nogil)
-        PyGILState_Release(state);
-#endif
-}
-
 /* RaiseDoubleKeywords */
 static void __Pyx_RaiseDoubleKeywordsError(
     const char* func_name,
@@ -18746,6 +18583,26 @@ static void __Pyx_RaiseArgtupleInvalid(
                  func_name, more_or_less, num_expected,
                  (num_expected == 1) ? "" : "s", num_found);
 }
+
+/* PyObjectCall */
+#if CYTHON_COMPILING_IN_CPYTHON
+static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw) {
+    PyObject *result;
+    ternaryfunc call = func->ob_type->tp_call;
+    if (unlikely(!call))
+        return PyObject_Call(func, arg, kw);
+    if (unlikely(Py_EnterRecursiveCall((char*)" while calling a Python object")))
+        return NULL;
+    result = (*call)(func, arg, kw);
+    Py_LeaveRecursiveCall();
+    if (unlikely(!result) && unlikely(!PyErr_Occurred())) {
+        PyErr_SetString(
+            PyExc_SystemError,
+            "NULL result without error in PyObject_Call");
+    }
+    return result;
+}
+#endif
 
 /* MemviewSliceInit */
 static int
@@ -18912,23 +18769,27 @@ static int __Pyx__ArgTypeTest(PyObject *obj, PyTypeObject *type, const char *nam
     return 0;
 }
 
-/* PyObjectCall */
-#if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw) {
-    PyObject *result;
-    ternaryfunc call = func->ob_type->tp_call;
-    if (unlikely(!call))
-        return PyObject_Call(func, arg, kw);
-    if (unlikely(Py_EnterRecursiveCall((char*)" while calling a Python object")))
-        return NULL;
-    result = (*call)(func, arg, kw);
-    Py_LeaveRecursiveCall();
-    if (unlikely(!result) && unlikely(!PyErr_Occurred())) {
-        PyErr_SetString(
-            PyExc_SystemError,
-            "NULL result without error in PyObject_Call");
-    }
-    return result;
+/* PyErrFetchRestore */
+#if CYTHON_FAST_THREAD_STATE
+static CYTHON_INLINE void __Pyx_ErrRestoreInState(PyThreadState *tstate, PyObject *type, PyObject *value, PyObject *tb) {
+    PyObject *tmp_type, *tmp_value, *tmp_tb;
+    tmp_type = tstate->curexc_type;
+    tmp_value = tstate->curexc_value;
+    tmp_tb = tstate->curexc_traceback;
+    tstate->curexc_type = type;
+    tstate->curexc_value = value;
+    tstate->curexc_traceback = tb;
+    Py_XDECREF(tmp_type);
+    Py_XDECREF(tmp_value);
+    Py_XDECREF(tmp_tb);
+}
+static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject **type, PyObject **value, PyObject **tb) {
+    *type = tstate->curexc_type;
+    *value = tstate->curexc_value;
+    *tb = tstate->curexc_traceback;
+    tstate->curexc_type = 0;
+    tstate->curexc_value = 0;
+    tstate->curexc_traceback = 0;
 }
 #endif
 
@@ -19947,6 +19808,48 @@ static PyObject* __Pyx_PyInt_AddObjC(PyObject *op1, PyObject *op2, CYTHON_UNUSED
     return q;
 }
 
+/* WriteUnraisableException */
+    static void __Pyx_WriteUnraisable(const char *name, CYTHON_UNUSED int clineno,
+                                  CYTHON_UNUSED int lineno, CYTHON_UNUSED const char *filename,
+                                  int full_traceback, CYTHON_UNUSED int nogil) {
+    PyObject *old_exc, *old_val, *old_tb;
+    PyObject *ctx;
+    __Pyx_PyThreadState_declare
+#ifdef WITH_THREAD
+    PyGILState_STATE state;
+    if (nogil)
+        state = PyGILState_Ensure();
+#ifdef _MSC_VER
+    else state = (PyGILState_STATE)-1;
+#endif
+#endif
+    __Pyx_PyThreadState_assign
+    __Pyx_ErrFetch(&old_exc, &old_val, &old_tb);
+    if (full_traceback) {
+        Py_XINCREF(old_exc);
+        Py_XINCREF(old_val);
+        Py_XINCREF(old_tb);
+        __Pyx_ErrRestore(old_exc, old_val, old_tb);
+        PyErr_PrintEx(1);
+    }
+    #if PY_MAJOR_VERSION < 3
+    ctx = PyString_FromString(name);
+    #else
+    ctx = PyUnicode_FromString(name);
+    #endif
+    __Pyx_ErrRestore(old_exc, old_val, old_tb);
+    if (!ctx) {
+        PyErr_WriteUnraisable(Py_None);
+    } else {
+        PyErr_WriteUnraisable(ctx);
+        Py_DECREF(ctx);
+    }
+#ifdef WITH_THREAD
+    if (nogil)
+        PyGILState_Release(state);
+#endif
+}
+
 /* PyObjectCallMethO */
     #if CYTHON_COMPILING_IN_CPYTHON
 static CYTHON_INLINE PyObject* __Pyx_PyObject_CallMethO(PyObject *func, PyObject *arg) {
@@ -20408,112 +20311,6 @@ bad:
     }
 }
 
-/* Print */
-    #if !CYTHON_COMPILING_IN_PYPY && PY_MAJOR_VERSION < 3
-static PyObject *__Pyx_GetStdout(void) {
-    PyObject *f = PySys_GetObject((char *)"stdout");
-    if (!f) {
-        PyErr_SetString(PyExc_RuntimeError, "lost sys.stdout");
-    }
-    return f;
-}
-static int __Pyx_Print(PyObject* f, PyObject *arg_tuple, int newline) {
-    int i;
-    if (!f) {
-        if (!(f = __Pyx_GetStdout()))
-            return -1;
-    }
-    Py_INCREF(f);
-    for (i=0; i < PyTuple_GET_SIZE(arg_tuple); i++) {
-        PyObject* v;
-        if (PyFile_SoftSpace(f, 1)) {
-            if (PyFile_WriteString(" ", f) < 0)
-                goto error;
-        }
-        v = PyTuple_GET_ITEM(arg_tuple, i);
-        if (PyFile_WriteObject(v, f, Py_PRINT_RAW) < 0)
-            goto error;
-        if (PyString_Check(v)) {
-            char *s = PyString_AsString(v);
-            Py_ssize_t len = PyString_Size(v);
-            if (len > 0) {
-                switch (s[len-1]) {
-                    case ' ': break;
-                    case '\f': case '\r': case '\n': case '\t': case '\v':
-                        PyFile_SoftSpace(f, 0);
-                        break;
-                    default:  break;
-                }
-            }
-        }
-    }
-    if (newline) {
-        if (PyFile_WriteString("\n", f) < 0)
-            goto error;
-        PyFile_SoftSpace(f, 0);
-    }
-    Py_DECREF(f);
-    return 0;
-error:
-    Py_DECREF(f);
-    return -1;
-}
-#else
-static int __Pyx_Print(PyObject* stream, PyObject *arg_tuple, int newline) {
-    PyObject* kwargs = 0;
-    PyObject* result = 0;
-    PyObject* end_string;
-    if (unlikely(!__pyx_print)) {
-        __pyx_print = PyObject_GetAttr(__pyx_b, __pyx_n_s_print);
-        if (!__pyx_print)
-            return -1;
-    }
-    if (stream) {
-        kwargs = PyDict_New();
-        if (unlikely(!kwargs))
-            return -1;
-        if (unlikely(PyDict_SetItem(kwargs, __pyx_n_s_file, stream) < 0))
-            goto bad;
-        if (!newline) {
-            end_string = PyUnicode_FromStringAndSize(" ", 1);
-            if (unlikely(!end_string))
-                goto bad;
-            if (PyDict_SetItem(kwargs, __pyx_n_s_end, end_string) < 0) {
-                Py_DECREF(end_string);
-                goto bad;
-            }
-            Py_DECREF(end_string);
-        }
-    } else if (!newline) {
-        if (unlikely(!__pyx_print_kwargs)) {
-            __pyx_print_kwargs = PyDict_New();
-            if (unlikely(!__pyx_print_kwargs))
-                return -1;
-            end_string = PyUnicode_FromStringAndSize(" ", 1);
-            if (unlikely(!end_string))
-                return -1;
-            if (PyDict_SetItem(__pyx_print_kwargs, __pyx_n_s_end, end_string) < 0) {
-                Py_DECREF(end_string);
-                return -1;
-            }
-            Py_DECREF(end_string);
-        }
-        kwargs = __pyx_print_kwargs;
-    }
-    result = PyObject_Call(__pyx_print, arg_tuple, kwargs);
-    if (unlikely(kwargs) && (kwargs != __pyx_print_kwargs))
-        Py_DECREF(kwargs);
-    if (!result)
-        return -1;
-    Py_DECREF(result);
-    return 0;
-bad:
-    if (kwargs != __pyx_print_kwargs)
-        Py_XDECREF(kwargs);
-    return -1;
-}
-#endif
-
 #if PY_MAJOR_VERSION < 3
 static int __Pyx_GetBuffer(PyObject *obj, Py_buffer *view, int flags) {
     if (PyObject_CheckBuffer(obj)) return PyObject_GetBuffer(obj, view, flags);
@@ -20797,6 +20594,262 @@ raise_neg_overflow:
 }
 
 /* CIntFromPy */
+    static CYTHON_INLINE unsigned long __Pyx_PyInt_As_unsigned_long(PyObject *x) {
+    const unsigned long neg_one = (unsigned long) -1, const_zero = (unsigned long) 0;
+    const int is_unsigned = neg_one > const_zero;
+#if PY_MAJOR_VERSION < 3
+    if (likely(PyInt_Check(x))) {
+        if (sizeof(unsigned long) < sizeof(long)) {
+            __PYX_VERIFY_RETURN_INT(unsigned long, long, PyInt_AS_LONG(x))
+        } else {
+            long val = PyInt_AS_LONG(x);
+            if (is_unsigned && unlikely(val < 0)) {
+                goto raise_neg_overflow;
+            }
+            return (unsigned long) val;
+        }
+    } else
+#endif
+    if (likely(PyLong_Check(x))) {
+        if (is_unsigned) {
+#if CYTHON_USE_PYLONG_INTERNALS
+            const digit* digits = ((PyLongObject*)x)->ob_digit;
+            switch (Py_SIZE(x)) {
+                case  0: return (unsigned long) 0;
+                case  1: __PYX_VERIFY_RETURN_INT(unsigned long, digit, digits[0])
+                case 2:
+                    if (8 * sizeof(unsigned long) > 1 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(unsigned long, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(unsigned long) >= 2 * PyLong_SHIFT) {
+                            return (unsigned long) (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
+                        }
+                    }
+                    break;
+                case 3:
+                    if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(unsigned long, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(unsigned long) >= 3 * PyLong_SHIFT) {
+                            return (unsigned long) (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
+                        }
+                    }
+                    break;
+                case 4:
+                    if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 4 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(unsigned long, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(unsigned long) >= 4 * PyLong_SHIFT) {
+                            return (unsigned long) (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
+                        }
+                    }
+                    break;
+            }
+#endif
+#if CYTHON_COMPILING_IN_CPYTHON
+            if (unlikely(Py_SIZE(x) < 0)) {
+                goto raise_neg_overflow;
+            }
+#else
+            {
+                int result = PyObject_RichCompareBool(x, Py_False, Py_LT);
+                if (unlikely(result < 0))
+                    return (unsigned long) -1;
+                if (unlikely(result == 1))
+                    goto raise_neg_overflow;
+            }
+#endif
+            if (sizeof(unsigned long) <= sizeof(unsigned long)) {
+                __PYX_VERIFY_RETURN_INT_EXC(unsigned long, unsigned long, PyLong_AsUnsignedLong(x))
+#ifdef HAVE_LONG_LONG
+            } else if (sizeof(unsigned long) <= sizeof(unsigned PY_LONG_LONG)) {
+                __PYX_VERIFY_RETURN_INT_EXC(unsigned long, unsigned PY_LONG_LONG, PyLong_AsUnsignedLongLong(x))
+#endif
+            }
+        } else {
+#if CYTHON_USE_PYLONG_INTERNALS
+            const digit* digits = ((PyLongObject*)x)->ob_digit;
+            switch (Py_SIZE(x)) {
+                case  0: return (unsigned long) 0;
+                case -1: __PYX_VERIFY_RETURN_INT(unsigned long, sdigit, (sdigit) (-(sdigit)digits[0]))
+                case  1: __PYX_VERIFY_RETURN_INT(unsigned long,  digit, +digits[0])
+                case -2:
+                    if (8 * sizeof(unsigned long) - 1 > 1 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(unsigned long, long, -(long) (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(unsigned long) - 1 > 2 * PyLong_SHIFT) {
+                            return (unsigned long) (((unsigned long)-1)*(((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])));
+                        }
+                    }
+                    break;
+                case 2:
+                    if (8 * sizeof(unsigned long) > 1 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(unsigned long, unsigned long, (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(unsigned long) - 1 > 2 * PyLong_SHIFT) {
+                            return (unsigned long) ((((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])));
+                        }
+                    }
+                    break;
+                case -3:
+                    if (8 * sizeof(unsigned long) - 1 > 2 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(unsigned long, long, -(long) (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(unsigned long) - 1 > 3 * PyLong_SHIFT) {
+                            return (unsigned long) (((unsigned long)-1)*(((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])));
+                        }
+                    }
+                    break;
+                case 3:
+                    if (8 * sizeof(unsigned long) > 2 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(unsigned long, unsigned long, (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(unsigned long) - 1 > 3 * PyLong_SHIFT) {
+                            return (unsigned long) ((((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])));
+                        }
+                    }
+                    break;
+                case -4:
+                    if (8 * sizeof(unsigned long) - 1 > 3 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 4 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(unsigned long, long, -(long) (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(unsigned long) - 1 > 4 * PyLong_SHIFT) {
+                            return (unsigned long) (((unsigned long)-1)*(((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])));
+                        }
+                    }
+                    break;
+                case 4:
+                    if (8 * sizeof(unsigned long) > 3 * PyLong_SHIFT) {
+                        if (8 * sizeof(unsigned long) > 4 * PyLong_SHIFT) {
+                            __PYX_VERIFY_RETURN_INT(unsigned long, unsigned long, (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])))
+                        } else if (8 * sizeof(unsigned long) - 1 > 4 * PyLong_SHIFT) {
+                            return (unsigned long) ((((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0])));
+                        }
+                    }
+                    break;
+            }
+#endif
+            if (sizeof(unsigned long) <= sizeof(long)) {
+                __PYX_VERIFY_RETURN_INT_EXC(unsigned long, long, PyLong_AsLong(x))
+#ifdef HAVE_LONG_LONG
+            } else if (sizeof(unsigned long) <= sizeof(PY_LONG_LONG)) {
+                __PYX_VERIFY_RETURN_INT_EXC(unsigned long, PY_LONG_LONG, PyLong_AsLongLong(x))
+#endif
+            }
+        }
+        {
+#if CYTHON_COMPILING_IN_PYPY && !defined(_PyLong_AsByteArray)
+            PyErr_SetString(PyExc_RuntimeError,
+                            "_PyLong_AsByteArray() not available in PyPy, cannot convert large numbers");
+#else
+            unsigned long val;
+            PyObject *v = __Pyx_PyNumber_IntOrLong(x);
+ #if PY_MAJOR_VERSION < 3
+            if (likely(v) && !PyLong_Check(v)) {
+                PyObject *tmp = v;
+                v = PyNumber_Long(tmp);
+                Py_DECREF(tmp);
+            }
+ #endif
+            if (likely(v)) {
+                int one = 1; int is_little = (int)*(unsigned char *)&one;
+                unsigned char *bytes = (unsigned char *)&val;
+                int ret = _PyLong_AsByteArray((PyLongObject *)v,
+                                              bytes, sizeof(val),
+                                              is_little, !is_unsigned);
+                Py_DECREF(v);
+                if (likely(!ret))
+                    return val;
+            }
+#endif
+            return (unsigned long) -1;
+        }
+    } else {
+        unsigned long val;
+        PyObject *tmp = __Pyx_PyNumber_IntOrLong(x);
+        if (!tmp) return (unsigned long) -1;
+        val = __Pyx_PyInt_As_unsigned_long(tmp);
+        Py_DECREF(tmp);
+        return val;
+    }
+raise_overflow:
+    PyErr_SetString(PyExc_OverflowError,
+        "value too large to convert to unsigned long");
+    return (unsigned long) -1;
+raise_neg_overflow:
+    PyErr_SetString(PyExc_OverflowError,
+        "can't convert negative value to unsigned long");
+    return (unsigned long) -1;
+}
+
+/* MemviewSliceCopyTemplate */
+    static __Pyx_memviewslice
+__pyx_memoryview_copy_new_contig(const __Pyx_memviewslice *from_mvs,
+                                 const char *mode, int ndim,
+                                 size_t sizeof_dtype, int contig_flag,
+                                 int dtype_is_object)
+{
+    __Pyx_RefNannyDeclarations
+    int i;
+    __Pyx_memviewslice new_mvs = { 0, 0, { 0 }, { 0 }, { 0 } };
+    struct __pyx_memoryview_obj *from_memview = from_mvs->memview;
+    Py_buffer *buf = &from_memview->view;
+    PyObject *shape_tuple = NULL;
+    PyObject *temp_int = NULL;
+    struct __pyx_array_obj *array_obj = NULL;
+    struct __pyx_memoryview_obj *memview_obj = NULL;
+    __Pyx_RefNannySetupContext("__pyx_memoryview_copy_new_contig", 0);
+    for (i = 0; i < ndim; i++) {
+        if (from_mvs->suboffsets[i] >= 0) {
+            PyErr_Format(PyExc_ValueError, "Cannot copy memoryview slice with "
+                                           "indirect dimensions (axis %d)", i);
+            goto fail;
+        }
+    }
+    shape_tuple = PyTuple_New(ndim);
+    if (unlikely(!shape_tuple)) {
+        goto fail;
+    }
+    __Pyx_GOTREF(shape_tuple);
+    for(i = 0; i < ndim; i++) {
+        temp_int = PyInt_FromSsize_t(from_mvs->shape[i]);
+        if(unlikely(!temp_int)) {
+            goto fail;
+        } else {
+            PyTuple_SET_ITEM(shape_tuple, i, temp_int);
+            temp_int = NULL;
+        }
+    }
+    array_obj = __pyx_array_new(shape_tuple, sizeof_dtype, buf->format, (char *) mode, NULL);
+    if (unlikely(!array_obj)) {
+        goto fail;
+    }
+    __Pyx_GOTREF(array_obj);
+    memview_obj = (struct __pyx_memoryview_obj *) __pyx_memoryview_new(
+                                    (PyObject *) array_obj, contig_flag,
+                                    dtype_is_object,
+                                    from_mvs->memview->typeinfo);
+    if (unlikely(!memview_obj))
+        goto fail;
+    if (unlikely(__Pyx_init_memviewslice(memview_obj, ndim, &new_mvs, 1) < 0))
+        goto fail;
+    if (unlikely(__pyx_memoryview_copy_contents(*from_mvs, new_mvs, ndim, ndim,
+                                                dtype_is_object) < 0))
+        goto fail;
+    goto no_fail;
+fail:
+    __Pyx_XDECREF(new_mvs.memview);
+    new_mvs.memview = NULL;
+    new_mvs.data = NULL;
+no_fail:
+    __Pyx_XDECREF(shape_tuple);
+    __Pyx_XDECREF(temp_int);
+    __Pyx_XDECREF(array_obj);
+    __Pyx_RefNannyFinishContext();
+    return new_mvs;
+}
+
+/* CIntFromPy */
     static CYTHON_INLINE long __Pyx_PyInt_As_long(PyObject *x) {
     const long neg_one = (long) -1, const_zero = (long) 0;
     const int is_unsigned = neg_one > const_zero;
@@ -20983,110 +21036,6 @@ raise_neg_overflow:
     PyErr_SetString(PyExc_OverflowError,
         "can't convert negative value to long");
     return (long) -1;
-}
-
-/* PrintOne */
-    #if !CYTHON_COMPILING_IN_PYPY && PY_MAJOR_VERSION < 3
-static int __Pyx_PrintOne(PyObject* f, PyObject *o) {
-    if (!f) {
-        if (!(f = __Pyx_GetStdout()))
-            return -1;
-    }
-    Py_INCREF(f);
-    if (PyFile_SoftSpace(f, 0)) {
-        if (PyFile_WriteString(" ", f) < 0)
-            goto error;
-    }
-    if (PyFile_WriteObject(o, f, Py_PRINT_RAW) < 0)
-        goto error;
-    if (PyFile_WriteString("\n", f) < 0)
-        goto error;
-    Py_DECREF(f);
-    return 0;
-error:
-    Py_DECREF(f);
-    return -1;
-    /* the line below is just to avoid C compiler
-     * warnings about unused functions */
-    return __Pyx_Print(f, NULL, 0);
-}
-#else
-static int __Pyx_PrintOne(PyObject* stream, PyObject *o) {
-    int res;
-    PyObject* arg_tuple = PyTuple_Pack(1, o);
-    if (unlikely(!arg_tuple))
-        return -1;
-    res = __Pyx_Print(stream, arg_tuple, 1);
-    Py_DECREF(arg_tuple);
-    return res;
-}
-#endif
-
-/* MemviewSliceCopyTemplate */
-    static __Pyx_memviewslice
-__pyx_memoryview_copy_new_contig(const __Pyx_memviewslice *from_mvs,
-                                 const char *mode, int ndim,
-                                 size_t sizeof_dtype, int contig_flag,
-                                 int dtype_is_object)
-{
-    __Pyx_RefNannyDeclarations
-    int i;
-    __Pyx_memviewslice new_mvs = { 0, 0, { 0 }, { 0 }, { 0 } };
-    struct __pyx_memoryview_obj *from_memview = from_mvs->memview;
-    Py_buffer *buf = &from_memview->view;
-    PyObject *shape_tuple = NULL;
-    PyObject *temp_int = NULL;
-    struct __pyx_array_obj *array_obj = NULL;
-    struct __pyx_memoryview_obj *memview_obj = NULL;
-    __Pyx_RefNannySetupContext("__pyx_memoryview_copy_new_contig", 0);
-    for (i = 0; i < ndim; i++) {
-        if (from_mvs->suboffsets[i] >= 0) {
-            PyErr_Format(PyExc_ValueError, "Cannot copy memoryview slice with "
-                                           "indirect dimensions (axis %d)", i);
-            goto fail;
-        }
-    }
-    shape_tuple = PyTuple_New(ndim);
-    if (unlikely(!shape_tuple)) {
-        goto fail;
-    }
-    __Pyx_GOTREF(shape_tuple);
-    for(i = 0; i < ndim; i++) {
-        temp_int = PyInt_FromSsize_t(from_mvs->shape[i]);
-        if(unlikely(!temp_int)) {
-            goto fail;
-        } else {
-            PyTuple_SET_ITEM(shape_tuple, i, temp_int);
-            temp_int = NULL;
-        }
-    }
-    array_obj = __pyx_array_new(shape_tuple, sizeof_dtype, buf->format, (char *) mode, NULL);
-    if (unlikely(!array_obj)) {
-        goto fail;
-    }
-    __Pyx_GOTREF(array_obj);
-    memview_obj = (struct __pyx_memoryview_obj *) __pyx_memoryview_new(
-                                    (PyObject *) array_obj, contig_flag,
-                                    dtype_is_object,
-                                    from_mvs->memview->typeinfo);
-    if (unlikely(!memview_obj))
-        goto fail;
-    if (unlikely(__Pyx_init_memviewslice(memview_obj, ndim, &new_mvs, 1) < 0))
-        goto fail;
-    if (unlikely(__pyx_memoryview_copy_contents(*from_mvs, new_mvs, ndim, ndim,
-                                                dtype_is_object) < 0))
-        goto fail;
-    goto no_fail;
-fail:
-    __Pyx_XDECREF(new_mvs.memview);
-    new_mvs.memview = NULL;
-    new_mvs.data = NULL;
-no_fail:
-    __Pyx_XDECREF(shape_tuple);
-    __Pyx_XDECREF(temp_int);
-    __Pyx_XDECREF(array_obj);
-    __Pyx_RefNannyFinishContext();
-    return new_mvs;
 }
 
 /* CIntToPy */

@@ -1,3 +1,6 @@
+# cython: language_level=3
+
+from __future__ import absolute_import
 import asyncio
 import readline
 import collections
@@ -18,8 +21,8 @@ import sounddevice as sd
 from aubio import pitch
 
 from . import names
-from .mixer import AstridMixer
-from pippi.soundbuffer import SoundBuffer
+from . cimport mixer
+from pippi.soundbuffer cimport SoundBuffer
 
 warnings.simplefilter('always')
 logging.basicConfig(level=logging.DEBUG)
@@ -127,7 +130,7 @@ class BufferQueueHandler(threading.Thread):
         self.playing = playing
         self.num_playing = num_playing
         self.block_size = block_size
-        self.mixer = AstridMixer(block_size, channels, samplerate)
+        self.mixer = mixer.AstridMixer(block_size, channels, samplerate)
         logger.info('started BUF QUEUE')
 
     def run(self):

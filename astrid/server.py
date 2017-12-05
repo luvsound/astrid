@@ -18,8 +18,8 @@ import zmq
 
 from pippi.soundbuffer import RingBuffer
 
-from . import io
 from . import midi
+from . import io
 from . import orc
 from . import workers
 from . import names
@@ -38,9 +38,6 @@ BANNER = """
 ╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═════╝ 
 """                         
 
-MSG_PORT = 9191
-MSG_HOST = 'localhost'
-
 NUMRENDERERS = 8
 
 class AstridServer(Service):
@@ -53,7 +50,7 @@ class AstridServer(Service):
     def msg_context(self):
         self.context = zmq.Context()
         self.msgsock = self.context.socket(zmq.REP)
-        address = 'tcp://*:{}'.format(MSG_PORT)
+        address = 'tcp://*:{}'.format(names.MSG_PORT)
         self.msgsock.bind(address)
         logger.info('^_-               Listening on %s' % address)
 

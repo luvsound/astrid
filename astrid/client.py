@@ -7,7 +7,7 @@ import msgpack
 from service import find_syslog
 import zmq
 
-from . import server
+from . import names
 
 class AstridClient:
     def __init__(self):
@@ -20,7 +20,7 @@ class AstridClient:
     def get_client(self):
         context = zmq.Context()
         client = context.socket(zmq.REQ)
-        address = 'tcp://{}:{}'.format(server.MSG_HOST, server.MSG_PORT)
+        address = 'tcp://{}:{}'.format(names.MSG_HOST, names.MSG_PORT)
         self.logger.debug('Connecting client to %s' % address)
         client.connect(address)
         yield client
@@ -33,11 +33,11 @@ class AstridClient:
             client.send(msg)
             resp = client.recv()
             resp = msgpack.unpackb(resp, encoding='utf-8')
-            self.logger.debug(server.cton(resp))
+            self.logger.debug(names.cton(resp))
 
     def list_instruments(self):
         with self.get_client() as client:
-            msg = msgpack.packb([server.cton(server.LIST_INSTRUMENTS)])
+            msg = msgpack.packb([names.cton(names.LIST_INSTRUMENTS)])
             client.send(msg)
             instruments = client.recv()
             self.logger.debug(('!!list instruments', instruments))

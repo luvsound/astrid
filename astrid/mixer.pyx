@@ -1,8 +1,11 @@
 # distutils: libraries = portaudio
-
+# cython: language_level=3
+ 
+from __future__ import absolute_import
 from libc.stdlib cimport malloc, calloc, free
 from pippi.soundbuffer cimport SoundBuffer
 cimport cython
+
 
 #@cython.boundscheck(False)
 #@cython.wraparound(False)
@@ -18,25 +21,9 @@ cdef int mix_block(stream_ctx *ctx, unsigned long block_size):
         if ctx.playing_current.pos < ctx.playing_current.length:
             for c in range(ctx.channels):
                 ctx.out[i * ctx.channels + c] += ctx.playing_current.frames[ctx.playing_current.pos * ctx.channels + c]
-            ctx.playing_current.pos += 1
         else:
-            print('end of buffer')
-            # Remove playbuf from stack
-            if ctx.playing_current.prev != NULL:
-                ctx.playing_current.prev.next = ctx.playing_current.next
-
-            if ctx.playing_current.next != NULL:
-                ctx.playing_current.next.prev = ctx.playing_current.prev
-
-            if ctx.done_head == NULL:
-                ctx.done_head = ctx.playing_current
-                ctx.done_tail = ctx.playing_current
-            else:
-                ctx.playing_current.prev = ctx.done_tail
-                ctx.done_tail.next = ctx.playing_current
-                ctx.done_tail = ctx.playing_current
-
             break
+        ctx.playing_current.pos = ctx.playing_current.pos + 1
 
     return 0
 
@@ -72,9 +59,15 @@ cdef int main_callback(const void *input,
     ctx.playing_current = ctx.playing_head
     cdef int count = 0
     while ctx.playing_current != NULL:
-        mix_block(ctx, frameCount)
+        if ctx.playing_current.pos < ctx.playing_current.length:
+            mix_block(ctx, frameCount)
+            
         ctx.playing_current = ctx.playing_current.next
+
         count += 1
+
+    #if ctx.playing_current == NULL:
+    #    print('end of stack')
 
     cdef float *out = <float*>output
 
@@ -124,6 +117,8 @@ cdef class AstridMixer:
         if(err != paNoError):
             print("Start stream err: %s" % Pa_GetErrorText(err))
 
+        #print('started stream')
+
     def __dealloc__(self):
         free(self.ctx.out)
         free(self.ctx)
@@ -162,20 +157,23 @@ cdef class AstridMixer:
         buf.prev = NULL
 
         if self.ctx.playing_head == NULL:
+            #print('adding buffer to empty play queue')
             self.ctx.playing_head = buf
             self.ctx.playing_tail = buf
         
         else:
+            #print('adding buffer to non-empty play queue')
             buf.prev = self.ctx.playing_tail
             self.ctx.playing_tail.next = buf
             self.ctx.playing_tail = buf
 
+        #print('added buffer to play queue')
         #self._flush()
 
     def add(self, SoundBuffer snd):
         self._add(snd)
 
-    def sleep(self, long msec):
+    def sleep(self, unsigned long msec):
         Pa_Sleep(msec)
 
     cdef void _shutdown(self) except *:

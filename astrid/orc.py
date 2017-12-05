@@ -21,7 +21,7 @@ from . import names
 
 logger = logging.getLogger('astrid')
 logger.addHandler(SysLogHandler(address=find_syslog(), facility=SysLogHandler.LOG_DAEMON))
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 ORC_DIR = 'orc'
 INSTRUMENT_RENDERER_KEY_TEMPLATE = '{}-renderer'
@@ -36,7 +36,7 @@ def load_instrument(name, path=None, cwd=None):
     logger = logging.getLogger('astrid')
     if not logger.handlers:
         logger.addHandler(SysLogHandler(address=find_syslog(), facility=SysLogHandler.LOG_DAEMON))
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
 
     if cwd is None:
         cwd = '.'
@@ -76,6 +76,8 @@ class ParamBucket:
         return self.get(key)
 
     def get(self, key, default=None):
+        if self._params is None:
+            return default
         return self._params.get(key, default)
 
 
