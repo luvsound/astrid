@@ -5,14 +5,14 @@ try:
     from Cython.Build import cythonize
     import numpy as np
     ext_modules = cythonize([
-        'astrid/io.pyx', 
+        #'astrid/io.pyx', 
         'astrid/mixer.pyx', 
     ], include_path=[np.get_include()]) 
 
 except ImportError:
     from setuptools.extension import Extension
     ext_modules = [
-        Extension('astrid.io', ['astrid/io.c']), 
+        #Extension('astrid.io', ['astrid/io.c']), 
         Extension('astrid.mixer', ['astrid/mixer.c']), 
     ]
 

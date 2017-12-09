@@ -21,8 +21,8 @@ import sounddevice as sd
 from aubio import pitch
 
 from . import names
-from . cimport mixer
-from pippi.soundbuffer cimport SoundBuffer
+from . import mixer
+from pippi.soundbuffer import SoundBuffer
 
 warnings.simplefilter('always')
 logging.basicConfig(level=logging.DEBUG)
@@ -210,7 +210,7 @@ class OldAstridMixer(mp.Process):
         buffer_queue_handler.join()
 
 
-def play_sequence(buf_q, event_loop, player, ctx, onsets, done_playing_event):
+def play_sequence(buf_q, player, ctx, onsets, done_playing_event):
     """ Schedule a sequence of overlapping oneshots
     """
     logger.info('play_sequence %s' % onsets)
@@ -224,14 +224,10 @@ def play_sequence(buf_q, event_loop, player, ctx, onsets, done_playing_event):
     logger.info('delay %s' % delay)
 
     count = 0
-    start_time = event_loop.time()
-    logger.info('start time %s' % start_time)
     logger.info('playing %s onsets %s' % (len(onsets), onsets))
     for onset in onsets:
         delay_time = onset
-        elapsed = event_loop.time() - start_time
-
-        logger.info('play note c:%s o:%s e:%s d:%s' % (count, onset, elapsed, delay_time))
+        logger.info('play note c:%s o:%s d:%s' % (count, onset, delay_time))
 
         if delay_time > 0:
             delay.wait(timeout=delay_time)
@@ -302,11 +298,10 @@ def start_voice(event_loop, executor, renderer, ctx, buf_q, play_q):
     for player, onsets in players:
         if onsets is None:
             onsets = [0]
-            #event_loop.run_in_executor(executor, play_stream, player, ctx, done_playing_event)
             
         logger.info('scheduling player onsets %s %s %s' % (count, player, onsets))
         try:
-            event_loop.run_in_executor(executor, play_sequence, buf_q, event_loop, player, ctx, onsets, done_playing_event)
+            event_loop.run_in_executor(executor, play_sequence, buf_q, player, ctx, onsets, done_playing_event)
         except Exception as e:
             logger.error('error calling play_sequence: %s' % e)
 

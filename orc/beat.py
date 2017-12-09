@@ -3,7 +3,7 @@ import glob
 from pippi import dsp, oscs, tune, rhythm
 from astrid import player
 
-BPM = 110
+BPM = 160
 MIDI = 'MPK'
 TRIG = -1
 

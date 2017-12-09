@@ -39,12 +39,75 @@ BANNER = """
 """                         
 
 NUMRENDERERS = 8
+BLOCKSIZE = 64
+CHANNELS = 2
+SAMPLERATE = 44100
+RINGBUFFERLENGTH = 30
 
 class AstridServer(Service):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.manager = mp.Manager()
+
+        self.buf_q = self.manager.Queue()
+        self.bus = self.manager.Namespace()
         self.cwd = os.getcwd()
         self.event_loop = asyncio.get_event_loop()
+        self.load_q = self.manager.Queue()
+        self.numrenderers = NUMRENDERERS
+        self.play_q = self.manager.Queue()
+        self.reply_q = self.manager.Queue()
+
+        # FIXME get this from env
+        self.block_size = BLOCKSIZE
+        self.channels = CHANNELS
+        self.samplerate = SAMPLERATE
+        self.input_buffer_length = RINGBUFFERLENGTH
+
+        setattr(self.bus, 'block_size', self.block_size)
+        setattr(self.bus, 'channels', self.channels)
+        setattr(self.bus, 'samplerate', self.samplerate)
+        setattr(self.bus, 'input_buffer_length', self.input_buffer_length)
+
+        self.input_buffer_maxlen = (self.input_buffer_length * self.samplerate) // self.block_size
+        setattr(self.bus, 'input_buffer_maxlen', self.input_buffer_maxlen)
+
+        self.input_buffer = None
+        self.playing = self.manager.list()
+        self.num_playing = self.manager.Value('i', 0)
+        self.record_head = self.manager.Value('i', 0)
+
+        self.stop_all = self.manager.Event() # voices
+        self.shutdown_flag = self.manager.Event() # render & analysis processes
+        self.stop_listening = self.manager.Event() # midi listeners
+        self.finished_playing = self.manager.Event() # Mixer
+
+        self.renderers = []
+        self.observers = {}
+        self.listeners = {}
+
+        self.buffer_queue_handler = io.BufferQueueHandler(self.buf_q, self.playing, self.num_playing, self.block_size, self.channels, self.samplerate)
+        self.buffer_queue_handler.start()
+
+        #self.tracker = workers.AnalysisProcess(self.bus, self.shutdown_flag, self.input_buffer, self.record_head)
+        #self.tracker.start()
+
+        for _ in range(self.numrenderers):
+            rp = workers.RenderProcess(
+                    self.buf_q, 
+                    self.play_q, 
+                    self.load_q, 
+                    self.reply_q, 
+                    self.shutdown_flag,
+                    self.stop_all, 
+                    self.stop_listening, 
+                    self.bus, 
+                    self.event_loop,
+                    self.cwd
+                )
+            rp.start()
+            self.renderers += [ rp ]
+
 
     @contextmanager
     def msg_context(self):
@@ -78,8 +141,8 @@ class AstridServer(Service):
         #self.tracker.join()
         #logger.info('analysis cleaned up')
 
-        self.mixer.join()
-        logger.info('mixer cleaned up')
+        self.buffer_queue_handler.join()
+        logger.info('buffer queue handler cleaned up')
 
         self.event_loop.stop()
         self.event_loop.close()
@@ -98,82 +161,6 @@ class AstridServer(Service):
 
     def run(self):
         logger.info(BANNER)
-        self.numrenderers = 8
-        self.manager = mp.Manager()
-        self.buf_q = self.manager.Queue()
-        self.play_q = self.manager.Queue()
-        self.load_q = self.manager.Queue()
-        self.reply_q = self.manager.Queue()
-        self.bus = self.manager.Namespace()
-
-
-        # FIXME get this from env
-        self.block_size = 512
-        self.channels = 2
-        self.samplerate = 44100
-        self.input_buffer_length = 30
-
-        setattr(self.bus, 'block_size', self.block_size)
-        setattr(self.bus, 'channels', self.channels)
-        setattr(self.bus, 'samplerate', self.samplerate)
-        setattr(self.bus, 'input_buffer_length', self.input_buffer_length)
-
-        self.input_buffer_maxlen = (self.input_buffer_length * self.samplerate) // self.block_size
-        setattr(self.bus, 'input_buffer_maxlen', self.input_buffer_maxlen)
-
-        logger.error(self.input_buffer_maxlen)
-        #self.input_buffer = collections.deque(maxlen=self.input_buffer_maxlen)
-        self.input_buffer = None
-        self.playing = self.manager.list()
-        self.num_playing = self.manager.Value('i', 0)
-        self.record_head = self.manager.Value('i', 0)
-
-        self.stop_all = self.manager.Event() # voices
-        self.shutdown_flag = self.manager.Event() # render & analysis processes
-        self.stop_listening = self.manager.Event() # midi listeners
-        self.finished_playing = self.manager.Event() # Mixer
-
-        self.renderers = []
-        self.observers = {}
-        self.listeners = {}
-
-        """
-        self.mixer = io.AstridMixer(
-                            self.buf_q, 
-                            self.play_q, 
-                            self.playing, 
-                            self.num_playing, 
-                            self.record_head,
-                            self.finished_playing, 
-                            self.block_size, 
-                            self.channels, 
-                            self.samplerate, 
-                            self.input_buffer, 
-                            self.input_buffer_maxlen
-                        )
-        self.mixer.start()
-        """
-        buffer_queue_handler = io.BufferQueueHandler(self.buf_q, self.playing, self.num_playing, self.block_size, self.channels, self.samplerate)
-        buffer_queue_handler.start()
-
-        #self.tracker = workers.AnalysisProcess(self.bus, self.shutdown_flag, self.input_buffer, self.record_head)
-        #self.tracker.start()
-
-        for _ in range(self.numrenderers):
-            rp = workers.RenderProcess(
-                    self.buf_q, 
-                    self.play_q, 
-                    self.load_q, 
-                    self.reply_q, 
-                    self.shutdown_flag,
-                    self.stop_all, 
-                    self.stop_listening, 
-                    self.bus, 
-                    self.event_loop,
-                    self.cwd
-                )
-            rp.start()
-            self.renderers += [ rp ]
 
         with self.msg_context():
             while True:

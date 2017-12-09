@@ -6,7 +6,7 @@ import multiprocessing as mp
 import threading
 
 
-class TestOrc(TestCase):
+class TestMixer(TestCase):
     def test_play_note_sequence(self):
         block_size = 64
         channels = 2

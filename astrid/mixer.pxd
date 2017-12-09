@@ -1,4 +1,4 @@
-from pippi.soundbuffer cimport SoundBuffer
+from pippi.soundbuffer cimport SoundBuffer, RingBuffer
 
 cdef extern from 'portaudio.h':
     ctypedef int PaError
@@ -105,17 +105,20 @@ cdef struct playbuf:
     int length
     int channels
     int pos
-    playbuf *prev
-    playbuf *next
+    playbuf* prev
+    playbuf* next
 
 cdef struct stream_ctx:
     double* out
-    playbuf *playing_head
-    playbuf *playing_tail
-    playbuf *playing_current
-    playbuf *done_head
-    playbuf *done_tail
-    PaStream *stream
+    playbuf* playing_head
+    playbuf* playing_tail
+    playbuf* playing_current
+    playbuf* done_head
+    playbuf* done_tail
+    PaStream* stream
+    double* input_ringbuffer
+    int input_write_head
+    int input_framelength
     int channels
 
 
@@ -124,8 +127,10 @@ cdef class AstridMixer:
     cdef public int channels
     cdef public int samplerate
     cdef stream_ctx* ctx
+    cdef RingBuffer input_ringbuffer
 
     cdef void _add(self, SoundBuffer sound) except *
     cdef void _flush(self) except *
     cdef void _shutdown(self) except *
+    cdef double[:,:] _read_input(self, int frames, int offset)
 

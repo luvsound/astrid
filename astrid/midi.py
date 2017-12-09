@@ -50,7 +50,7 @@ class MidiDeviceBucket:
         and key in self._mapping:
             key = self.__mapping[key]
 
-        return getattr(self._bus, MIDI_MSG_CC_TEMPLATE.format(device=self._device, cc=key), default)
+        return getattr(self._bus, MIDI_MSG_CC_TEMPLATE.format(device=self._device, cc=key[2:]), default)
 
     def getnote(self, key, default=None):
         if not self._device:

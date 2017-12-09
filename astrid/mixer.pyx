@@ -5,11 +5,12 @@ from __future__ import absolute_import
 from libc.stdlib cimport malloc, calloc, free
 from pippi.soundbuffer cimport SoundBuffer
 cimport cython
+import numpy as np
 
 
-#@cython.boundscheck(False)
-#@cython.wraparound(False)
-cdef int mix_block(stream_ctx *ctx, unsigned long block_size):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef int mix_block(stream_ctx* ctx, unsigned long block_size):
     """ Add frames to output, removing from 
         playing list and adding to done queu 
         if no more frames are available.
@@ -25,32 +26,22 @@ cdef int mix_block(stream_ctx *ctx, unsigned long block_size):
             break
         ctx.playing_current.pos = ctx.playing_current.pos + 1
 
+    #print('mixed')
     return 0
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef int main_callback(const void *input, 
-                             void *output,
-                    unsigned long frameCount,
-  const PaStreamCallbackTimeInfo* timeInfo,
-            PaStreamCallbackFlags statusFlags,
-                             void *current_context):
-    """ Starting at root node, follow the chain of 
-        buffers in the playing stack until the end, 
-        Summing each and writing samples out to the 
-        stream.
-
-        As buffers are read, if no more samples are available, 
-        remove the buffer from the stack. Which involves:
-        Setting the value of next_buffer->previous to 
-        deleted_buffer->previous, and deleted_buffer->previous->next to 
-        next_buffer... then freeing memory.
-    """
+cdef int main_callback(const void* inputbuffer, 
+                             void* output,
+                     unsigned long frameCount,
+   const PaStreamCallbackTimeInfo* timeInfo,
+             PaStreamCallbackFlags statusFlags,
+                             void* current_context):
     cdef int i = 0
     cdef int j = 0
     cdef int c = 0
 
-    cdef stream_ctx *ctx = <stream_ctx*>current_context
+    cdef stream_ctx* ctx = <stream_ctx*>current_context
 
     for i in range(<int>frameCount):
         for c in range(ctx.channels):
@@ -66,20 +57,28 @@ cdef int main_callback(const void *input,
 
         count += 1
 
-    #if ctx.playing_current == NULL:
-    #    print('end of stack')
-
-    cdef float *out = <float*>output
+    cdef float* out = <float*>output
+    cdef const float* inp = <const float*>inputbuffer
+    cdef double* rbp = &ctx.input_ringbuffer[ctx.input_write_head * ctx.channels]
 
     for i in range(<int>frameCount):
         for c in range(ctx.channels):
             out[j] = <float>ctx.out[i * ctx.channels + c]
             j += 1
+    j = 0
+
+    if inputbuffer != NULL:
+        for i in range(<int>frameCount):
+            for c in range(ctx.channels):
+                rbp[ctx.input_write_head * ctx.channels + c ] = <double>inp[j]
+                j += 1
+
+        ctx.input_write_head = (ctx.input_write_head + 1) % ctx.input_framelength
 
     return 0
 
 cdef class AstridMixer:
-    def __cinit__(self, int block_size=64, int channels=2, int samplerate=44100):
+    def __cinit__(self, int block_size=64, int channels=2, int samplerate=44100, double ringbuffer_length=30):
         self.block_size = block_size
         self.channels = channels
         self.samplerate = samplerate
@@ -88,14 +87,19 @@ cdef class AstridMixer:
         cdef PaError err
         cdef PaStreamCallback* cb
 
+
         self.ctx = <stream_ctx*>malloc(sizeof(stream_ctx))
         self.ctx.out = <double*>calloc(block_size * channels, sizeof(double))
+        self.ctx.input_framelength = <int>(ringbuffer_length * samplerate)
+        self.ctx.input_ringbuffer = <double*>calloc(self.ctx.input_framelength * channels, sizeof(double))
+        self.ctx.input_write_head = 0
         self.ctx.channels = channels
         self.ctx.playing_head = NULL
         self.ctx.playing_tail = NULL
         self.ctx.playing_current = NULL
         self.ctx.done_head = NULL
         self.ctx.done_tail = NULL
+        #print('mixer ctx alloc')
 
         cb = <PaStreamCallback*>&main_callback
 
@@ -120,12 +124,13 @@ cdef class AstridMixer:
         #print('started stream')
 
     def __dealloc__(self):
-        free(self.ctx.out)
-        free(self.ctx)
+        #free(self.ctx.out)
+        #free(self.ctx)
+        pass
 
     cdef void _flush(self) except *:
-        cdef playbuf *current = self.ctx.playing_head
-        cdef playbuf *tofree = NULL
+        cdef playbuf* current = self.ctx.playing_head
+        cdef playbuf* tofree = NULL
         while current != NULL:
             tofree = current
             current = current.next
@@ -137,10 +142,11 @@ cdef class AstridMixer:
         self.ctx.done_tail = NULL
 
     cdef void _add(self, SoundBuffer snd) except *:
+        #print('mixer add')
         cdef int length = len(snd)
         cdef int channels = snd.channels
 
-        cdef playbuf *buf = <playbuf*>malloc(sizeof(playbuf))
+        cdef playbuf* buf = <playbuf*>malloc(sizeof(playbuf))
         buf.frames = <double*>calloc(length * channels, sizeof(double))
 
         cdef int i = 0
@@ -157,21 +163,39 @@ cdef class AstridMixer:
         buf.prev = NULL
 
         if self.ctx.playing_head == NULL:
-            #print('adding buffer to empty play queue')
             self.ctx.playing_head = buf
             self.ctx.playing_tail = buf
         
         else:
-            #print('adding buffer to non-empty play queue')
             buf.prev = self.ctx.playing_tail
             self.ctx.playing_tail.next = buf
             self.ctx.playing_tail = buf
 
-        #print('added buffer to play queue')
         #self._flush()
 
     def add(self, SoundBuffer snd):
         self._add(snd)
+
+    cdef double[:,:] _read_input(self, int frames, int offset):
+        cdef int i = 0
+        cdef int c = 0
+        cdef int read_head = 0
+        cdef double[:,:] out = np.zeros((frames, self.channels))
+
+        if frames > self.input_framelength:
+            frames = self.input_framelength
+
+        read_head = (self.input_write_head - frames + offset) % self.input_framelength
+        for i in range(frames):
+            for c in range(self.channels):
+                out[i][c] = self.ctx.input_ringbuffer[read_head * self.channels + c]
+            read_head = (read_head + 1) % self.input_framelength
+
+        return out
+
+    def read(self, int frames, int offset=0):
+        #print('mixer.read')
+        return SoundBuffer(self._read_input(frames, offset), self.channels, self.samplerate)
 
     def sleep(self, unsigned long msec):
         Pa_Sleep(msec)
