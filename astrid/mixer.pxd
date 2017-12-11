@@ -1,8 +1,9 @@
-from pippi.soundbuffer cimport SoundBuffer, RingBuffer
+from pippi.soundbuffer cimport SoundBuffer
 
 cdef extern from 'portaudio.h':
     ctypedef int PaError
     ctypedef void PaStream
+    const int paFramesPerBufferUnspecified
 
     cdef const char *Pa_GetErrorText( PaError errorCode )
 
@@ -20,6 +21,7 @@ cdef extern from 'portaudio.h':
     ctypedef unsigned long PaStreamCallbackFlags
     ctypedef unsigned long PaSampleFormat
     ctypedef int PaDeviceIndex
+    ctypedef int PaHostApiIndex
 
     PaSampleFormat paFloat32
     PaSampleFormat paInt32
@@ -41,6 +43,21 @@ cdef extern from 'portaudio.h':
         PaTime inputBufferAdcTime
         PaTime currentTime
         PaTime outputBufferDacTime
+
+    ctypedef struct PaDeviceInfo:
+        int structVersion
+        const char *name
+        PaHostApiIndex hostApi
+        
+        int maxInputChannels
+        int maxOutputChannels
+
+        PaTime defaultLowInputLatency
+        PaTime defaultLowOutputLatency
+        PaTime defaultHighInputLatency
+        PaTime defaultHighOutputLatency
+
+        double defaultSampleRate
 
     ctypedef int (*PaStreamCallback) (const void *input, void *output,
                                         unsigned long frameCount,
@@ -66,6 +83,10 @@ cdef extern from 'portaudio.h':
                   PaStreamCallback *streamCallback,
                   void *userData )
 
+
+    PaDeviceIndex Pa_GetDefaultInputDevice()
+    PaDeviceIndex Pa_GetDefaultOutputDevice()
+    const PaDeviceInfo* Pa_GetDeviceInfo( PaDeviceIndex device )
 
     ctypedef enum PaErrorCode:
         paNoError = 0
@@ -113,13 +134,13 @@ cdef struct stream_ctx:
     playbuf* playing_head
     playbuf* playing_tail
     playbuf* playing_current
-    playbuf* done_head
-    playbuf* done_tail
-    PaStream* stream
-    double* input_ringbuffer
-    int input_write_head
-    int input_framelength
+    PaStream* output_stream
+    PaStream* input_stream
+    double* ringbuffer
+    int ringbuffer_pos
+    int ringbuffer_length
     int channels
+    int samplerate
 
 
 cdef class AstridMixer:
@@ -127,7 +148,8 @@ cdef class AstridMixer:
     cdef public int channels
     cdef public int samplerate
     cdef stream_ctx* ctx
-    cdef RingBuffer input_ringbuffer
+    cdef PaStreamParameters* input_params
+    cdef PaStreamParameters* output_params
 
     cdef void _add(self, SoundBuffer sound) except *
     cdef void _flush(self) except *

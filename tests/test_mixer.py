@@ -4,9 +4,25 @@ from astrid.mixer import AstridMixer
 from astrid import orc
 import multiprocessing as mp
 import threading
+from pippi import dsp
 
 
 class TestMixer(TestCase):
+    def test_play_sample(self):
+        block_size = 64
+        channels = 2
+        samplerate = 44100
+
+        mixer = AstridMixer(block_size, channels, samplerate)
+
+        snd = dsp.read('tests/sounds/vibes.wav')
+
+        mixer.add(snd)
+        mixer.sleep(snd.dur*1000.0)
+
+        mixer.shutdown()
+
+
     def test_play_note_sequence(self):
         block_size = 64
         channels = 2
@@ -45,3 +61,26 @@ class TestMixer(TestCase):
         mixer.sleep(1000)
 
         mixer.shutdown()
+
+
+    def test_play_input_recording(self):
+        block_size = 64
+        channels = 2
+        samplerate = 44100
+        lengthms = 2000
+
+        mixer = AstridMixer(block_size, channels, samplerate)
+
+        # fill up the ringbuffer for a while
+        mixer.sleep(lengthms)
+
+        # get the recording from the mixer
+        snd = mixer.read(int(lengthms * 0.001 * samplerate))
+        #snd.write('inp.wav')
+
+        # play the sound
+        mixer.add(snd)
+        mixer.sleep(lengthms * 2)
+
+        mixer.shutdown()
+
