@@ -1,21 +1,13 @@
-import logging
-from logging.handlers import SysLogHandler
 import multiprocessing as mp
-
 import mido
-from service import find_syslog
 
 from pippi import tune
-from astrid import client
+from . import client
+from .logger import logger
 
 MIDI_MSG_NOTE_TEMPLATE = 'midi-message-{device}-note-{note}'
 MIDI_MSG_CC_TEMPLATE = 'midi-message-{device}-cc-{cc}'
 MIDI_LISTENER_KEY_TEMPLATE = '{}-midi-listener'
-
-logger = logging.getLogger('astrid')
-if not logger.handlers:
-    logger.addHandler(SysLogHandler(address=find_syslog(), facility=SysLogHandler.LOG_DAEMON))
-logger.setLevel(logging.DEBUG)
 
 def find_device(substr, input_device=True):
     try:

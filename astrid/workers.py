@@ -1,9 +1,6 @@
-import logging
-from logging.handlers import SysLogHandler
 import multiprocessing as mp
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from service import find_syslog
 import queue
 import time
 
@@ -11,44 +8,7 @@ from . import io
 from . import midi
 from . import orc
 from . import names
-
-
-logger = logging.getLogger('astrid')
-if not logger.handlers:
-    logger.addHandler(SysLogHandler(address=find_syslog(), facility=SysLogHandler.LOG_DAEMON))
-logger.setLevel(logging.INFO)
-
-class AnalysisProcess(mp.Process):
-    def __init__(self, bus, shutdown_signal, input_buffer, record_head):
-        logger.info('Starting AnalysisProcess')
-        super(AnalysisProcess, self).__init__()
-        self.bus = bus
-        self.shutdown_signal = shutdown_signal
-        self.name = 'astrid-analysis'
-        self.input_buffer = input_buffer
-        self.record_head = record_head
-
-    def run(self):
-        logger.info('Starting pitch tracker')
-        try:
-            pitch_tracker = mp.Process(name='astrid-pitch-tracker', target=io.pitch_tracker, args=(self.bus, self.record_head, self.input_buffer, self.shutdown_signal))
-            pitch_tracker.start()
-        except Exception as e:
-            logger.error(e)
-
-        logger.info('Starting envelope follower')
-        try:
-            envelope_follower = mp.Process(name='astrid-envelope-follower', target=io.envelope_follower, args=(self.bus, self.record_head, self.input_buffer, self.shutdown_signal))
-            envelope_follower.start()
-        except Exception as e:
-            logger.error(e)
-
-        logger.info('started analysis')
-        self.shutdown_signal.wait()
-
-        pitch_tracker.join()
-        envelope_follower.join()
-        logger.info('analysis shut down')
+from .logger import logger
 
 class RenderProcess(mp.Process):
     def __init__(self, 
@@ -89,38 +49,40 @@ class RenderProcess(mp.Process):
         self.latency = 'low'
         self.device = None
 
-    def load_renderer(self, name):
-        renderer = orc.load_instrument(name, cwd=self.cwd)
-        logger.info('render process load_renderer %s' % renderer)
-        self.instruments[name] = renderer
+    def load_renderer(self, instrument_name, instrument_path):
+        renderer = orc.load_instrument(instrument_name, instrument_path)
+        logger.debug('render process load_renderer %s' % renderer)
+        self.instruments[instrument_name] = renderer
         return renderer
 
-    def get_renderer(self, name):
-        # FIXME add loader and keep local dict of renderers
-        renderer = self.instruments.get(name, None)         
+    def get_renderer(self, instrument_name):
+        renderer = self.instruments.get(instrument_name, None)         
         if renderer is None:
-            renderer = self.load_renderer(name)
-        logger.info('render process get_renderer %s' % renderer)
+            instrument_path = os.path.join(self.cwd, names.ORC_DIR, '%s.py' % instrument_name)
+            renderer = self.load_renderer(instrument_name, instrument_path)
+        logger.debug('render process get_renderer %s' % renderer)
         return renderer
 
     def run(self):
-        logger.info('render process init')
+        logger.debug('render process init')
 
         def wait_for_shutdown(q, shutdown_flag):
             shutdown_flag.wait()
             q.put((names.SHUTDOWN, None))
-            logger.info('render process put shutdown')
+            logger.debug('render process put shutdown')
 
         def wait_for_loads(load_q, q, shutdown_flag):
             while True:
                 msg = load_q.get()
+                logger.info('GOT LOAD')
+                logger.info(msg)
 
                 if msg == names.SHUTDOWN:
-                    logger.info('render process shutdown load queue')
+                    logger.debug('render process shutdown load queue')
                     break
 
                 q.put((names.LOAD_INSTRUMENT, msg))
-                logger.info('render process put load %s' % msg)
+                logger.debug('render process put load %s %s' % msg)
 
                 # dumb way to try to keep it to one load per process
                 # FIXME this probably doesn't always work
@@ -131,11 +93,11 @@ class RenderProcess(mp.Process):
                 msg = play_q.get()
 
                 if msg == names.SHUTDOWN:
-                    logger.info('render process shutdown play queue')
+                    logger.debug('render process shutdown play queue')
                     break
 
                 q.put((names.PLAY_INSTRUMENT, msg))
-                logger.info('render process put play %s' % msg)
+                logger.debug('render process put play %s' % msg)
 
         load_listener = threading.Thread(name='astrid-load-queue-listener', target=wait_for_loads, args=(self.load_q, self.q, self.shutdown_flag))
         load_listener.start()
@@ -148,16 +110,16 @@ class RenderProcess(mp.Process):
 
         try:
             while True:
-                logger.info('render process waiting for messages')
+                logger.debug('render process waiting for messages')
                 action, cmd = self.q.get()
-                logger.info('got message %s %s' % (action, cmd))
+                logger.debug('got message %s %s' % (action, cmd))
 
                 if action == names.LOAD_INSTRUMENT:
-                    logger.info('render process LOAD_INSTRUMENT %s' % cmd)
-                    self.load_renderer(cmd)
+                    logger.debug('render process LOAD_INSTRUMENT %s %s' % cmd)
+                    self.load_renderer(*cmd)
 
                 elif action == names.PLAY_INSTRUMENT:
-                    logger.info('render process PLAY_INSTRUMENT %s' % cmd)
+                    logger.debug('render process PLAY_INSTRUMENT %s' % cmd)
                     instrument_name = cmd[0]
                     params = None
                     if len(cmd) > 1:
@@ -168,7 +130,7 @@ class RenderProcess(mp.Process):
                         logger.error('No renderer loaded for %s' % instrument_name)
                         continue
 
-                    logger.info('starting voice with inst %s and params %s' % (renderer, params))
+                    logger.debug('starting voice with inst %s and params %s' % (renderer, params))
 
                     device_aliases = []
                     midi_maps = {}
@@ -192,7 +154,7 @@ class RenderProcess(mp.Process):
 
                             midi_maps[device] = mapping 
 
-                        logger.info('MIDI device mapping %s %s' % (device, mapping))
+                        logger.debug('MIDI device mapping %s %s' % (device, mapping))
 
                     ctx = orc.EventContext(
                                 params=params, 
@@ -205,12 +167,12 @@ class RenderProcess(mp.Process):
                                 midi_maps=midi_maps, 
                             )
 
-                    logger.info('ctx %s' % ctx)
+                    logger.debug('ctx %s' % ctx)
 
                     io.start_voice(self.event_loop, self.render_pool, renderer, ctx, self.buf_q, self.play_q)
 
                 elif action == names.SHUTDOWN:
-                    logger.info('got shutdown')
+                    logger.debug('got shutdown')
                     break
         except Exception as e:
             logger.error(e)
@@ -219,6 +181,6 @@ class RenderProcess(mp.Process):
         load_listener.join()
         play_listener.join()
         shutdown_listener.join()
-        logger.info('render process finished')
+        logger.debug('render process finished')
 
 

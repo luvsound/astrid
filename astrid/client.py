@@ -1,27 +1,19 @@
 from contextlib import contextmanager
-import logging
-from logging.handlers import SysLogHandler
 import os
 
 import msgpack
-from service import find_syslog
 import zmq
 
 from . import names
+from .logger import logger
 
 class AstridClient:
-    def __init__(self):
-        self.logger = logging.getLogger('astrid')
-        if not self.logger.handlers:
-            self.logger.addHandler(SysLogHandler(address=find_syslog(), facility=SysLogHandler.LOG_DAEMON))
-        self.logger.setLevel(logging.INFO)
-
     @contextmanager
     def get_client(self):
         context = zmq.Context()
         client = context.socket(zmq.REQ)
         address = 'tcp://{}:{}'.format(names.MSG_HOST, names.MSG_PORT)
-        self.logger.debug('Connecting client to %s' % address)
+        logger.debug('Connecting client to %s' % address)
         client.connect(address)
         yield client
         context.destroy()
@@ -33,16 +25,16 @@ class AstridClient:
             client.send(msg)
             resp = client.recv()
             resp = msgpack.unpackb(resp, encoding='utf-8')
-            self.logger.debug(names.cton(resp))
+            logger.debug(names.cton(resp))
 
     def list_instruments(self):
         with self.get_client() as client:
             msg = msgpack.packb([names.cton(names.LIST_INSTRUMENTS)])
             client.send(msg)
             instruments = client.recv()
-            self.logger.debug(('!!list instruments', instruments))
+            logger.debug(('!!list instruments', instruments))
             instruments = msgpack.unpackb(instruments, encoding='utf-8')
-            self.logger.debug(('!!list instruments', instruments))
+            logger.debug(('!!list instruments', instruments))
             return instruments      
 
         return {}

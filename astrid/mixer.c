@@ -1227,6 +1227,50 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_GetAttrStr(PyObject* obj, PyObject
 /* GetBuiltinName.proto */
 static PyObject *__Pyx_GetBuiltinName(PyObject *name);
 
+/* None.proto */
+static CYTHON_INLINE int __Pyx_mod_int(int, int);
+
+/* PyThreadStateGet.proto */
+#if CYTHON_FAST_THREAD_STATE
+#define __Pyx_PyThreadState_declare  PyThreadState *__pyx_tstate;
+#define __Pyx_PyThreadState_assign  __pyx_tstate = __Pyx_PyThreadState_Current;
+#define __Pyx_PyErr_Occurred()  __pyx_tstate->curexc_type
+#else
+#define __Pyx_PyThreadState_declare
+#define __Pyx_PyThreadState_assign
+#define __Pyx_PyErr_Occurred()  PyErr_Occurred()
+#endif
+
+/* PyErrFetchRestore.proto */
+#if CYTHON_FAST_THREAD_STATE
+#define __Pyx_PyErr_Clear() __Pyx_ErrRestore(NULL, NULL, NULL)
+#define __Pyx_ErrRestoreWithState(type, value, tb)  __Pyx_ErrRestoreInState(PyThreadState_GET(), type, value, tb)
+#define __Pyx_ErrFetchWithState(type, value, tb)    __Pyx_ErrFetchInState(PyThreadState_GET(), type, value, tb)
+#define __Pyx_ErrRestore(type, value, tb)  __Pyx_ErrRestoreInState(__pyx_tstate, type, value, tb)
+#define __Pyx_ErrFetch(type, value, tb)    __Pyx_ErrFetchInState(__pyx_tstate, type, value, tb)
+static CYTHON_INLINE void __Pyx_ErrRestoreInState(PyThreadState *tstate, PyObject *type, PyObject *value, PyObject *tb);
+static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject **type, PyObject **value, PyObject **tb);
+#if CYTHON_COMPILING_IN_CPYTHON
+#define __Pyx_PyErr_SetNone(exc) (Py_INCREF(exc), __Pyx_ErrRestore((exc), NULL, NULL))
+#else
+#define __Pyx_PyErr_SetNone(exc) PyErr_SetNone(exc)
+#endif
+#else
+#define __Pyx_PyErr_Clear() PyErr_Clear()
+#define __Pyx_PyErr_SetNone(exc) PyErr_SetNone(exc)
+#define __Pyx_ErrRestoreWithState(type, value, tb)  PyErr_Restore(type, value, tb)
+#define __Pyx_ErrFetchWithState(type, value, tb)  PyErr_Fetch(type, value, tb)
+#define __Pyx_ErrRestoreInState(tstate, type, value, tb)  PyErr_Restore(type, value, tb)
+#define __Pyx_ErrFetchInState(tstate, type, value, tb)  PyErr_Fetch(type, value, tb)
+#define __Pyx_ErrRestore(type, value, tb)  PyErr_Restore(type, value, tb)
+#define __Pyx_ErrFetch(type, value, tb)  PyErr_Fetch(type, value, tb)
+#endif
+
+/* WriteUnraisableException.proto */
+static void __Pyx_WriteUnraisable(const char *name, int clineno,
+                                  int lineno, const char *filename,
+                                  int full_traceback, int nogil);
+
 /* RaiseDoubleKeywords.proto */
 static void __Pyx_RaiseDoubleKeywordsError(const char* func_name, PyObject* kw_name);
 
@@ -1316,45 +1360,6 @@ static CYTHON_INLINE int __Pyx_div_int(int, int);
 /* UnaryNegOverflows.proto */
 #define UNARY_NEG_WOULD_OVERFLOW(x)\
         (((x) < 0) & ((unsigned long)(x) == 0-(unsigned long)(x)))
-
-/* None.proto */
-static CYTHON_INLINE int __Pyx_mod_int(int, int);
-
-/* PyThreadStateGet.proto */
-#if CYTHON_FAST_THREAD_STATE
-#define __Pyx_PyThreadState_declare  PyThreadState *__pyx_tstate;
-#define __Pyx_PyThreadState_assign  __pyx_tstate = __Pyx_PyThreadState_Current;
-#define __Pyx_PyErr_Occurred()  __pyx_tstate->curexc_type
-#else
-#define __Pyx_PyThreadState_declare
-#define __Pyx_PyThreadState_assign
-#define __Pyx_PyErr_Occurred()  PyErr_Occurred()
-#endif
-
-/* PyErrFetchRestore.proto */
-#if CYTHON_FAST_THREAD_STATE
-#define __Pyx_PyErr_Clear() __Pyx_ErrRestore(NULL, NULL, NULL)
-#define __Pyx_ErrRestoreWithState(type, value, tb)  __Pyx_ErrRestoreInState(PyThreadState_GET(), type, value, tb)
-#define __Pyx_ErrFetchWithState(type, value, tb)    __Pyx_ErrFetchInState(PyThreadState_GET(), type, value, tb)
-#define __Pyx_ErrRestore(type, value, tb)  __Pyx_ErrRestoreInState(__pyx_tstate, type, value, tb)
-#define __Pyx_ErrFetch(type, value, tb)    __Pyx_ErrFetchInState(__pyx_tstate, type, value, tb)
-static CYTHON_INLINE void __Pyx_ErrRestoreInState(PyThreadState *tstate, PyObject *type, PyObject *value, PyObject *tb);
-static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject **type, PyObject **value, PyObject **tb);
-#if CYTHON_COMPILING_IN_CPYTHON
-#define __Pyx_PyErr_SetNone(exc) (Py_INCREF(exc), __Pyx_ErrRestore((exc), NULL, NULL))
-#else
-#define __Pyx_PyErr_SetNone(exc) PyErr_SetNone(exc)
-#endif
-#else
-#define __Pyx_PyErr_Clear() PyErr_Clear()
-#define __Pyx_PyErr_SetNone(exc) PyErr_SetNone(exc)
-#define __Pyx_ErrRestoreWithState(type, value, tb)  PyErr_Restore(type, value, tb)
-#define __Pyx_ErrFetchWithState(type, value, tb)  PyErr_Fetch(type, value, tb)
-#define __Pyx_ErrRestoreInState(tstate, type, value, tb)  PyErr_Restore(type, value, tb)
-#define __Pyx_ErrFetchInState(tstate, type, value, tb)  PyErr_Fetch(type, value, tb)
-#define __Pyx_ErrRestore(type, value, tb)  PyErr_Restore(type, value, tb)
-#define __Pyx_ErrFetch(type, value, tb)  PyErr_Fetch(type, value, tb)
-#endif
 
 /* RaiseException.proto */
 static void __Pyx_Raise(PyObject *type, PyObject *value, PyObject *tb, PyObject *cause);
@@ -1539,11 +1544,6 @@ static CYTHON_INLINE void __Pyx_RaiseUnboundLocalError(const char *varname);
 
 /* None.proto */
 static CYTHON_INLINE long __Pyx_div_long(long, long);
-
-/* WriteUnraisableException.proto */
-static void __Pyx_WriteUnraisable(const char *name, int clineno,
-                                  int lineno, const char *filename,
-                                  int full_traceback, int nogil);
 
 /* ImportFrom.proto */
 static PyObject* __Pyx_ImportFrom(PyObject* module, PyObject* name);
@@ -2551,7 +2551,7 @@ static int __pyx_f_6astrid_5mixer_input_callback(void const *__pyx_v_inputbuffer
  * 
  *     if inputbuffer != NULL:             # <<<<<<<<<<<<<<
  *         for i in range(<int>frameCount * ctx.channels):
- *             ctx.ringbuffer[ctx.ringbuffer_pos] = <double>inp[i]
+ *             ctx.ringbuffer[ctx.ringbuffer_pos % ctx.ringbuffer_length] = <double>inp[i]
  */
   __pyx_t_1 = ((__pyx_v_inputbuffer != NULL) != 0);
   if (__pyx_t_1) {
@@ -2560,7 +2560,7 @@ static int __pyx_f_6astrid_5mixer_input_callback(void const *__pyx_v_inputbuffer
  * 
  *     if inputbuffer != NULL:
  *         for i in range(<int>frameCount * ctx.channels):             # <<<<<<<<<<<<<<
- *             ctx.ringbuffer[ctx.ringbuffer_pos] = <double>inp[i]
+ *             ctx.ringbuffer[ctx.ringbuffer_pos % ctx.ringbuffer_length] = <double>inp[i]
  *             ctx.ringbuffer_pos += 1
  */
     __pyx_t_2 = (((int)__pyx_v_frameCount) * __pyx_v_ctx->channels);
@@ -2570,15 +2570,19 @@ static int __pyx_f_6astrid_5mixer_input_callback(void const *__pyx_v_inputbuffer
       /* "astrid/mixer.pyx":86
  *     if inputbuffer != NULL:
  *         for i in range(<int>frameCount * ctx.channels):
- *             ctx.ringbuffer[ctx.ringbuffer_pos] = <double>inp[i]             # <<<<<<<<<<<<<<
+ *             ctx.ringbuffer[ctx.ringbuffer_pos % ctx.ringbuffer_length] = <double>inp[i]             # <<<<<<<<<<<<<<
  *             ctx.ringbuffer_pos += 1
  * 
  */
-      (__pyx_v_ctx->ringbuffer[__pyx_v_ctx->ringbuffer_pos]) = ((double)(__pyx_v_inp[__pyx_v_i]));
+      if (unlikely(__pyx_v_ctx->ringbuffer_length == 0)) {
+        PyErr_SetString(PyExc_ZeroDivisionError, "integer division or modulo by zero");
+        __PYX_ERR(0, 86, __pyx_L1_error)
+      }
+      (__pyx_v_ctx->ringbuffer[__Pyx_mod_int(__pyx_v_ctx->ringbuffer_pos, __pyx_v_ctx->ringbuffer_length)]) = ((double)(__pyx_v_inp[__pyx_v_i]));
 
       /* "astrid/mixer.pyx":87
  *         for i in range(<int>frameCount * ctx.channels):
- *             ctx.ringbuffer[ctx.ringbuffer_pos] = <double>inp[i]
+ *             ctx.ringbuffer[ctx.ringbuffer_pos % ctx.ringbuffer_length] = <double>inp[i]
  *             ctx.ringbuffer_pos += 1             # <<<<<<<<<<<<<<
  * 
  *     return 0
@@ -2591,7 +2595,7 @@ static int __pyx_f_6astrid_5mixer_input_callback(void const *__pyx_v_inputbuffer
  * 
  *     if inputbuffer != NULL:             # <<<<<<<<<<<<<<
  *         for i in range(<int>frameCount * ctx.channels):
- *             ctx.ringbuffer[ctx.ringbuffer_pos] = <double>inp[i]
+ *             ctx.ringbuffer[ctx.ringbuffer_pos % ctx.ringbuffer_length] = <double>inp[i]
  */
   }
 
@@ -2614,6 +2618,9 @@ static int __pyx_f_6astrid_5mixer_input_callback(void const *__pyx_v_inputbuffer
  */
 
   /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_WriteUnraisable("astrid.mixer.input_callback", __pyx_clineno, __pyx_lineno, __pyx_filename, 1, 0);
+  __pyx_r = 0;
   __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
@@ -2956,7 +2963,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  *         self.input_params.device = Pa_GetDefaultInputDevice()
  *         self.input_params.channelCount = channels             # <<<<<<<<<<<<<<
  *         self.input_params.sampleFormat = paFloat32
- *         self.input_params.suggestedLatency = Pa_GetDeviceInfo(self.input_params.device).defaultHighInputLatency
+ *         self.input_params.suggestedLatency = Pa_GetDeviceInfo(self.input_params.device).defaultLowInputLatency
  */
   __pyx_v_self->input_params->channelCount = __pyx_v_channels;
 
@@ -2964,7 +2971,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  *         self.input_params.device = Pa_GetDefaultInputDevice()
  *         self.input_params.channelCount = channels
  *         self.input_params.sampleFormat = paFloat32             # <<<<<<<<<<<<<<
- *         self.input_params.suggestedLatency = Pa_GetDeviceInfo(self.input_params.device).defaultHighInputLatency
+ *         self.input_params.suggestedLatency = Pa_GetDeviceInfo(self.input_params.device).defaultLowInputLatency
  *         self.input_params.hostApiSpecificStreamInfo = NULL
  */
   __pyx_v_self->input_params->sampleFormat = paFloat32;
@@ -2972,16 +2979,16 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
   /* "astrid/mixer.pyx":125
  *         self.input_params.channelCount = channels
  *         self.input_params.sampleFormat = paFloat32
- *         self.input_params.suggestedLatency = Pa_GetDeviceInfo(self.input_params.device).defaultHighInputLatency             # <<<<<<<<<<<<<<
+ *         self.input_params.suggestedLatency = Pa_GetDeviceInfo(self.input_params.device).defaultLowInputLatency             # <<<<<<<<<<<<<<
  *         self.input_params.hostApiSpecificStreamInfo = NULL
  * 
  */
-  __pyx_t_4 = Pa_GetDeviceInfo(__pyx_v_self->input_params->device)->defaultHighInputLatency;
+  __pyx_t_4 = Pa_GetDeviceInfo(__pyx_v_self->input_params->device)->defaultLowInputLatency;
   __pyx_v_self->input_params->suggestedLatency = __pyx_t_4;
 
   /* "astrid/mixer.pyx":126
  *         self.input_params.sampleFormat = paFloat32
- *         self.input_params.suggestedLatency = Pa_GetDeviceInfo(self.input_params.device).defaultHighInputLatency
+ *         self.input_params.suggestedLatency = Pa_GetDeviceInfo(self.input_params.device).defaultLowInputLatency
  *         self.input_params.hostApiSpecificStreamInfo = NULL             # <<<<<<<<<<<<<<
  * 
  *         self.output_params = <PaStreamParameters*>malloc(sizeof(PaStreamParameters))
@@ -3011,7 +3018,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  *         self.output_params.device = Pa_GetDefaultOutputDevice()
  *         self.output_params.channelCount = channels             # <<<<<<<<<<<<<<
  *         self.output_params.sampleFormat = paFloat32
- *         self.output_params.suggestedLatency = Pa_GetDeviceInfo(self.output_params.device).defaultHighInputLatency
+ *         self.output_params.suggestedLatency = Pa_GetDeviceInfo(self.output_params.device).defaultLowInputLatency
  */
   __pyx_v_self->output_params->channelCount = __pyx_v_channels;
 
@@ -3019,7 +3026,7 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
  *         self.output_params.device = Pa_GetDefaultOutputDevice()
  *         self.output_params.channelCount = channels
  *         self.output_params.sampleFormat = paFloat32             # <<<<<<<<<<<<<<
- *         self.output_params.suggestedLatency = Pa_GetDeviceInfo(self.output_params.device).defaultHighInputLatency
+ *         self.output_params.suggestedLatency = Pa_GetDeviceInfo(self.output_params.device).defaultLowInputLatency
  *         self.output_params.hostApiSpecificStreamInfo = NULL
  */
   __pyx_v_self->output_params->sampleFormat = paFloat32;
@@ -3027,16 +3034,16 @@ static int __pyx_pf_6astrid_5mixer_11AstridMixer___cinit__(struct __pyx_obj_6ast
   /* "astrid/mixer.pyx":132
  *         self.output_params.channelCount = channels
  *         self.output_params.sampleFormat = paFloat32
- *         self.output_params.suggestedLatency = Pa_GetDeviceInfo(self.output_params.device).defaultHighInputLatency             # <<<<<<<<<<<<<<
+ *         self.output_params.suggestedLatency = Pa_GetDeviceInfo(self.output_params.device).defaultLowInputLatency             # <<<<<<<<<<<<<<
  *         self.output_params.hostApiSpecificStreamInfo = NULL
  * 
  */
-  __pyx_t_4 = Pa_GetDeviceInfo(__pyx_v_self->output_params->device)->defaultHighInputLatency;
+  __pyx_t_4 = Pa_GetDeviceInfo(__pyx_v_self->output_params->device)->defaultLowInputLatency;
   __pyx_v_self->output_params->suggestedLatency = __pyx_t_4;
 
   /* "astrid/mixer.pyx":133
  *         self.output_params.sampleFormat = paFloat32
- *         self.output_params.suggestedLatency = Pa_GetDeviceInfo(self.output_params.device).defaultHighInputLatency
+ *         self.output_params.suggestedLatency = Pa_GetDeviceInfo(self.output_params.device).defaultLowInputLatency
  *         self.output_params.hostApiSpecificStreamInfo = NULL             # <<<<<<<<<<<<<<
  * 
  *         err = Pa_OpenStream(
@@ -19590,6 +19597,79 @@ static PyObject *__Pyx_GetBuiltinName(PyObject *name) {
     return result;
 }
 
+/* None */
+static CYTHON_INLINE int __Pyx_mod_int(int a, int b) {
+    int r = a % b;
+    r += ((r != 0) & ((r ^ b) < 0)) * b;
+    return r;
+}
+
+/* PyErrFetchRestore */
+#if CYTHON_FAST_THREAD_STATE
+static CYTHON_INLINE void __Pyx_ErrRestoreInState(PyThreadState *tstate, PyObject *type, PyObject *value, PyObject *tb) {
+    PyObject *tmp_type, *tmp_value, *tmp_tb;
+    tmp_type = tstate->curexc_type;
+    tmp_value = tstate->curexc_value;
+    tmp_tb = tstate->curexc_traceback;
+    tstate->curexc_type = type;
+    tstate->curexc_value = value;
+    tstate->curexc_traceback = tb;
+    Py_XDECREF(tmp_type);
+    Py_XDECREF(tmp_value);
+    Py_XDECREF(tmp_tb);
+}
+static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject **type, PyObject **value, PyObject **tb) {
+    *type = tstate->curexc_type;
+    *value = tstate->curexc_value;
+    *tb = tstate->curexc_traceback;
+    tstate->curexc_type = 0;
+    tstate->curexc_value = 0;
+    tstate->curexc_traceback = 0;
+}
+#endif
+
+/* WriteUnraisableException */
+static void __Pyx_WriteUnraisable(const char *name, CYTHON_UNUSED int clineno,
+                                  CYTHON_UNUSED int lineno, CYTHON_UNUSED const char *filename,
+                                  int full_traceback, CYTHON_UNUSED int nogil) {
+    PyObject *old_exc, *old_val, *old_tb;
+    PyObject *ctx;
+    __Pyx_PyThreadState_declare
+#ifdef WITH_THREAD
+    PyGILState_STATE state;
+    if (nogil)
+        state = PyGILState_Ensure();
+#ifdef _MSC_VER
+    else state = (PyGILState_STATE)-1;
+#endif
+#endif
+    __Pyx_PyThreadState_assign
+    __Pyx_ErrFetch(&old_exc, &old_val, &old_tb);
+    if (full_traceback) {
+        Py_XINCREF(old_exc);
+        Py_XINCREF(old_val);
+        Py_XINCREF(old_tb);
+        __Pyx_ErrRestore(old_exc, old_val, old_tb);
+        PyErr_PrintEx(1);
+    }
+    #if PY_MAJOR_VERSION < 3
+    ctx = PyString_FromString(name);
+    #else
+    ctx = PyUnicode_FromString(name);
+    #endif
+    __Pyx_ErrRestore(old_exc, old_val, old_tb);
+    if (!ctx) {
+        PyErr_WriteUnraisable(Py_None);
+    } else {
+        PyErr_WriteUnraisable(ctx);
+        Py_DECREF(ctx);
+    }
+#ifdef WITH_THREAD
+    if (nogil)
+        PyGILState_Release(state);
+#endif
+}
+
 /* RaiseDoubleKeywords */
 static void __Pyx_RaiseDoubleKeywordsError(
     const char* func_name,
@@ -20145,37 +20225,6 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_CallOneArg(PyObject *func, PyObjec
     q -= ((r != 0) & ((r ^ b) < 0));
     return q;
 }
-
-/* None */
-  static CYTHON_INLINE int __Pyx_mod_int(int a, int b) {
-    int r = a % b;
-    r += ((r != 0) & ((r ^ b) < 0)) * b;
-    return r;
-}
-
-/* PyErrFetchRestore */
-  #if CYTHON_FAST_THREAD_STATE
-static CYTHON_INLINE void __Pyx_ErrRestoreInState(PyThreadState *tstate, PyObject *type, PyObject *value, PyObject *tb) {
-    PyObject *tmp_type, *tmp_value, *tmp_tb;
-    tmp_type = tstate->curexc_type;
-    tmp_value = tstate->curexc_value;
-    tmp_tb = tstate->curexc_traceback;
-    tstate->curexc_type = type;
-    tstate->curexc_value = value;
-    tstate->curexc_traceback = tb;
-    Py_XDECREF(tmp_type);
-    Py_XDECREF(tmp_value);
-    Py_XDECREF(tmp_tb);
-}
-static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject **type, PyObject **value, PyObject **tb) {
-    *type = tstate->curexc_type;
-    *value = tstate->curexc_value;
-    *tb = tstate->curexc_traceback;
-    tstate->curexc_type = 0;
-    tstate->curexc_value = 0;
-    tstate->curexc_traceback = 0;
-}
-#endif
 
 /* RaiseException */
   #if PY_MAJOR_VERSION < 3
@@ -21029,48 +21078,6 @@ static PyObject* __Pyx_PyInt_AddObjC(PyObject *op1, PyObject *op2, CYTHON_UNUSED
     long r = a - q*b;
     q -= ((r != 0) & ((r ^ b) < 0));
     return q;
-}
-
-/* WriteUnraisableException */
-    static void __Pyx_WriteUnraisable(const char *name, CYTHON_UNUSED int clineno,
-                                  CYTHON_UNUSED int lineno, CYTHON_UNUSED const char *filename,
-                                  int full_traceback, CYTHON_UNUSED int nogil) {
-    PyObject *old_exc, *old_val, *old_tb;
-    PyObject *ctx;
-    __Pyx_PyThreadState_declare
-#ifdef WITH_THREAD
-    PyGILState_STATE state;
-    if (nogil)
-        state = PyGILState_Ensure();
-#ifdef _MSC_VER
-    else state = (PyGILState_STATE)-1;
-#endif
-#endif
-    __Pyx_PyThreadState_assign
-    __Pyx_ErrFetch(&old_exc, &old_val, &old_tb);
-    if (full_traceback) {
-        Py_XINCREF(old_exc);
-        Py_XINCREF(old_val);
-        Py_XINCREF(old_tb);
-        __Pyx_ErrRestore(old_exc, old_val, old_tb);
-        PyErr_PrintEx(1);
-    }
-    #if PY_MAJOR_VERSION < 3
-    ctx = PyString_FromString(name);
-    #else
-    ctx = PyUnicode_FromString(name);
-    #endif
-    __Pyx_ErrRestore(old_exc, old_val, old_tb);
-    if (!ctx) {
-        PyErr_WriteUnraisable(Py_None);
-    } else {
-        PyErr_WriteUnraisable(ctx);
-        Py_DECREF(ctx);
-    }
-#ifdef WITH_THREAD
-    if (nogil)
-        PyGILState_Release(state);
-#endif
 }
 
 /* ImportFrom */

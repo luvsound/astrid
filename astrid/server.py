@@ -2,8 +2,6 @@ import asyncio
 from contextlib import contextmanager
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 import collections
-import logging
-from logging.handlers import SysLogHandler
 import multiprocessing as mp
 import os
 import time
@@ -12,22 +10,17 @@ import random
 import queue
 
 import msgpack
-from service import find_syslog, Service
+from service import Service
 import numpy as np
 import zmq
 
-from pippi.soundbuffer import RingBuffer
-
+from . import analysis
 from . import midi
 from . import io
 from . import orc
 from . import workers
 from . import names
-
-logger = logging.getLogger('astrid')
-if not logger.handlers:
-    logger.addHandler(SysLogHandler(address=find_syslog(), facility=SysLogHandler.LOG_DAEMON))
-logger.setLevel(logging.INFO)
+from .logger import logger
 
 BANNER = """
  █████╗ ███████╗████████╗██████╗ ██╗██████╗ 
@@ -49,33 +42,30 @@ class AstridServer(Service):
         super().__init__(*args, **kwargs)
         self.manager = mp.Manager()
 
-        self.buf_q = self.manager.Queue()
         self.bus = self.manager.Namespace()
         self.cwd = os.getcwd()
         self.event_loop = asyncio.get_event_loop()
+
+        self.buf_q = self.manager.Queue()
+        self.envelope_follower_response_q = self.manager.Queue()
+        self.pitch_tracker_response_q = self.manager.Queue()
         self.load_q = self.manager.Queue()
-        self.numrenderers = NUMRENDERERS
         self.play_q = self.manager.Queue()
+        self.read_q = self.manager.Queue()
         self.reply_q = self.manager.Queue()
 
         # FIXME get this from env
         self.block_size = BLOCKSIZE
         self.channels = CHANNELS
-        self.samplerate = SAMPLERATE
         self.input_buffer_length = RINGBUFFERLENGTH
+        self.numrenderers = NUMRENDERERS
+        self.samplerate = SAMPLERATE
 
-        setattr(self.bus, 'block_size', self.block_size)
-        setattr(self.bus, 'channels', self.channels)
-        setattr(self.bus, 'samplerate', self.samplerate)
-        setattr(self.bus, 'input_buffer_length', self.input_buffer_length)
-
-        self.input_buffer_maxlen = (self.input_buffer_length * self.samplerate) // self.block_size
-        setattr(self.bus, 'input_buffer_maxlen', self.input_buffer_maxlen)
-
-        self.input_buffer = None
-        self.playing = self.manager.list()
-        self.num_playing = self.manager.Value('i', 0)
-        self.record_head = self.manager.Value('i', 0)
+        self.bus.samplerate = SAMPLERATE
+        self.bus.channels = CHANNELS
+        self.bus.block_size = BLOCKSIZE
+        self.bus.input_pitch = 220
+        self.bus.input_amp = 0
 
         self.stop_all = self.manager.Event() # voices
         self.shutdown_flag = self.manager.Event() # render & analysis processes
@@ -86,11 +76,31 @@ class AstridServer(Service):
         self.observers = {}
         self.listeners = {}
 
-        self.buffer_queue_handler = io.BufferQueueHandler(self.buf_q, self.playing, self.num_playing, self.block_size, self.channels, self.samplerate)
-        self.buffer_queue_handler.start()
+        self.audiostream = io.AudioStream(self.buf_q, 
+                                        self.read_q, 
+                                        self.envelope_follower_response_q, 
+                                        self.pitch_tracker_response_q,
+                                        self.shutdown_flag,
+                                        self.block_size, 
+                                        self.channels, 
+                                        self.samplerate
+                                    )
+        self.audiostream.start()
 
-        #self.tracker = workers.AnalysisProcess(self.bus, self.shutdown_flag, self.input_buffer, self.record_head)
-        #self.tracker.start()
+        logger.info('Starting envelope follower')
+        try:
+            self.envelope_follower = mp.Process(name='astrid-envelope-follower', target=analysis.envelope_follower, args=(self.bus, self.read_q, self.envelope_follower_response_q, self.shutdown_flag))
+            self.envelope_follower.start()
+        except Exception as e:
+            logger.error(e)
+
+        logger.info('Starting pitch tracker')
+        try:
+            self.pitch_tracker = mp.Process(name='astrid-pitch-tracker', target=analysis.pitch_tracker, args=(self.bus, self.read_q, self.pitch_tracker_response_q, self.shutdown_flag))
+            self.pitch_tracker.start()
+        except Exception as e:
+            logger.error(e)
+
 
         for _ in range(self.numrenderers):
             rp = workers.RenderProcess(
@@ -138,29 +148,53 @@ class AstridServer(Service):
 
         logger.info('listeners cleaned up')
 
-        #self.tracker.join()
-        #logger.info('analysis cleaned up')
+        self.envelope_follower.join()
+        logger.info('envelope follower stopped')
 
-        self.buffer_queue_handler.join()
-        logger.info('buffer queue handler cleaned up')
+        self.pitch_tracker.join()
+        logger.info('pitch tracker stopped')
+
+        self.audiostream.join()
+        logger.info('audiostream cleaned up')
 
         self.event_loop.stop()
         self.event_loop.close()
         logger.info('stopped event loop')
 
+        logger.info('stopping instrument observer')
+        self.instrument_observer.stop()
+        self.instrument_observer.join()
+
         logger.info('all cleaned up!')
 
-    def start_instrument_listener(self, instrument_name, refresh=False):
-        # FIXME if refresh=True then send listener stop and start again
-        # with reloaded instrument
+    def start_instrument_listeners(self, instrument_name, instrument_path):
         if instrument_name not in self.listeners:
-            logger.info('starting listener %s' % instrument_name)
-            renderer = orc.load_instrument(instrument_name, cwd=self.cwd)
+            logger.debug('starting listener %s' % instrument_name)
+            renderer = orc.load_instrument(instrument_name, instrument_path)
             self.listeners[instrument_name] = midi.start_listener(instrument_name, renderer, self.bus, self.stop_listening)
-            logger.info('started listener %s' % instrument_name)
+            logger.debug('started listener %s' % instrument_name)
+
+    def load_instrument(self, instrument_name):
+        instrument_path = os.path.join(self.cwd, names.ORC_DIR, '%s.py' % instrument_name)
+        if not os.path.exists(instrument_path):
+            logger.error('Could not find an instrument file at location %s' % instrument_path)
+            return names.MSG_INVALID_INSTRUMENT
+
+        self.start_instrument_listeners(instrument_name, instrument_path)
+
+        for _ in range(self.numrenderers):
+            self.load_q.put((instrument_name, instrument_path))
+
+        return names.MSG_OK
 
     def run(self):
         logger.info(BANNER)
+
+        orc_fullpath = os.path.join(self.cwd, names.ORC_DIR)
+        self.instrument_handler = orc.InstrumentHandler(self.load_q, orc_fullpath, self.numrenderers)
+        self.instrument_observer = orc.Observer()
+        self.instrument_observer.schedule(self.instrument_handler, path=orc_fullpath, recursive=True)
+        self.instrument_observer.start()
 
         with self.msg_context():
             while True:
@@ -175,13 +209,15 @@ class AstridServer(Service):
 
                 logger.info('action %s' % action) 
 
-                if names.ntoc(action) == names.LOAD_INSTRUMENT or \
-                   names.ntoc(action) == names.RELOAD_INSTRUMENT:
-                    self.start_instrument_listener(cmd[0])
+                if names.ntoc(action) == names.LOAD_INSTRUMENT:
                     logger.info('LOAD_INSTRUMENT %s %s' % (action, cmd))
                     if len(cmd) > 0:
-                        for _ in range(self.numrenderers):
-                            self.load_q.put(cmd[0])
+                        reply = self.load_instrument(cmd[0])
+
+                elif names.ntoc(action) == names.RELOAD_INSTRUMENT:
+                    logger.info('RELOAD_INSTRUMENT %s %s' % (action, cmd))
+                    if len(cmd) > 0:
+                        reply = self.load_instrument(cmd[0])
 
                 elif names.ntoc(action) == names.ANALYSIS:
                     # TODO probably be nice to toggle 

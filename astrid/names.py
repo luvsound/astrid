@@ -10,9 +10,17 @@ RELOAD_INSTRUMENT = 6
 STOP_ALL_VOICES = 7
 SHUTDOWN = 8
 ANALYSIS = 9
+MSG_INVALID_INSTRUMENT = 10
+ADD_BUFFER = 11
+READ_INPUT = 12
+
+ENVELOPE_FOLLOWER = 14
+PITCH_TRACKER = 15
 
 MSG_PORT = 9191
 MSG_HOST = 'localhost'
+
+ORC_DIR = 'orc'
 
 _cmdToName = {
     LOAD_INSTRUMENT: 'add', 
@@ -23,6 +31,9 @@ _cmdToName = {
     ANALYSIS: 'analysis', 
     SHUTDOWN: 'shutdown', 
     MSG_OK: 'ok', 
+    MSG_INVALID_INSTRUMENT: 'invalid_instrument', 
+    ADD_BUFFER: 'add_buffer',
+    READ_INPUT: 'read_input',
 }
 
 _nameToCmd = {
@@ -35,6 +46,9 @@ _nameToCmd = {
     'analysis': ANALYSIS,
     'shutdown': SHUTDOWN,
     'ok': MSG_OK, 
+    'invalid_instrument': MSG_INVALID_INSTRUMENT,
+    'add_buffer': ADD_BUFFER,
+    'read_input': READ_INPUT,
 }
 
 def ntoc(name):

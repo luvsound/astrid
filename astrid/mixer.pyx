@@ -83,7 +83,7 @@ cdef int input_callback(const void* inputbuffer,
 
     if inputbuffer != NULL:
         for i in range(<int>frameCount * ctx.channels):
-            ctx.ringbuffer[ctx.ringbuffer_pos] = <double>inp[i]
+            ctx.ringbuffer[ctx.ringbuffer_pos % ctx.ringbuffer_length] = <double>inp[i]
             ctx.ringbuffer_pos += 1
 
     return 0
@@ -122,14 +122,14 @@ cdef class AstridMixer:
         self.input_params.device = Pa_GetDefaultInputDevice()
         self.input_params.channelCount = channels
         self.input_params.sampleFormat = paFloat32
-        self.input_params.suggestedLatency = Pa_GetDeviceInfo(self.input_params.device).defaultHighInputLatency
+        self.input_params.suggestedLatency = Pa_GetDeviceInfo(self.input_params.device).defaultLowInputLatency
         self.input_params.hostApiSpecificStreamInfo = NULL
 
         self.output_params = <PaStreamParameters*>malloc(sizeof(PaStreamParameters))
         self.output_params.device = Pa_GetDefaultOutputDevice()
         self.output_params.channelCount = channels
         self.output_params.sampleFormat = paFloat32
-        self.output_params.suggestedLatency = Pa_GetDeviceInfo(self.output_params.device).defaultHighInputLatency
+        self.output_params.suggestedLatency = Pa_GetDeviceInfo(self.output_params.device).defaultLowInputLatency
         self.output_params.hostApiSpecificStreamInfo = NULL
 
         err = Pa_OpenStream(

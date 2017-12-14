@@ -1,219 +1,109 @@
-# cython: language_level=3
-
 from __future__ import absolute_import
-import asyncio
-import readline
 import collections
-from concurrent.futures import ThreadPoolExecutor
-import concurrent.futures
-import logging
-import functools
-from logging.handlers import SysLogHandler
-import queue
 import threading
-import time
-import warnings
-import multiprocessing as mp
+import queue
 
-import numpy as np
-from service import find_syslog
-import sounddevice as sd
-from aubio import pitch
-
+from .logger import logger
 from . import names
-from . import mixer
-from pippi.soundbuffer import SoundBuffer
+from .mixer import AstridMixer
 
-warnings.simplefilter('always')
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger('astrid')
-if not logger.handlers:
-    logger.addHandler(SysLogHandler(address=find_syslog(), facility=SysLogHandler.LOG_DAEMON))
-
-def get_input_blocks(record_head, input_buffer_stack, blocks=1):
-    read_head = 0 if record_head.value < 0 else record_head.value
-    return input_buffer_stack[read_head]
-    
-def pitch_tracker(bus, record_head, input_buffer_stack, shutdown_signal):
-    logger.info('starting pitch tracker')
-    window_size = 4096
-    hop_size = bus.block_size
-    tolerance = 0.8
-    wait_time = (bus.samplerate / hop_size) / 1000
-    delay = threading.Event()
-
-    tracker = pitch('yin', window_size, hop_size, bus.samplerate)
-    tracker.set_unit('freq')
-    tracker.set_tolerance(bus.pitch_tracker_tolerance)
-
-    while True:
-        if shutdown_signal.is_set():
-            break
-
-        #p = tracker(input_buffer_stack[read_head][:,0].flatten())[0]
-        p = 1
-        if tracker.get_confidence() >= tolerance:
-            setattr(bus, 'input_pitch', p)
-
-        delay.wait(timeout=wait_time)
-
-def envelope_follower(bus, record_head, input_buffer, shutdown_signal):
-    logger.info('starting envelope follower')
-    wait_time = 0.015
-    delay = threading.Event()
-
-    while True:
-        if shutdown_signal.is_set():
-            break
-
-        read_head = record_head.value - 1
-        read_head = 0 if read_head < 0 else read_head
-        try:
-            setattr(bus, 'input_amp', np.amax(input_buffer[read_head]))
-        except Exception as e:
-            pass
-            #logger.error(e)
-        delay.wait(timeout=wait_time)
-
-class BufferEndReached(Exception):
-    pass
-
-class RingBuffer:
-    def __init__(self, length, channels=2):
-        self.write_index = 0
-        self.frames = np.zeros((length, channels))
-
-    def get_frames(self, length):
-        last_frame_index = (self.write_index - 1) % self.length
-        return self.frames[last_frame_index - length]
-
-class PlayBuffer:
-    """ This is just a wrapper around a
-        bare numpy array.
-        
-        The mixer callback gets a block of sound 
-        by calling get_block() which either returns 
-        a buffer that equals the block size, or 
-        raises a BufferEndReached if there are no 
-        more samples to read.
-
-        The callback will remove this playbuffer
-        from the stack of playing buffers when finished.
-    """
-    def __init__(self, snd, block_size=64, pos=0):
-        self.snd = snd
-        self.pos = pos
-        self.length = len(snd)
-        self.block_size = block_size
-        self.silence = np.zeros((block_size, snd.channels), dtype='float32')
-
-    def get_block(self):
-        start = self.pos * self.block_size
-        end = start + self.block_size
-        self.pos += 1
-        if end < self.length:
-            return np.asarray(self.snd.frames[start:end], dtype='float32')
-        elif start >= self.length:
-            raise BufferEndReached
-        
-        return np.concatenate(self.snd.frames[start:], self.silence[:end-self.length])
-
-class BufferQueueHandler(threading.Thread):
-    """ Just watches for new sounds coming into the 
-        shared play_q, wraps them in a PlayBuffer and 
-        appends them to the end of the stack of playing 
-        buffers.
-    """
-    def __init__(self, buf_q, playing, num_playing, block_size=64, channels=2, samplerate=44100):
-        super(BufferQueueHandler, self).__init__()
-        self.buf_q = buf_q
-        self.playing = playing
-        self.num_playing = num_playing
-        self.block_size = block_size
-        self.mixer = mixer.AstridMixer(block_size, channels, samplerate)
-        logger.info('started BUF QUEUE')
-
-    def run(self):
-        while True:
-            snd = self.buf_q.get()
-            logger.info('BUF QUEUE got snd')
-
-            if snd == names.SHUTDOWN:
-                break
-
-            try:
-                #playbuf = PlayBuffer(snd, self.block_size)
-                logger.info('adding %s to ASTRID MIXER' % snd)
-                #self.playing.append(playbuf)
-                #self.num_playing.value = len(self.playing)
-                self.mixer.add(snd)
-            except Exception as e:
-                logger.error(e)
-
-        self.mixer.shutdown()
-
-class OldAstridMixer(mp.Process):
-    # FIXME do this with cython's openmp compat
-    """
-    cdef public double[:,:] silence
-    cdef public int block_size
-    cdef public int channels
-    cdef public int samplerate
-    cdef public int input_buffer_maxlen
-    cdef public int i
-    cdef public int _num_playing
-    """
-
+   
+class AudioStream(threading.Thread):
     def __init__(self, 
             buf_q, 
-            play_q, 
-            playing, 
-            num_playing, 
-            record_head, 
-            finished_event, 
+            read_q, 
+            envelope_follower_response_q, 
+            pitch_tracker_response_q, 
+            shutdown_flag, 
             block_size=64, 
             channels=2, 
-            samplerate=44100, 
-            input_buffer=None, 
-            input_buffer_maxlen=0
+            samplerate=44100
         ):
-        logger.info('Starting AstridMixer')
-        super(OldAstridMixer, self).__init__()
+        super(AudioStream, self).__init__()
+        self.q = queue.Queue()
         self.buf_q = buf_q
-        self.play_q = play_q
-        self.playing = playing
-        self.num_playing = num_playing
-        self.record_head = record_head
-        self.finished_event = finished_event
+        self.read_q = read_q
+        self.envelope_follower_response_q = envelope_follower_response_q
+        self.pitch_tracker_response_q = pitch_tracker_response_q
         self.block_size = block_size
         self.channels = channels
         self.samplerate = samplerate
-        self.input_buffer = input_buffer
-        self.input_buffer_maxlen = input_buffer_maxlen
-        self.silence = np.zeros((block_size, channels), dtype='float32')
-        self.i = 0
-        self._num_playing = len(self.num_playing.value)
+        self.shutdown_flag = shutdown_flag
 
     def run(self):
-        try:
-            logger.info('Starting buffer queue handler')
-            buffer_queue_handler = BufferQueueHandler(self.buf_q, self.playing, self.num_playing, self.block_size)
-            buffer_queue_handler.start()
-            logger.info('BUF QUEUE handler started')
-        except Exception as e:
-            logger.error(e)
+        def wait_for_bufs(buf_q, q, shutdown_flag):
+            while True:
+                msg = buf_q.get()
+                logger.info(msg)
 
-        self.finished_event.wait()
+                if msg == names.SHUTDOWN:
+                    logger.debug('audiostream shutdown buf queue')
+                    break
 
-        logger.info('shutting mixer down')
-        self.buf_q.put(names.SHUTDOWN)
-        buffer_queue_handler.join()
+                q.put((names.ADD_BUFFER, msg))
+                logger.debug('audiostream put buf')
+
+        def wait_for_reads(read_q, q, shutdown_flag):
+            while True:
+                msg = read_q.get()
+
+                if msg == names.SHUTDOWN:
+                    logger.debug('audiostream shutdown read queue')
+                    break
+
+                q.put((names.READ_INPUT, msg))
+                logger.debug('audiostream put read')
+
+        def wait_for_shutdown(q, shutdown_flag):
+            shutdown_flag.wait()
+            q.put((names.SHUTDOWN, None))
+            logger.debug('audiostream put shutdown')
+
+        buf_listener = threading.Thread(name='astrid-buf-queue-listener', target=wait_for_bufs, args=(self.buf_q, self.q, self.shutdown_flag))
+        buf_listener.start()
+
+        read_listener = threading.Thread(name='astrid-read-queue-listener', target=wait_for_reads, args=(self.read_q, self.q, self.shutdown_flag))
+        read_listener.start()
+
+        shutdown_listener = threading.Thread(name='astrid-render-shutdown-listener', target=wait_for_shutdown, args=(self.q, self.shutdown_flag))
+        shutdown_listener.start()
+
+        mixer = AstridMixer(self.block_size, self.channels, self.samplerate)
+        logger.info('started audiostream QUEUE')
+
+        while True:
+            action, data = self.q.get()
+            if action == names.SHUTDOWN:
+                break
+
+            elif action == names.ADD_BUFFER:
+                try:
+                    logger.info('adding %s to ASTRID MIXER' % data)
+                    mixer.add(data)
+                except Exception as e:
+                    logger.error(e)
+
+            elif action == names.READ_INPUT:
+                try:
+                    target, frames = data
+                    buf = mixer.read(frames)
+                    if target == names.ENVELOPE_FOLLOWER:
+                        self.envelope_follower_response_q.put(buf)
+                    elif target == names.PITCH_TRACKER:
+                        self.pitch_tracker_response_q.put(buf)
+
+                except Exception as e:
+                    logger.error(e)
+
+        mixer.shutdown()
+        buf_listener.join()
+        read_listener.join()
+        shutdown_listener.join()
 
 
 def play_sequence(buf_q, player, ctx, onsets, done_playing_event):
-    """ Schedule a sequence of overlapping oneshots
+    """ Play a sequence of overlapping oneshots
     """
-    logger.info('play_sequence %s' % onsets)
     if not isinstance(onsets, collections.Iterable):
         try: 
             onsets = onsets(ctx)
@@ -221,10 +111,9 @@ def play_sequence(buf_q, player, ctx, onsets, done_playing_event):
             logger.error('Onset callback failed with msg %s' % e)
 
     delay = threading.Event()
-    logger.info('delay %s' % delay)
 
     count = 0
-    logger.info('playing %s onsets %s' % (len(onsets), onsets))
+    logger.debug('playing %s onsets %s' % (len(onsets), onsets))
     for onset in onsets:
         delay_time = onset
         logger.info('play note c:%s o:%s d:%s' % (count, onset, delay_time))
@@ -235,7 +124,6 @@ def play_sequence(buf_q, player, ctx, onsets, done_playing_event):
         try:
             generator = player(ctx)
             for snd in generator:
-                logger.info('play_sequence putting snd in BUF QUEUE')
                 buf_q.put(snd)
 
         except Exception as e:
@@ -246,18 +134,18 @@ def play_sequence(buf_q, player, ctx, onsets, done_playing_event):
 
         count += 1
 
-    delay.wait(timeout=len(snd)/snd.samplerate)
+    delay.wait(timeout=snd.dur)
     done_playing_event.set()
 
 def start_voice(event_loop, executor, renderer, ctx, buf_q, play_q):
     ctx.running.set()
-    logger.info('start voice %s' % renderer)
+    logger.debug('start voice %s' % renderer)
 
     loop = False
     if hasattr(renderer, 'loop'):
         loop = renderer.loop
 
-    logger.info('loop %s' % loop)
+    logger.debug('loop %s' % loop)
 
     if hasattr(renderer, 'before'):
         # blocking before callback makes
@@ -299,7 +187,7 @@ def start_voice(event_loop, executor, renderer, ctx, buf_q, play_q):
         if onsets is None:
             onsets = [0]
             
-        logger.info('scheduling player onsets %s %s %s' % (count, player, onsets))
+        logger.debug('scheduling player onsets %s %s %s' % (count, player, onsets))
         try:
             event_loop.run_in_executor(executor, play_sequence, buf_q, player, ctx, onsets, done_playing_event)
         except Exception as e:
@@ -307,10 +195,9 @@ def start_voice(event_loop, executor, renderer, ctx, buf_q, play_q):
 
         count += 1
 
-    # add done callback to the last scheduled future
-    logger.info('waiting for final future to complete')
+    logger.debug('waiting for play to complete')
     done_playing_event.wait()
-    logger.info('future completed')
+    logger.debug('got done playing event')
     ctx.running.clear()
 
     if hasattr(renderer, 'done'):
@@ -321,9 +208,8 @@ def start_voice(event_loop, executor, renderer, ctx, buf_q, play_q):
     try:
         if loop:
             msg = [ctx.instrument_name, ctx.get_params()]
-            logger.error('retrigger msg %s' % msg)
+            logger.debug('retrigger %s' % msg)
             play_q.put(msg)
-            logger.error('put msg %s' % msg)
     except Exception as e:
         logger.error(e)
 

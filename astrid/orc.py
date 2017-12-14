@@ -2,14 +2,11 @@ import asyncio
 from contextlib import contextmanager
 import importlib
 import importlib.util
-import logging
-from logging.handlers import SysLogHandler
 import os
 import threading
 
 import msgpack
 import numpy as np
-from service import find_syslog
 import sounddevice as sd
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -18,32 +15,17 @@ import zmq
 from . import client
 from . import midi
 from . import names
+from .logger import logger
 
-logger = logging.getLogger('astrid')
-logger.addHandler(SysLogHandler(address=find_syslog(), facility=SysLogHandler.LOG_DAEMON))
-logger.setLevel(logging.DEBUG)
-
-ORC_DIR = 'orc'
 INSTRUMENT_RENDERER_KEY_TEMPLATE = '{}-renderer'
 
-def load_instrument(name, path=None, cwd=None):
+def load_instrument(name, path):
     """ Loads a renderer module from the script 
         at self.path 
 
         Failure to load the module raises an 
         InstrumentNotFoundError
     """
-    logger = logging.getLogger('astrid')
-    if not logger.handlers:
-        logger.addHandler(SysLogHandler(address=find_syslog(), facility=SysLogHandler.LOG_DAEMON))
-    logger.setLevel(logging.DEBUG)
-
-    if cwd is None:
-        cwd = '.'
-
-    if path is None:
-        path = os.path.join(cwd, ORC_DIR, '%s.py' % name)
-
     logger.debug('Loading instrument %s from %s' % (name, path))
 
     try:
@@ -129,45 +111,21 @@ class EventContext:
         return self.p._params
 
 
-class InstrumentLoadOrchestrator(threading.Thread):
-    def __init__(self, load_q, instruments, shutdown_flag, bus):
-        super(InstrumentLoadOrchestrator, self).__init__()
-
-        self.load_q = load_q
-        self.instruments = instruments
-        self.shutdown_flag = shutdown_flag
-        self.bus = bus
-
-    def run(self):
-        """
-        if False and self.observers.get(self.cmd[1], None) is None:
-            instrument_handler = orc.InstrumentHandler(self.messg_q, cmd[0])
-            instrument_observer = orc.Observer()
-            instrument_observer.schedule(instrument_handler, path=cmd[1], recursive=True)
-            logger.debug('add reload handler %s %s' % (instrument_handler, instrument_observer))
-            self.observers[cmd[1]] = (instrument_observer, instrument_handler)
-        """
-
-        while True:
-            logger.debug('waiting for load messages')
-            if self.shutdown_flag.is_set():
-                logger.debug('got shutdown')
-                break
-
-
 class InstrumentNotFoundError(Exception):
     def __init__(self, instrument_name, *args, **kwargs):
         self.message = 'No instrument named %s found' % instrument_name
 
 class InstrumentHandler(FileSystemEventHandler):
-    def __init__(self, messg_q, instrument_name):
+    def __init__(self, load_q, orc_path, numrenderers):
         super(InstrumentHandler, self).__init__()
-        self.messg_q = messg_q
-        self.instrument_name = instrument_name
+        self.load_q = load_q
+        self.orc_path = orc_path
+        self.numrenderers = numrenderers
 
     def on_modified(self, event):
         logger.debug('updated %s' % event)
-        path = event.src_path
-
-
+        if event.src_path[-3:] == '.py':
+            instrument_name = os.path.basename(event.src_path).replace('.py', '')
+            for _ in range(self.numrenderers):
+                self.load_q.put((instrument_name, event.src_path))
 

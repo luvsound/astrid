@@ -3,7 +3,7 @@ import glob
 from pippi import dsp, oscs, tune, rhythm
 from astrid import player
 
-BPM = 160
+BPM = 120
 MIDI = 'MPK'
 TRIG = -1
 
@@ -12,17 +12,17 @@ loop = True
 def snarep(ctx):
     #offset = 0 if ctx.m.note == 60 else 4
     offset = 0
-    return rhythm.pattern('..x.', meter='4/4', beats=16, offset=offset, bpm=BPM)
+    return rhythm.pattern('..x.', meter='4/4', beats=4, offset=offset, bpm=BPM)
 
 def kickp(ctx):
     #offset = 0 if ctx.m.note == 60 else 4
     offset = 0
-    return rhythm.pattern('x...', meter='4/4', beats=16, offset=offset, bpm=BPM)
+    return rhythm.pattern('x...', meter='4/4', beats=4, offset=offset, bpm=BPM)
 
 def hatp(ctx):
     #offset = 0 if ctx.m.note == 60 else 4
     offset = 0
-    return rhythm.pattern('xxxx', meter='4/4', beats=16, offset=offset, swing=0, bpm=BPM)
+    return rhythm.pattern('xxxxxxxx', meter='8/8', beats=8, offset=offset, swing=0, bpm=BPM)
 
 def before(ctx):
     hatfs = glob.glob('/home/hecanjog/code/songs/sounds/drums/hats*.wav')
@@ -39,7 +39,7 @@ def before(ctx):
 def hats(ctx):
     hat = random.choice(ctx.before.get('hats'))
     hat = dsp.read(hat)
-    yield hat * random.triangular(0.25, 0.35)
+    yield hat * random.triangular(0.25, 0.75)
 
 @player.init(onsets=kickp)
 def kicks(ctx):
