@@ -10,6 +10,7 @@ from .mixer import AstridMixer
    
 class AudioStream(threading.Thread):
     def __init__(self, 
+            #stream_ctx_ptr, 
             buf_q, 
             read_q, 
             envelope_follower_response_q, 
@@ -20,6 +21,7 @@ class AudioStream(threading.Thread):
             samplerate=44100
         ):
         super(AudioStream, self).__init__()
+        #self.stream_ctx_ptr = stream_ctx_ptr
         self.q = queue.Queue()
         self.buf_q = buf_q
         self.read_q = read_q
@@ -206,7 +208,7 @@ def start_voice(event_loop, executor, renderer, ctx, buf_q, play_q):
 
     logger.info('done playing')
     try:
-        if loop:
+        if loop and not ctx.stop_all.is_set() and not ctx.stop_me.is_set():
             msg = [ctx.instrument_name, ctx.get_params()]
             logger.debug('retrigger %s' % msg)
             play_q.put(msg)

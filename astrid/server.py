@@ -20,6 +20,7 @@ from . import io
 from . import orc
 from . import workers
 from . import names
+from .mixer import StreamContext, StreamContextView
 from .logger import logger
 
 BANNER = """
@@ -54,6 +55,9 @@ class AstridServer(Service):
         self.read_q = self.manager.Queue()
         self.reply_q = self.manager.Queue()
 
+        #stream_ctx = StreamContext()
+        #self.stream_ctx_ptr = stream_ctx.get_pointer()
+
         # FIXME get this from env
         self.block_size = BLOCKSIZE
         self.channels = CHANNELS
@@ -66,6 +70,7 @@ class AstridServer(Service):
         self.bus.block_size = BLOCKSIZE
         self.bus.input_pitch = 220
         self.bus.input_amp = 0
+        #self.bus.stream_ctx_ptr = self.stream_ctx_ptr
 
         self.stop_all = self.manager.Event() # voices
         self.shutdown_flag = self.manager.Event() # render & analysis processes
@@ -76,7 +81,8 @@ class AstridServer(Service):
         self.observers = {}
         self.listeners = {}
 
-        self.audiostream = io.AudioStream(self.buf_q, 
+        self.audiostream = io.AudioStream(
+                                        self.buf_q, 
                                         self.read_q, 
                                         self.envelope_follower_response_q, 
                                         self.pitch_tracker_response_q,
@@ -85,40 +91,6 @@ class AstridServer(Service):
                                         self.channels, 
                                         self.samplerate
                                     )
-        self.audiostream.start()
-
-        logger.info('Starting envelope follower')
-        try:
-            self.envelope_follower = mp.Process(name='astrid-envelope-follower', target=analysis.envelope_follower, args=(self.bus, self.read_q, self.envelope_follower_response_q, self.shutdown_flag))
-            self.envelope_follower.start()
-        except Exception as e:
-            logger.error(e)
-
-        logger.info('Starting pitch tracker')
-        try:
-            self.pitch_tracker = mp.Process(name='astrid-pitch-tracker', target=analysis.pitch_tracker, args=(self.bus, self.read_q, self.pitch_tracker_response_q, self.shutdown_flag))
-            self.pitch_tracker.start()
-        except Exception as e:
-            logger.error(e)
-
-
-        for _ in range(self.numrenderers):
-            rp = workers.RenderProcess(
-                    self.buf_q, 
-                    self.play_q, 
-                    self.load_q, 
-                    self.reply_q, 
-                    self.shutdown_flag,
-                    self.stop_all, 
-                    self.stop_listening, 
-                    self.bus, 
-                    self.event_loop,
-                    self.cwd
-                )
-            rp.start()
-            self.renderers += [ rp ]
-
-
     @contextmanager
     def msg_context(self):
         self.context = zmq.Context()
@@ -144,7 +116,11 @@ class AstridServer(Service):
         logger.info('renderers cleaned up')
 
         for instrument_name, listener in self.listeners.items():
-            listener.join()
+            logger.debug('stopping listeners')
+            logger.debug(instrument_name)
+            logger.debug(listener)
+            if listener is not None:
+                listener.join()
 
         logger.info('listeners cleaned up')
 
@@ -189,6 +165,38 @@ class AstridServer(Service):
 
     def run(self):
         logger.info(BANNER)
+
+        self.audiostream.start()
+
+        logger.info('Starting envelope follower')
+        try:
+            self.envelope_follower = mp.Process(name='astrid-envelope-follower', target=analysis.envelope_follower, args=(self.bus, self.read_q, self.envelope_follower_response_q, self.shutdown_flag))
+            self.envelope_follower.start()
+        except Exception as e:
+            logger.error(e)
+
+        logger.info('Starting pitch tracker')
+        try:
+            self.pitch_tracker = mp.Process(name='astrid-pitch-tracker', target=analysis.pitch_tracker, args=(self.bus, self.read_q, self.pitch_tracker_response_q, self.shutdown_flag))
+            self.pitch_tracker.start()
+        except Exception as e:
+            logger.error(e)
+
+        for _ in range(self.numrenderers):
+            rp = workers.RenderProcess(
+                    self.buf_q, 
+                    self.play_q, 
+                    self.load_q, 
+                    self.reply_q, 
+                    self.shutdown_flag,
+                    self.stop_all, 
+                    self.stop_listening, 
+                    self.bus, 
+                    self.event_loop,
+                    self.cwd
+                )
+            rp.start()
+            self.renderers += [ rp ]
 
         orc_fullpath = os.path.join(self.cwd, names.ORC_DIR)
         self.instrument_handler = orc.InstrumentHandler(self.load_q, orc_fullpath, self.numrenderers)
@@ -236,14 +244,19 @@ class AstridServer(Service):
                 elif names.ntoc(action) == names.STOP_ALL_VOICES:
                     logger.info('STOP_ALL_VOICES %s' % cmd)
                     self.stop_all.set()
+                    """
                     for _ in range(self.numrenderers):
                         self.play_q.put(names.STOP_ALL_VOICES)
+                    """
 
                 elif names.ntoc(action) == names.LIST_INSTRUMENTS:
                     logger.info('LIST_INSTRUMENTS %s' % cmd)
                     reply = [ str(instrument) for name, instrument in self.instruments.items() ]
 
                 elif names.ntoc(action) == names.PLAY_INSTRUMENT:
+                    if self.stop_all.is_set():
+                        self.stop_all.clear() # FIXME this probably doesn't always work
+
                     logger.info('PLAY_INSTRUMENT %s' % cmd)
                     self.play_q.put(cmd)
 

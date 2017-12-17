@@ -2,6 +2,7 @@
 # cython: language_level=3
  
 from __future__ import absolute_import
+from libc.stdint cimport uintptr_t
 from libc.stdlib cimport malloc, calloc, free
 from pippi.soundbuffer cimport SoundBuffer
 cimport cython
@@ -88,8 +89,83 @@ cdef int input_callback(const void* inputbuffer,
 
     return 0
 
+cdef class StreamContext:
+    def __cinit__(self):
+        # TODO maybe best to free memory from here too?
+        # but at the moment cleanup still happens in AstridMixer.shutdown
+        self.ctx = <stream_ctx*>malloc(sizeof(stream_ctx))
+
+    def get_pointer(self):
+        return <uintptr_t><void *>self.ctx
+
+    def set_data(self):
+        self._set_data()
+
+    cdef void _set_data(self):
+        self.ctx.channels = 3
+        self.ctx.samplerate = 10
+
+
+cdef class StreamContextView:
+    def __cinit__(self, uintptr_t ptr):
+        print('StreamContextView INIT PTR', ptr)
+        self.ctx = <stream_ctx*>ptr
+
+    @property
+    def channels(self):
+        if self.ctx == NULL:
+            return -1
+        return self.ctx.channels
+
+    @property
+    def samplerate(self):
+        if self.ctx == NULL:
+            return -1
+
+        return self.ctx.samplerate
+
+    @property
+    def ringbuffer_length(self):
+        if self.ctx == NULL:
+            return -1
+
+        return self.ctx.ringbuffer_length
+
+    def read(self, int frames, int offset=0):
+        return self._read_input(frames, offset)
+
+    cdef SoundBuffer _read_input(self, int frames, int offset):
+        self.ctx.channels = 2
+        self.ctx.samplerate = 44100
+        cdef int i = 0
+        cdef int c = 0
+        cdef int read_head = 0
+        cdef double[:,:] out = np.zeros((frames, self.ctx.channels))
+
+        print('self.ctx.channels', self.ctx.channels)
+        print('self.ctx.samplerate', self.ctx.samplerate)
+
+        if frames * self.ctx.channels > self.ctx.ringbuffer_length:
+            frames = self.ctx.ringbuffer_length // self.ctx.channels
+
+        read_head = (self.ctx.ringbuffer_pos - ((frames + offset) * self.ctx.channels)) % self.ctx.ringbuffer_length
+        for i in range(frames):
+            for c in range(self.ctx.channels):
+                out[i][c] = self.ctx.ringbuffer[read_head % self.ctx.ringbuffer_length]
+                read_head += 1
+
+        return SoundBuffer(out, self.ctx.channels, self.ctx.samplerate)
+
+
 cdef class AstridMixer:
-    def __cinit__(self, int block_size=64, int channels=2, int samplerate=44100, double ringbuffer_length=30):
+    def __cinit__(self, 
+            #uintptr_t stream_ctx_ptr, 
+            int block_size=64, 
+            int channels=2, 
+            int samplerate=44100, 
+            double ringbuffer_length=30
+        ):
+
         self.block_size = block_size
         self.channels = channels
         self.samplerate = samplerate
@@ -101,10 +177,14 @@ cdef class AstridMixer:
         cdef PaStreamCallback* outputcb
 
         self.ctx = <stream_ctx*>malloc(sizeof(stream_ctx))
+        #self.ctx = <stream_ctx*>stream_ctx_ptr
         self.ctx.out = <double*>calloc(block_size * channels, sizeof(double))
         self.ctx.ringbuffer_length = <int>(ringbuffer_length * samplerate * channels)
         self.ctx.ringbuffer = <double*>calloc(self.ctx.ringbuffer_length, sizeof(double))
         self.ctx.ringbuffer_pos = 0
+        #self.ctx.ringbuffer_length = ringbuffer_length
+        #self.ctx.ringbuffer = ringbuffer
+        #self.ctx.ringbuffer_pos = ringbuffer_pos
         self.ctx.channels = channels
         self.ctx.samplerate = samplerate
         self.ctx.playing_head = NULL
@@ -216,28 +296,29 @@ cdef class AstridMixer:
     def add(self, SoundBuffer snd):
         self._add(snd)
 
-    cdef double[:,:] _read_input(self, int frames, int offset):
+    def sleep(self, unsigned long msec):
+        Pa_Sleep(msec)
+
+    def read(self, int frames, int offset=0):
+        return self._read_input(frames, offset)
+
+    cdef SoundBuffer _read_input(self, int frames, int offset):
         cdef int i = 0
         cdef int c = 0
         cdef int read_head = 0
-        cdef double[:,:] out = np.zeros((frames, self.channels))
+        cdef double[:,:] out = np.zeros((frames, self.ctx.channels))
 
         if frames * self.ctx.channels > self.ctx.ringbuffer_length:
             frames = self.ctx.ringbuffer_length // self.ctx.channels
 
         read_head = (self.ctx.ringbuffer_pos - ((frames + offset) * self.ctx.channels)) % self.ctx.ringbuffer_length
         for i in range(frames):
-            for c in range(self.channels):
+            for c in range(self.ctx.channels):
                 out[i][c] = self.ctx.ringbuffer[read_head % self.ctx.ringbuffer_length]
                 read_head += 1
 
-        return out
+        return SoundBuffer(out, self.ctx.channels, self.ctx.samplerate)
 
-    def read(self, int frames, int offset=0):
-        return SoundBuffer(self._read_input(frames, offset), self.channels, self.samplerate)
-
-    def sleep(self, unsigned long msec):
-        Pa_Sleep(msec)
 
     cdef void _shutdown(self) except *:
         cdef PaError err

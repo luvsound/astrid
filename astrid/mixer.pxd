@@ -151,8 +151,16 @@ cdef class AstridMixer:
     cdef PaStreamParameters* input_params
     cdef PaStreamParameters* output_params
 
+    cdef SoundBuffer _read_input(self, int frames, int offset)
     cdef void _add(self, SoundBuffer sound) except *
     cdef void _flush(self) except *
     cdef void _shutdown(self) except *
-    cdef double[:,:] _read_input(self, int frames, int offset)
+
+cdef class StreamContext:
+    cdef stream_ctx* ctx
+    cdef void _set_data(self)
+
+cdef class StreamContextView:
+    cdef stream_ctx* ctx
+    cdef SoundBuffer _read_input(self, int frames, int offset)
 

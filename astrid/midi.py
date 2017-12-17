@@ -57,7 +57,6 @@ class MidiDeviceBucket:
 
 class MidiBucket:
     def __init__(self, devices, mappings, bus):
-        logger.info((self, devices, mappings, bus))
         self.bus = bus
         self.devices = self.map_device_buckets(devices, mappings)
         self.dummy = MidiDeviceBucket() # empty fallback
@@ -66,23 +65,21 @@ class MidiBucket:
         return self.devices.get(device_alias, self.dummy)
 
     def map_device_buckets(self, devices=None, mappings=None):
-        logger.info((devices, mappings))
         if devices is None:
             return {}
 
         device_buckets = {}
         for device_alias in devices:
             mapping = mappings.get(device_alias, None)
-            device_buckets[device_alias] = MidiDeviceBucket(device_alias, self.bus, mapping)
+            device_fullname = find_device(device_alias)
+            device_buckets[device_alias] = MidiDeviceBucket(device_fullname, self.bus, mapping)
 
-        logger.info(device_buckets)
         return device_buckets
 
 
 class MidiListener(mp.Process):
     def __init__(self, instrument_name, device, triggers, bus, stop_listening=None):
         super(MidiListener, self).__init__()
-        logger.debug('MidiListener init')
         self.client = client.AstridClient()
         self.instrument_name = instrument_name
         self.device = device
@@ -92,10 +89,7 @@ class MidiListener(mp.Process):
         self.name = 'astrid-%s-midi-listener' % instrument_name
 
     def run(self):
-        logger.debug('MidiListener run %s' % self.device)
-
         with mido.open_input(self.device) as events:
-            logger.debug('waiting for events %s' % events)
             for msg in events:
                 logger.info('midi: %s %s' % (self.device, msg))
                 if self.stop_listening.is_set():
@@ -103,21 +97,15 @@ class MidiListener(mp.Process):
 
                 if msg.type == 'note_on':
                     freq = tune.mtof(msg.note)
-                    logger.debug('freq %s' % freq)
                     amp = msg.velocity / 127
-                    logger.debug('amp %s' % amp)
-                    logger.debug('freq amp %s %s' % (freq, amp))
                     setattr(self.bus, MIDI_MSG_NOTE_TEMPLATE.format(device=self.device, note=msg.note), amp)
-                    logger.debug('got msg %s' % msg)
 
                     if self.triggers is not None \
                     and (self.triggers == -1 or msg.note in self.triggers):
-                        logger.debug('sending play cmd %s' % msg)
                         self.client.send_cmd(['play', self.instrument_name, {'freq': freq, 'amp': amp}])
-                        logger.debug('sent play cmd %s' % self.instrument_name)
  
                 elif msg.type == 'control_change':
-                    value = msg.value / 127
+                    value = msg.value / 127.0
                     setattr(self.bus, MIDI_MSG_CC_TEMPLATE.format(device=self.device, cc=msg.control), value)
 
 def start_listener(name, renderer, bus, stop_listening):

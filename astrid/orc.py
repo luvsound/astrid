@@ -16,6 +16,7 @@ from . import client
 from . import midi
 from . import names
 from .logger import logger
+from .mixer import StreamContextView
 
 INSTRUMENT_RENDERER_KEY_TEMPLATE = '{}-renderer'
 
@@ -77,6 +78,8 @@ class EventContext:
             midi_maps=None
         ):
 
+        #self.stream_ctx = StreamContextView(self.bus.stream_ctx_ptr)
+
         logger.info('MidiBUcket')
         self.m = midi.MidiBucket(midi_devices, midi_maps, bus)
         logger.info('ParamBucket')
@@ -91,6 +94,10 @@ class EventContext:
 
     def msg(self, msg):
         self.client.send_cmd(msg)
+
+    def adc(self, length):
+        framelength = int(self.bus.samplerate * length)
+        return self.stream_ctx.read(framelength, 0)
 
     def play(self, instrument_name, *params, **kwargs):
         if params is not None:

@@ -1,6 +1,6 @@
 import random
 from unittest import TestCase
-from astrid.mixer import AstridMixer
+from astrid.mixer import AstridMixer, StreamContext, StreamContextView
 from astrid import orc
 import multiprocessing as mp
 import threading
@@ -13,11 +13,14 @@ class TestMixer(TestCase):
         channels = 2
         samplerate = 44100
 
+        #ctx = StreamContext()
+        #ctx_ptr = ctx.get_pointer()
         mixer = AstridMixer(block_size, channels, samplerate)
 
         snd = dsp.read('tests/sounds/vibes.wav')
         snd = snd.cut(1).env(dsp.SINE)
 
+        print('adding SND')
         mixer.add(snd)
         mixer.sleep(snd.dur*1000.0)
 
@@ -44,10 +47,15 @@ class TestMixer(TestCase):
         channels = 2
         samplerate = 44100
 
+        #ctx = StreamContext()
+        #ctx_ptr = ctx.get_pointer()
         mixer = AstridMixer(block_size, channels, samplerate)
 
         mixer.sleep(2000.0)
         snd = mixer.read(44100)
+
+        #ctx_view = StreamContextView(ctx_ptr)
+        #snd = ctx_view.read(44100, 0)
 
         for i in range(10):
             density = random.triangular(0.1, 1)
@@ -70,6 +78,8 @@ class TestMixer(TestCase):
         channels = 2
         samplerate = 44100
 
+        #ctx = StreamContext()
+        #ctx_ptr = ctx.get_pointer()
         mixer = AstridMixer(block_size, channels, samplerate)
 
         instrument_name = 'test'
@@ -111,12 +121,16 @@ class TestMixer(TestCase):
         samplerate = 44100
         lengthms = 2000
 
+        #ctx = StreamContext()
+        #ctx_ptr = ctx.get_pointer()
         mixer = AstridMixer(block_size, channels, samplerate)
 
         # fill up the ringbuffer for a while
         mixer.sleep(lengthms)
 
         # get the recording from the mixer
+        #ctx_view = StreamContextView(ctx_ptr)
+        #snd = ctx_view.read(int(lengthms * 0.001 * samplerate), 0)
         snd = mixer.read(int(lengthms * 0.001 * samplerate))
         snd.write('inp.wav')
 
