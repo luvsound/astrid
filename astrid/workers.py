@@ -51,7 +51,6 @@ class RenderProcess(mp.Process):
 
     def load_renderer(self, instrument_name, instrument_path):
         renderer = orc.load_instrument(instrument_name, instrument_path)
-        logger.debug('render process load_renderer %s' % renderer)
         self.instruments[instrument_name] = renderer
         return renderer
 
@@ -60,12 +59,9 @@ class RenderProcess(mp.Process):
         if renderer is None:
             instrument_path = os.path.join(self.cwd, names.ORC_DIR, '%s.py' % instrument_name)
             renderer = self.load_renderer(instrument_name, instrument_path)
-        logger.debug('render process get_renderer %s' % renderer)
         return renderer
 
     def run(self):
-        logger.debug('render process init')
-
         def wait_for_shutdown(q, shutdown_flag):
             shutdown_flag.wait()
             q.put((names.SHUTDOWN, None))
@@ -74,15 +70,12 @@ class RenderProcess(mp.Process):
         def wait_for_loads(load_q, q, shutdown_flag):
             while True:
                 msg = load_q.get()
-                logger.info('GOT LOAD')
-                logger.info(msg)
 
                 if msg == names.SHUTDOWN:
                     logger.debug('render process shutdown load queue')
                     break
 
                 q.put((names.LOAD_INSTRUMENT, msg))
-                logger.debug('render process put load %s %s' % msg)
 
                 # dumb way to try to keep it to one load per process
                 # FIXME this probably doesn't always work
@@ -97,7 +90,6 @@ class RenderProcess(mp.Process):
                     break
 
                 q.put((names.PLAY_INSTRUMENT, msg))
-                logger.debug('render process put play %s' % msg)
 
         load_listener = threading.Thread(name='astrid-load-queue-listener', target=wait_for_loads, args=(self.load_q, self.q, self.shutdown_flag))
         load_listener.start()
@@ -110,16 +102,12 @@ class RenderProcess(mp.Process):
 
         try:
             while True:
-                logger.debug('render process waiting for messages')
                 action, cmd = self.q.get()
-                logger.debug('got message %s %s' % (action, cmd))
 
                 if action == names.LOAD_INSTRUMENT:
-                    logger.debug('render process LOAD_INSTRUMENT %s %s' % cmd)
                     self.load_renderer(*cmd)
 
                 elif action == names.PLAY_INSTRUMENT:
-                    logger.debug('render process PLAY_INSTRUMENT %s' % cmd)
                     instrument_name = cmd[0]
                     params = None
                     if len(cmd) > 1:
@@ -129,8 +117,6 @@ class RenderProcess(mp.Process):
                     if renderer is None:
                         logger.error('No renderer loaded for %s' % instrument_name)
                         continue
-
-                    logger.debug('starting voice with inst %s and params %s' % (renderer, params))
 
                     device_aliases = []
                     midi_maps = {}
@@ -154,8 +140,6 @@ class RenderProcess(mp.Process):
 
                             midi_maps[device] = mapping 
 
-                        logger.debug('MIDI device mapping %s %s' % (device, mapping))
-
                     ctx = orc.EventContext(
                                 params=params, 
                                 instrument_name=instrument_name, 
@@ -167,13 +151,12 @@ class RenderProcess(mp.Process):
                                 midi_maps=midi_maps, 
                             )
 
-                    logger.debug('ctx %s' % ctx)
-
                     io.start_voice(self.event_loop, self.render_pool, renderer, ctx, self.buf_q, self.play_q)
 
                 elif action == names.SHUTDOWN:
                     logger.debug('got shutdown')
                     break
+
         except Exception as e:
             logger.error(e)
      

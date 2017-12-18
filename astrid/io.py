@@ -42,7 +42,6 @@ class AudioStream(threading.Thread):
                     break
 
                 q.put((names.ADD_BUFFER, msg))
-                logger.debug('audiostream put buf')
 
         def wait_for_reads(read_q, q, shutdown_flag):
             while True:
@@ -53,7 +52,6 @@ class AudioStream(threading.Thread):
                     break
 
                 q.put((names.READ_INPUT, msg))
-                logger.debug('audiostream put read')
 
         def wait_for_shutdown(q, shutdown_flag):
             shutdown_flag.wait()
@@ -70,7 +68,6 @@ class AudioStream(threading.Thread):
         shutdown_listener.start()
 
         mixer = AstridMixer(self.block_size, self.channels, self.samplerate)
-        logger.info('started audiostream QUEUE')
 
         while True:
             action, data = self.q.get()
@@ -113,43 +110,40 @@ def play_sequence(buf_q, player, ctx, onsets, done_playing_event):
     delay = threading.Event()
 
     count = 0
-    logger.debug('playing %s onsets %s' % (len(onsets), onsets))
-    start_time = time.time()
     elapsed = 0
+    start_time = time.clock_gettime(time.CLOCK_MONOTONIC_RAW)
     for onset in onsets:
         delay_time = onset - elapsed
-        #logger.info('play note c:%s o:%s e:%s d:%s' % (count, onset, elapsed, delay_time))
-
         if delay_time > 0:
             delay.wait(timeout=delay_time)
-        
+
         try:
             generator = player(ctx)
             for snd in generator:
                 buf_q.put(snd)
-
         except Exception as e:
             logger.error('Error during %s generator render: %s' % (ctx.instrument_name, e))
+
+        last_play = time.clock_gettime(time.CLOCK_MONOTONIC_RAW) - start_time
 
         if ctx.stop_all.is_set() or ctx.stop_me.is_set():
             break
 
-        elapsed += time.time() - start_time
-
+        elapsed += time.clock_gettime(time.CLOCK_MONOTONIC_RAW) - start_time
         count += 1
 
-    delay.wait(timeout=snd.dur)
+    last_delay = snd.dur - last_play
+    if last_delay > 0:
+        delay.wait(timeout=last_delay)
+
     done_playing_event.set()
 
 def start_voice(event_loop, executor, renderer, ctx, buf_q, play_q):
     ctx.running.set()
-    logger.debug('start voice %s' % renderer)
 
     loop = False
     if hasattr(renderer, 'loop'):
         loop = renderer.loop
-
-    logger.debug('loop %s' % loop)
 
     if hasattr(renderer, 'before'):
         # blocking before callback makes
@@ -178,38 +172,34 @@ def start_voice(event_loop, executor, renderer, ctx, buf_q, play_q):
         and isinstance(renderer.player.players, set):
         players |= renderer.player.players
 
-    logger.debug('players %s' % players)
+    while True:
+        done_events = []
+        count = 0
+        for player, onsets in players:
+            if onsets is None:
+                onsets = [0]
+                
+            done_event = threading.Event()
+            try:
+                event_loop.run_in_executor(executor, play_sequence, buf_q, player, ctx, onsets, done_event)
+            except Exception as e:
+                logger.error('error calling play_sequence: %s' % e)
 
-    done_playing_event = threading.Event()
+            done_events += [ done_event ]
+            count += 1
 
-    count = 0
-    for player, onsets in players:
-        if onsets is None:
-            onsets = [0]
-            
-        logger.debug('scheduling player onsets %s %s %s' % (count, player, onsets))
-        try:
-            event_loop.run_in_executor(executor, play_sequence, buf_q, player, ctx, onsets, done_playing_event)
-        except Exception as e:
-            logger.error('error calling play_sequence: %s' % e)
+        # Wait for all players to finish 
+        # before restarting the loop
+        for e in done_events:
+            e.wait()
 
-        count += 1
+        if not loop or ctx.stop_all.is_set():
+            break
 
-    logger.debug('waiting for play to complete')
-    done_playing_event.wait()
-    logger.debug('got done playing event')
     ctx.running.clear()
 
     if hasattr(renderer, 'done'):
-        logger.info('running player done callback')
+        # When the loop has completed or playback has stopped, 
+        # execute the done callback
         event_loop.run_in_executor(executor, renderer.done, ctx)
-
-    logger.debug('done playing')
-    try:
-        if loop:
-            msg = [ctx.instrument_name, ctx.get_params()]
-            logger.info('retrigger %s' % msg)
-            play_q.put(msg)
-    except Exception as e:
-        logger.error(e)
 

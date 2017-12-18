@@ -27,19 +27,14 @@ def load_instrument(name, path):
         Failure to load the module raises an 
         InstrumentNotFoundError
     """
-    logger.debug('Loading instrument %s from %s' % (name, path))
-
     try:
         spec = importlib.util.spec_from_file_location(name, path)
-        logger.debug('spec %s' % spec)
         if spec is not None:
             renderer = importlib.util.module_from_spec(spec)
-            logger.debug('renderer %s' % renderer)
             try:
                 spec.loader.exec_module(renderer)
             except Exception as e:
                 logger.error(e)
-            logger.debug('post exec renderer %s' % renderer)
 
             return renderer
         else:

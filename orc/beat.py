@@ -3,26 +3,20 @@ import glob
 from pippi import dsp, oscs, tune, rhythm
 from astrid import player
 
-BPM = 100
+BPM = 130
 MIDI = 'MPK'
 TRIG = -1
 
 loop = True
 
 def snarep(ctx):
-    #offset = 0 if ctx.m.note == 60 else 4
-    offset = 0
-    return rhythm.pattern('..x.', meter='4/4', beats=4, offset=offset, bpm=BPM)
+    return rhythm.pattern('..x.', meter='4/4', beats=4, offset=0, bpm=BPM)
 
 def kickp(ctx):
-    #offset = 0 if ctx.m.note == 60 else 4
-    offset = 0
-    return rhythm.pattern('x...', meter='4/4', beats=4, offset=offset, bpm=BPM)
+    return rhythm.pattern('x...', meter='4/4', beats=4, offset=0, bpm=BPM)
 
 def hatp(ctx):
-    #offset = 0 if ctx.m.note == 60 else 4
-    offset = 0
-    return rhythm.pattern('xxxx', meter='4/4', beats=4, offset=offset, swing=0, bpm=BPM)
+    return rhythm.pattern('xxxx', meter='4/4', beats=4, offset=0, swing=0, bpm=BPM)
 
 def before(ctx):
     hatfs = glob.glob('/home/hecanjog/code/songs/sounds/drums/hats*.wav')

@@ -145,10 +145,8 @@ class AstridServer(Service):
 
     def start_instrument_listeners(self, instrument_name, instrument_path):
         if instrument_name not in self.listeners:
-            logger.debug('starting listener %s' % instrument_name)
             renderer = orc.load_instrument(instrument_name, instrument_path)
             self.listeners[instrument_name] = midi.start_listener(instrument_name, renderer, self.bus, self.stop_listening)
-            logger.debug('started listener %s' % instrument_name)
 
     def load_instrument(self, instrument_name):
         instrument_path = os.path.join(self.cwd, names.ORC_DIR, '%s.py' % instrument_name)
@@ -217,15 +215,11 @@ class AstridServer(Service):
                 else:
                     action = cmd.pop(0)
 
-                logger.info('action %s' % action) 
-
                 if names.ntoc(action) == names.LOAD_INSTRUMENT:
-                    logger.info('LOAD_INSTRUMENT %s %s' % (action, cmd))
                     if len(cmd) > 0:
                         reply = self.load_instrument(cmd[0])
 
                 elif names.ntoc(action) == names.RELOAD_INSTRUMENT:
-                    logger.info('RELOAD_INSTRUMENT %s %s' % (action, cmd))
                     if len(cmd) > 0:
                         reply = self.load_instrument(cmd[0])
 
@@ -255,7 +249,6 @@ class AstridServer(Service):
                     if self.stop_all.is_set():
                         self.stop_all.clear() # FIXME this probably doesn't always work
 
-                    logger.info('PLAY_INSTRUMENT %s' % cmd)
                     self.play_q.put(cmd)
 
                 self.msgsock.send(msgpack.packb(reply or names.MSG_OK))

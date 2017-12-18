@@ -91,7 +91,7 @@ class MidiListener(mp.Process):
     def run(self):
         with mido.open_input(self.device) as events:
             for msg in events:
-                logger.info('midi: %s %s' % (self.device, msg))
+                #logger.info('midi: %s %s' % (self.device, msg))
                 if self.stop_listening.is_set():
                     break
 
@@ -111,8 +111,6 @@ class MidiListener(mp.Process):
 def start_listener(name, renderer, bus, stop_listening):
     listener = None
     if hasattr(renderer, 'MIDI'):
-        logger.debug('has MIDI %s' % renderer.MIDI)
-
         devices = []
         if isinstance(renderer.MIDI, list):
             devices = renderer.MIDI
@@ -130,12 +128,9 @@ def start_listener(name, renderer, bus, stop_listening):
                 else:
                     triggers = renderer.TRIG
 
-            logger.debug('MIDI device triggers %s %s' % (device, triggers))
             device = find_device(device)
 
-            logger.debug('creating MidiListener %s %s %s' % (device, triggers, bus))
             listener = MidiListener(name, device, triggers, bus, stop_listening)
-            logger.debug('starting listener')
             listener.start()
 
     return listener
