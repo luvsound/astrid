@@ -124,11 +124,11 @@ class AstridServer(Service):
 
         logger.info('listeners cleaned up')
 
-        self.envelope_follower.join()
-        logger.info('envelope follower stopped')
+        #self.envelope_follower.join()
+        #logger.info('envelope follower stopped')
 
-        self.pitch_tracker.join()
-        logger.info('pitch tracker stopped')
+        #self.pitch_tracker.join()
+        #logger.info('pitch tracker stopped')
 
         self.audiostream.join()
         logger.info('audiostream cleaned up')
@@ -168,6 +168,7 @@ class AstridServer(Service):
 
         self.audiostream.start()
 
+        """
         logger.info('Starting envelope follower')
         try:
             self.envelope_follower = mp.Process(name='astrid-envelope-follower', target=analysis.envelope_follower, args=(self.bus, self.read_q, self.envelope_follower_response_q, self.shutdown_flag))
@@ -181,6 +182,7 @@ class AstridServer(Service):
             self.pitch_tracker.start()
         except Exception as e:
             logger.error(e)
+        """
 
         for _ in range(self.numrenderers):
             rp = workers.RenderProcess(
@@ -244,10 +246,6 @@ class AstridServer(Service):
                 elif names.ntoc(action) == names.STOP_ALL_VOICES:
                     logger.info('STOP_ALL_VOICES %s' % cmd)
                     self.stop_all.set()
-                    """
-                    for _ in range(self.numrenderers):
-                        self.play_q.put(names.STOP_ALL_VOICES)
-                    """
 
                 elif names.ntoc(action) == names.LIST_INSTRUMENTS:
                     logger.info('LIST_INSTRUMENTS %s' % cmd)

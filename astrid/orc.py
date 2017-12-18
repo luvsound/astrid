@@ -80,12 +80,10 @@ class EventContext:
 
         #self.stream_ctx = StreamContextView(self.bus.stream_ctx_ptr)
 
-        logger.info('MidiBUcket')
         self.m = midi.MidiBucket(midi_devices, midi_maps, bus)
-        logger.info('ParamBucket')
         self.p = ParamBucket(params)
-        logger.info('client')
-        self.client = client.AstridClient()
+        #self.client = client.AstridClient()
+        self.client = None
         self.instrument_name = instrument_name
         self.running = running
         self.stop_all = stop_all
@@ -93,7 +91,8 @@ class EventContext:
         self.bus = bus
 
     def msg(self, msg):
-        self.client.send_cmd(msg)
+        if self.client is not None:
+            self.client.send_cmd(msg)
 
     def adc(self, length):
         framelength = int(self.bus.samplerate * length)
@@ -109,7 +108,8 @@ class EventContext:
         if kwargs is not None:
             params.update(kwargs)
 
-        self.client.send_cmd([names.PLAY_INSTRUMENT, instrument_name, params])
+        if self.client is not None:
+            self.client.send_cmd([names.PLAY_INSTRUMENT, instrument_name, params])
 
     def log(self, msg):
         logger.info(msg)

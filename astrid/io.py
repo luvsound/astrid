@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import collections
 import threading
 import queue
+import time
 
 from .logger import logger
 from . import names
@@ -36,8 +37,6 @@ class AudioStream(threading.Thread):
         def wait_for_bufs(buf_q, q, shutdown_flag):
             while True:
                 msg = buf_q.get()
-                logger.info(msg)
-
                 if msg == names.SHUTDOWN:
                     logger.debug('audiostream shutdown buf queue')
                     break
@@ -80,7 +79,6 @@ class AudioStream(threading.Thread):
 
             elif action == names.ADD_BUFFER:
                 try:
-                    logger.info('adding %s to ASTRID MIXER' % data)
                     mixer.add(data)
                 except Exception as e:
                     logger.error(e)
@@ -116,9 +114,11 @@ def play_sequence(buf_q, player, ctx, onsets, done_playing_event):
 
     count = 0
     logger.debug('playing %s onsets %s' % (len(onsets), onsets))
+    start_time = time.time()
+    elapsed = 0
     for onset in onsets:
-        delay_time = onset
-        logger.info('play note c:%s o:%s d:%s' % (count, onset, delay_time))
+        delay_time = onset - elapsed
+        #logger.info('play note c:%s o:%s e:%s d:%s' % (count, onset, elapsed, delay_time))
 
         if delay_time > 0:
             delay.wait(timeout=delay_time)
@@ -133,6 +133,8 @@ def play_sequence(buf_q, player, ctx, onsets, done_playing_event):
 
         if ctx.stop_all.is_set() or ctx.stop_me.is_set():
             break
+
+        elapsed += time.time() - start_time
 
         count += 1
 
@@ -176,13 +178,9 @@ def start_voice(event_loop, executor, renderer, ctx, buf_q, play_q):
         and isinstance(renderer.player.players, set):
         players |= renderer.player.players
 
-    logger.info('players %s' % players)
+    logger.debug('players %s' % players)
 
-    try:
-        done_playing_event = threading.Event()
-        logger.info(done_playing_event)
-    except Exception as e:
-        logger.error(e)
+    done_playing_event = threading.Event()
 
     count = 0
     for player, onsets in players:
@@ -206,11 +204,11 @@ def start_voice(event_loop, executor, renderer, ctx, buf_q, play_q):
         logger.info('running player done callback')
         event_loop.run_in_executor(executor, renderer.done, ctx)
 
-    logger.info('done playing')
+    logger.debug('done playing')
     try:
-        if loop and not ctx.stop_all.is_set() and not ctx.stop_me.is_set():
+        if loop:
             msg = [ctx.instrument_name, ctx.get_params()]
-            logger.debug('retrigger %s' % msg)
+            logger.info('retrigger %s' % msg)
             play_q.put(msg)
     except Exception as e:
         logger.error(e)
