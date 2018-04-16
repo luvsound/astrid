@@ -1,7 +1,7 @@
 argh==0.26.2
 aubio==0.4.6
 cffi==1.11.2
-Cython==0.27.3
+Cython==0.28.1
 docutils==0.14
 lockfile==0.12.2
 mido==1.2.8
@@ -10,8 +10,6 @@ numpy==1.13.3
 olefile==0.44
 pathtools==0.1.2
 Pillow-SIMD==4.3.0.post0
--e git+git@github.com:luvsound/pippi.git@52508d14d1b9dd4ee341e17fc5c6d08fcc08e98d#egg=pippi
-pkg-resources==0.0.0
 pycparser==2.18
 PySoundFile==0.9.0.post1
 python-daemon==2.1.2
