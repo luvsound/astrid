@@ -20,7 +20,6 @@ class TestMixer(TestCase):
         snd = dsp.read('tests/sounds/vibes.wav')
         snd = snd.cut(1).env(dsp.SINE)
 
-        print('adding SND')
         mixer.add(snd)
         mixer.sleep(snd.dur*1000.0)
 
@@ -34,11 +33,11 @@ class TestMixer(TestCase):
                         speed_lfo_wt=interpolation.linear([ random.triangular(0, 0.05) for _ in range(random.randint(10, 1000)) ], 4096), 
                         density_lfo_wt=interpolation.linear([ random.random() for _ in range(random.randint(10, 1000)) ], 4096), 
                         grainlength_lfo_wt=interpolation.linear([ random.random() for _ in range(random.randint(10, 500)) ], 4096), 
-                        minspeed=0.99, 
-                        maxspeed=random.triangular(1, 1.1),
+                        minspeed=0.25, 
+                        maxspeed=random.triangular(1, 1.5),
                         density=random.triangular(0.75, 2),
                         minlength=1, 
-                        maxlength=random.triangular(60, 100),
+                        maxlength=random.triangular(60, 200),
                         spread=random.random(),
                         jitter=random.triangular(0, 0.1),
                     ).play(snd.dur * random.triangular(3, 4))
@@ -60,11 +59,9 @@ class TestMixer(TestCase):
         for i in range(10):
             density = random.triangular(0.1, 1)
 
-            print('snd dur', snd.dur)
             out = makecloud(snd) * 5
             #out.write('cldhm%s.wav' % i)
 
-            print('post cld dur', out.dur)
             mixer.add(out)
 
         mixer.sleep(5000.0)
