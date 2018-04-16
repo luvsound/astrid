@@ -37,8 +37,8 @@ def play(ctx):
     ctx.log(freq)
     #amp = random.triangular(0.1, 0.25) * 0.2
     #amp = ctx.p.amp * 0.125
-    amp = mpk.cc2 or 0
-    pulsewidth = mpk.cc1 or 0
+    amp = mpk.cc2 or 0.15
+    pulsewidth = mpk.cc1 or random.random()
     lfo_freq = random.triangular(0.001, 330)
     lfo_freq = (mpk.cc3 or 1) * 100
 
