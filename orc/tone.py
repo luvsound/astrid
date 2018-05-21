@@ -6,49 +6,46 @@ MIDI = 'MPK'
 #TRIG = -1
 loop = True
 
+"""
 def onsets(ctx):
-    return [ i * 0.2 for i in wts.wavetable(dsp.SINE, random.randint(4, 32)) ]
+    #return [ i * 3 for i in wts.wavetable(dsp.SINE, random.randint(4, 32)) ]
+    return [ 0, 1 ]
+"""
 
-def make_note(freq, lfo_freq, amp, length):
-    length = random.triangular(length, length * 2)
+def make_note(freq, amp, length):
     numtables = random.randint(1, random.randint(3, 12))
-    lfo = random.choice([dsp.SINE, dsp.RSAW, dsp.TRI, dsp.PHASOR])
-    wavetables = [ random.choice([dsp.SINE, dsp.SQUARE, dsp.TRI, dsp.SAW]) for _ in range(numtables) ]
+    lfo = wts.randline(random.randint(10, 100))
+    lfo_freq = random.triangular(0.3, 30)
 
-    osc = oscs.Osc(wavetables, lfo=lfo)
+    mod = wts.randline(random.randint(10, 100))
+    mod_freq = random.triangular(0.3, 3)
+    mod_range = random.triangular(0, 3)
+    pulsewidth = random.random()
 
-    #freq = freq * random.choice([0.5, 1])
-    note = osc.play(length=length, freq=freq, amp=amp, mod_freq=lfo_freq)
-    #note = note.env(dsp.RND).env(dsp.PHASOR).pan(random.random())
+    wavetables = []
+    for _ in range(numtables):
+        if random.random() > 0.5:
+            wavetables += [ random.choice([dsp.SINE, dsp.SQUARE, dsp.TRI, dsp.SAW]) ]
+        else:
+            wavetables += [ wts.randline(random.randint(3, 300)) ]
 
-    return note
-
+    return oscs.Osc(stack=wavetables, window=dsp.SINE, mod=mod, lfo=lfo, pulsewidth=pulsewidth, mod_freq=mod_freq, mod_range=mod_range, lfo_freq=lfo_freq).play(length=length, freq=freq, amp=amp)
 
 def play(ctx):
-    ctx.log('play voice')
     mpk = ctx.m('MPK')
-    ctx.log('MPK CC1 %s' % mpk.cc1)
+    freqs = tune.fromdegrees([1,2,3,5,6,8,9], octave=random.randint(1, 5), root='c')
+    numvoices = random.randint(1, 3)
+    length = random.triangular(0.5, 7)
 
-    length = random.triangular(0.01, 0.5)
-    #freq = ctx.p.freq or random.triangular(200, 330)
-    freqs = tune.fromdegrees([1,3,5,6], octave=random.randint(2,5), root='c')
-    #freq = random.triangular(300, 600)
-    freq = random.choice(freqs)
-    ctx.log(freq)
-    #amp = random.triangular(0.1, 0.25) * 0.2
-    #amp = ctx.p.amp * 0.125
-    amp = mpk.cc2 or 0.15
-    pulsewidth = mpk.cc1 or random.random()
-    lfo_freq = random.triangular(0.001, 330)
-    lfo_freq = (mpk.cc3 or 1) * 100
+    for _ in range(numvoices):
+        freq = ctx.p.freq or random.choice(freqs)
+        amp = mpk.cc2 or ctx.p.amp or random.triangular(0.1, 0.5)
 
-    out = make_note(freq, lfo_freq, amp, length)
-    out = out.adsr(0.005, 0.01, 0.35, 0.1)
-    out = out.pan(random.random())
-    #out.write('listeny.wav')
+        out = make_note(freq, amp, length)
+        out = out.adsr(0.005, 0.01, 0.35, 0.1)
+        out = out.env(dsp.RSAW)
+        out = out.pan(random.random())
 
-    ctx.log('PLAYED %s at %s' % (freq, amp))
-
-    yield out
+        yield out
 
 

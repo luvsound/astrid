@@ -1,5 +1,9 @@
 import multiprocessing as mp
+from concurrent.futures import ThreadPoolExecutor
+import threading
 import mido
+import math
+import time
 
 from pippi import tune
 from . import client
@@ -76,6 +80,45 @@ class MidiBucket:
 
         return device_buckets
 
+class PlayNote(threading.Thread):
+    def __init__(self, out, freq, amp, length):
+        self.out = out
+        self.freq = freq
+        self.amp = amp
+        self.length = length
+
+        super().__init__()
+
+    def run(self):
+        note = int(math.floor(math.log(self.freq/440.0, 2) * 12 + 69))
+        velocity = int(self.amp * 127)
+        logger.info('MidiOutput ON %s %s %s %s %s' % (self.freq, self.amp, self.length, note, velocity))
+
+        m = mido.Message('note_on', note=note, velocity=velocity)
+        self.out.send(m)
+        time.sleep(self.length)
+        m = mido.Message('note_off', note=note)
+        self.out.send(m)
+        logger.info('MidiOutput OFF %s %s %s %s %s' % (self.freq, self.amp, self.length, note, velocity))
+
+
+class MidiOutput(mp.Process):
+    def __init__(self, event_loop, event_q):
+        super().__init__()
+        self.event_loop = event_loop
+        self.event_q = event_q
+        self.out = mido.open_output('MidiSport 2x2 MIDI 1')
+        self.pool = ThreadPoolExecutor(max_workers=256)
+        logger.info('MidiOutput started up')
+
+    def run(self):
+        while True:
+            freq, amp, length = self.event_q.get()
+            logger.info('Got MSG: MidiOutput %s %s %s' % (freq, amp, length))
+            e = PlayNote(self.out, freq, amp, length)
+            logger.info(type(e))
+            e.start()
+            #self.event_loop.run_in_executor(self.pool, self._play, freq, amp, length)
 
 class MidiListener(mp.Process):
     def __init__(self, instrument_name, device, triggers, bus, stop_listening=None):

@@ -4,19 +4,19 @@ from pippi import dsp, oscs, tune, rhythm
 from astrid import player
 
 BPM = 130
-MIDI = 'MPK'
-TRIG = -1
+#MIDI = 'MPK'
+#TRIG = -1
 
 loop = True
 
 def snarep(ctx):
-    return rhythm.pattern('..x.', meter='4/4', beats=4, offset=0, bpm=BPM)
+    return rhythm.pattern('..x.', bpm=BPM)
 
 def kickp(ctx):
-    return rhythm.pattern('x...', meter='4/4', beats=4, offset=0, bpm=BPM)
+    return rhythm.pattern('x...', bpm=BPM)
 
 def hatp(ctx):
-    return rhythm.pattern('xxxx', meter='4/4', beats=4, offset=0, swing=0, bpm=BPM)
+    return rhythm.pattern('xxxx', bpm=BPM)
 
 def before(ctx):
     hatfs = glob.glob('/home/hecanjog/code/songs/sounds/drums/hats*.wav')

@@ -9,17 +9,8 @@ class AstridConsole(cmd.Cmd):
     prompt = '^_- '
     intro = 'Astrid Console'
 
-    def __init__(self, server=None, client=None):
+    def __init__(self, client=None):
         cmd.Cmd.__init__(self)
-
-        if server is None:
-            self.server = AstridServer('astrid', pid_dir='/tmp')
-        else:
-            self.server = server
-
-        if not self.server.is_running():
-            self.server.start()
-            print('Started astrid server')
 
         if client is None:
             self.client = AstridClient()
@@ -51,20 +42,6 @@ class AstridConsole(cmd.Cmd):
         print('Stopping all voices')
         self.client.send_cmd(['stopall'])
 
-    def do_start(self, cmd):
-        if not self.server.is_running():
-            self.server.start()
-            print('Started astrid server')
-        else:
-            print('Astrid server is already running')
-
-    def do_stop(self, cmd):
-        if self.server.is_running():
-            self.client.send_cmd(['shutdown'])
-            print('Sent shutdown signal')
-        else:
-            print('Astrid server is already stopped')
-
     def do_quit(self, cmd):
         self.quit()
 
@@ -78,6 +55,4 @@ class AstridConsole(cmd.Cmd):
         self.cmdloop()
 
     def quit(self):
-        if self.server.is_running():
-            self.server.stop()
-
+        print('Quitting')

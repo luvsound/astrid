@@ -14,6 +14,7 @@ class RenderProcess(mp.Process):
     def __init__(self, 
             buf_q, 
             play_q, 
+            event_q, 
             load_q, 
             reply_q, 
             shutdown_flag,
@@ -30,6 +31,7 @@ class RenderProcess(mp.Process):
         self.voices = []
         self.buf_q = buf_q
         self.play_q = play_q
+        self.event_q = event_q
         self.load_q = load_q
         self.reply_q = reply_q
         self.stop_all = stop_all
@@ -151,7 +153,7 @@ class RenderProcess(mp.Process):
                                 midi_maps=midi_maps, 
                             )
 
-                    io.start_voice(self.event_loop, self.render_pool, renderer, ctx, self.buf_q, self.play_q)
+                    io.start_voice(self.event_loop, self.render_pool, renderer, ctx, self.buf_q, self.play_q, self.event_q)
 
                 elif action == names.SHUTDOWN:
                     logger.debug('got shutdown')

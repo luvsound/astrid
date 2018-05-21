@@ -10,7 +10,6 @@ import random
 import queue
 
 import msgpack
-from service import Service
 import numpy as np
 import zmq
 
@@ -38,9 +37,8 @@ CHANNELS = 2
 SAMPLERATE = 44100
 RINGBUFFERLENGTH = 30
 
-class AstridServer(Service):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+class AstridServer:
+    def __init__(self):
         self.manager = mp.Manager()
 
         self.bus = self.manager.Namespace()
@@ -48,6 +46,7 @@ class AstridServer(Service):
         self.event_loop = asyncio.get_event_loop()
 
         self.buf_q = self.manager.Queue()
+        self.event_q = self.manager.Queue()
         self.envelope_follower_response_q = self.manager.Queue()
         self.pitch_tracker_response_q = self.manager.Queue()
         self.load_q = self.manager.Queue()
@@ -91,6 +90,9 @@ class AstridServer(Service):
                                         self.channels, 
                                         self.samplerate
                                     )
+
+        self.midiout = midi.MidiOutput(self.event_loop, self.event_q)
+
     @contextmanager
     def msg_context(self):
         self.context = zmq.Context()
@@ -130,6 +132,9 @@ class AstridServer(Service):
         #self.pitch_tracker.join()
         #logger.info('pitch tracker stopped')
 
+        self.midiout.join()
+        logger.info('midiout cleaned up')
+
         self.audiostream.join()
         logger.info('audiostream cleaned up')
 
@@ -165,6 +170,7 @@ class AstridServer(Service):
         logger.info(BANNER)
 
         self.audiostream.start()
+        self.midiout.start()
 
         """
         logger.info('Starting envelope follower')
@@ -186,6 +192,7 @@ class AstridServer(Service):
             rp = workers.RenderProcess(
                     self.buf_q, 
                     self.play_q, 
+                    self.event_q,
                     self.load_q, 
                     self.reply_q, 
                     self.shutdown_flag,

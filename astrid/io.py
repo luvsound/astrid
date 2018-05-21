@@ -97,8 +97,7 @@ class AudioStream(threading.Thread):
         read_listener.join()
         shutdown_listener.join()
 
-
-def play_sequence(buf_q, player, ctx, onsets, done_playing_event):
+def play_sequence(buf_q, event_q, player, ctx, onsets, done_playing_event):
     """ Play a sequence of overlapping oneshots
     """
     if not isinstance(onsets, collections.Iterable):
@@ -120,7 +119,12 @@ def play_sequence(buf_q, player, ctx, onsets, done_playing_event):
         try:
             generator = player(ctx)
             for snd in generator:
-                buf_q.put(snd)
+                if hasattr(snd, 'dur'):
+                    logger.info('SND PUT BUF')
+                    buf_q.put(snd)
+                else:
+                    logger.info('EVENT PUT MSG')
+                    event_q.put(snd)
         except Exception as e:
             logger.error('Error during %s generator render: %s' % (ctx.instrument_name, e))
 
@@ -138,7 +142,7 @@ def play_sequence(buf_q, player, ctx, onsets, done_playing_event):
 
     done_playing_event.set()
 
-def start_voice(event_loop, executor, renderer, ctx, buf_q, play_q):
+def start_voice(event_loop, executor, renderer, ctx, buf_q, play_q, event_q):
     ctx.running.set()
 
     loop = False
@@ -181,7 +185,7 @@ def start_voice(event_loop, executor, renderer, ctx, buf_q, play_q):
                 
             done_event = threading.Event()
             try:
-                event_loop.run_in_executor(executor, play_sequence, buf_q, player, ctx, onsets, done_event)
+                event_loop.run_in_executor(executor, play_sequence, buf_q, event_q, player, ctx, onsets, done_event)
             except Exception as e:
                 logger.error('error calling play_sequence: %s' % e)
 

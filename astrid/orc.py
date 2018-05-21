@@ -28,6 +28,7 @@ def load_instrument(name, path):
         InstrumentNotFoundError
     """
     try:
+        logger.info('Loading instrument %s from %s' % (name, path))
         spec = importlib.util.spec_from_file_location(name, path)
         if spec is not None:
             renderer = importlib.util.module_from_spec(spec)
