@@ -17,8 +17,7 @@ class TestMixer(TestCase):
         #ctx_ptr = ctx.get_pointer()
         mixer = AstridMixer(block_size, channels, samplerate)
 
-        snd = dsp.read('tests/sounds/vibes.wav')
-        snd = snd.cut(1).env(dsp.SINE)
+        snd = dsp.read('tests/sounds/linus.wav')
 
         mixer.add(snd)
         mixer.sleep(snd.dur*1000.0)
@@ -27,17 +26,17 @@ class TestMixer(TestCase):
 
     def test_play_clouds(self):
         def makecloud(snd):
-            return grains.GrainCloud(snd * 0.125, 
+            return grains.GrainCloud(snd * 0.5, 
                         win=dsp.HANN, 
                         read_lfo=dsp.PHASOR, 
-                        speed_lfo_wt=interpolation.linear([ random.triangular(0, 0.05) for _ in range(random.randint(10, 1000)) ], 4096), 
+                        speed_lfo=dsp.RND, 
                         density_lfo_wt=interpolation.linear([ random.random() for _ in range(random.randint(10, 1000)) ], 4096), 
                         grainlength_lfo_wt=interpolation.linear([ random.random() for _ in range(random.randint(10, 500)) ], 4096), 
-                        minspeed=0.25, 
-                        maxspeed=random.triangular(1, 1.5),
+                        minspeed=0.75, 
+                        maxspeed=random.triangular(1, 3),
                         density=random.triangular(0.75, 2),
-                        minlength=1, 
-                        maxlength=random.triangular(60, 200),
+                        minlength=30, 
+                        maxlength=random.triangular(60, 1000),
                         spread=random.random(),
                         jitter=random.triangular(0, 0.1),
                     ).play(snd.dur * random.triangular(3, 4))
@@ -57,9 +56,7 @@ class TestMixer(TestCase):
         #snd = ctx_view.read(44100, 0)
 
         for i in range(10):
-            density = random.triangular(0.1, 1)
-
-            out = makecloud(snd) * 5
+            out = makecloud(snd)
             #out.write('cldhm%s.wav' % i)
 
             mixer.add(out)
