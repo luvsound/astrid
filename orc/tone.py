@@ -5,6 +5,7 @@ from pippi import wavetables as wts
 MIDI = 'MPK'
 #TRIG = -1
 loop = True
+SOUNDS = ['tests/sounds/vibes.wav']
 
 """
 def onsets(ctx):
@@ -45,6 +46,9 @@ def play(ctx):
         out = out.adsr(0.005, 0.01, 0.35, 0.1)
         out = out.env(dsp.RSAW)
         out = out.pan(random.random())
+        v = random.choice(ctx.sounds)
+        v = v.rcut(random.triangular(length/10, length)).pan(random.random()) * random.random()
+        out.dub(v, 0)
 
         yield out
 

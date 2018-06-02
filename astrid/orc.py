@@ -122,7 +122,7 @@ class Instrument:
         self.name = name
         self.renderer = renderer
         self.bus = bus
-        self.sounds = load_sounds()
+        self.sounds = self.load_sounds()
 
     def load_sounds(self):
         if hasattr(self.renderer, 'SOUNDS') and isinstance(self.renderer.SOUNDS, list):
