@@ -12,6 +12,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import zmq
 
+from pippi import dsp
 from . import client
 from . import midi
 from . import names
@@ -63,7 +64,6 @@ class ParamBucket:
 
 class EventContext:
     before = None
-    sounds = None
 
     def __init__(self, 
             params=None, 
@@ -72,6 +72,7 @@ class EventContext:
             stop_all=None, 
             stop_me=None, 
             bus=None,
+            sounds=None,
             midi_devices=None, 
             midi_maps=None
         ):
@@ -87,6 +88,7 @@ class EventContext:
         self.stop_all = stop_all
         self.stop_me = stop_me
         self.bus = bus
+        self.sounds = sounds
 
     def msg(self, msg):
         if self.client is not None:
@@ -120,6 +122,15 @@ class Instrument:
         self.name = name
         self.renderer = renderer
         self.bus = bus
+        self.sounds = load_sounds()
+
+    def load_sounds(self):
+        if hasattr(self.renderer, 'SOUNDS') and isinstance(self.renderer.SOUNDS, list):
+            return [ dsp.read(snd) for snd in self.renderer.SOUNDS ]
+        elif hasattr(self.renderer, 'SOUNDS') and isinstance(self.renderer.SOUNDS, dict):
+            return { k: dsp.read(snd) for k, snd in self.renderer.SOUNDS.items() }
+
+        return None
 
     def map_midi_devices(self):
         device_aliases = []
@@ -148,7 +159,6 @@ class Instrument:
 
     def create_ctx(self, params):
         device_aliases, midi_maps = self.map_midi_devices()
-
         return EventContext(
                     params=params, 
                     instrument_name=self.name, 
@@ -156,6 +166,7 @@ class Instrument:
                     stop_all=self.bus.stop_all, 
                     stop_me=threading.Event(),
                     bus=self.bus, 
+                    sounds=self.sounds,
                     midi_devices=device_aliases, 
                     midi_maps=midi_maps, 
                 )
