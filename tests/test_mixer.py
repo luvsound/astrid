@@ -75,22 +75,20 @@ class TestMixer(TestCase):
         #ctx = StreamContext()
         #ctx_ptr = ctx.get_pointer()
         mixer = AstridMixer(block_size, channels, samplerate)
+        manager = mp.Manager()
+        bus = manager.Namespace()
+        bus.stop_all = manager.Event() # voices
+        bus.shutdown_flag = manager.Event() # render & analysis processes
+        bus.stop_listening = manager.Event() # midi listeners
 
         instrument_name = 'test'
-        instrument = orc.load_instrument(instrument_name, 'orc/tone.py')
-
-        ctx = orc.EventContext(
-                    instrument_name=instrument_name, 
-                    running=threading.Event(),
-                    stop_all=threading.Event(), 
-                    stop_me=threading.Event(),
-                    bus=mp.Manager().Namespace(), 
-                )
-
+        instrument = orc.load_instrument(instrument_name, 'orc/tone.py', bus)
+        params = None
+        ctx = instrument.create_ctx(params)
         numnotes = 6
 
         for _ in range(numnotes):
-            generator = instrument.play(ctx)
+            generator = instrument.renderer.play(ctx)
 
             for snd in generator:
                 self.assertTrue(len(snd) > 0)
@@ -98,7 +96,7 @@ class TestMixer(TestCase):
             mixer.sleep(random.randint(0, 100))
 
         mixer.sleep(1000)
-        generator = instrument.play(ctx)
+        generator = instrument.renderer.play(ctx)
 
         for snd in generator:
             self.assertTrue(len(snd) > 0)

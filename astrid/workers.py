@@ -17,9 +17,6 @@ class RenderProcess(mp.Process):
             event_q, 
             load_q, 
             reply_q, 
-            shutdown_flag,
-            stop_all, 
-            stop_listening, 
             bus,
             event_loop, 
             cwd
@@ -34,9 +31,9 @@ class RenderProcess(mp.Process):
         self.event_q = event_q
         self.load_q = load_q
         self.reply_q = reply_q
-        self.stop_all = stop_all
-        self.shutdown_flag = shutdown_flag
-        self.stop_listening = stop_listening
+        self.stop_all = bus.stop_all
+        self.shutdown_flag = bus.shutdown_flag
+        self.stop_listening = bus.stop_listening
         self.bus = bus
         self.render_pool = ThreadPoolExecutor(max_workers=16)
         self.event_loop = event_loop
@@ -51,17 +48,17 @@ class RenderProcess(mp.Process):
         self.latency = 'low'
         self.device = None
 
-    def load_renderer(self, instrument_name, instrument_path):
-        renderer = orc.load_instrument(instrument_name, instrument_path)
-        self.instruments[instrument_name] = renderer
-        return renderer
+    def load_instrument(self, instrument_name, instrument_path):
+        instrument = orc.load_instrument(instrument_name, instrument_path, self.bus)
+        self.instruments[instrument_name] = instrument
+        return instrument
 
-    def get_renderer(self, instrument_name):
-        renderer = self.instruments.get(instrument_name, None)         
-        if renderer is None:
+    def get_instrument(self, instrument_name):
+        instrument = self.instruments.get(instrument_name, None)         
+        if instrument is None:
             instrument_path = os.path.join(self.cwd, names.ORC_DIR, '%s.py' % instrument_name)
-            renderer = self.load_renderer(instrument_name, instrument_path)
-        return renderer
+            instrument = self.load_instrument(instrument_name, instrument_path, self.bus)
+        return instrument
 
     def run(self):
         def wait_for_shutdown(q, shutdown_flag):
@@ -115,45 +112,12 @@ class RenderProcess(mp.Process):
                     if len(cmd) > 1:
                         params = cmd[1]
 
-                    renderer = self.get_renderer(instrument_name)
-                    if renderer is None:
-                        logger.error('No renderer loaded for %s' % instrument_name)
+                    instrument = self.get_instrument(instrument_name)
+                    if instrument is None:
+                        logger.error('No instrument loaded for %s' % instrument_name)
                         continue
 
-                    device_aliases = []
-                    midi_maps = {}
-
-                    if hasattr(renderer, 'MIDI'): 
-                        if isinstance(renderer.MIDI, list):
-                            device_aliases = renderer.MIDI
-                        else:
-                            device_aliases = [ renderer.MIDI ]
-
-                    for i, device in enumerate(device_aliases):
-                        mapping = None
-                        if hasattr(renderer, 'MAP'):
-                            if isinstance(renderer.MAP, list):
-                                try:
-                                    mapping = renderer.MAP[i]
-                                except IndexError:
-                                    pass
-                            else:
-                                mapping = renderer.MAP
-
-                            midi_maps[device] = mapping 
-
-                    ctx = orc.EventContext(
-                                params=params, 
-                                instrument_name=instrument_name, 
-                                running=threading.Event(),
-                                stop_all=self.stop_all, 
-                                stop_me=threading.Event(),
-                                bus=self.bus, 
-                                midi_devices=device_aliases, 
-                                midi_maps=midi_maps, 
-                            )
-
-                    io.start_voice(self.event_loop, self.render_pool, renderer, ctx, self.buf_q, self.play_q, self.event_q)
+                    io.start_voice(self.event_loop, self.render_pool, instrument, params, self.buf_q, self.play_q, self.event_q)
 
                 elif action == names.SHUTDOWN:
                     logger.debug('got shutdown')

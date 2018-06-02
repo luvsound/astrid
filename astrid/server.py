@@ -71,10 +71,9 @@ class AstridServer:
         self.bus.input_amp = 0
         #self.bus.stream_ctx_ptr = self.stream_ctx_ptr
 
-        self.stop_all = self.manager.Event() # voices
-        self.shutdown_flag = self.manager.Event() # render & analysis processes
-        self.stop_listening = self.manager.Event() # midi listeners
-        self.finished_playing = self.manager.Event() # Mixer
+        self.bus.stop_all = self.manager.Event() # voices
+        self.bus.shutdown_flag = self.manager.Event() # render & analysis processes
+        self.bus.stop_listening = self.manager.Event() # midi listeners
 
         self.renderers = []
         self.observers = {}
@@ -85,7 +84,7 @@ class AstridServer:
                                         self.read_q, 
                                         self.envelope_follower_response_q, 
                                         self.pitch_tracker_response_q,
-                                        self.shutdown_flag,
+                                        self.bus.shutdown_flag,
                                         self.block_size, 
                                         self.channels, 
                                         self.samplerate
@@ -108,9 +107,9 @@ class AstridServer:
     def cleanup(self):
         logger.info('cleaning up')
 
-        self.stop_all.set()
-        self.shutdown_flag.set()
-        self.stop_listening.set()
+        self.bus.stop_all.set()
+        self.bus.shutdown_flag.set()
+        self.bus.stop_listening.set()
 
         for r in self.renderers:
             r.join()
@@ -150,8 +149,8 @@ class AstridServer:
 
     def start_instrument_listeners(self, instrument_name, instrument_path):
         if instrument_name not in self.listeners:
-            renderer = orc.load_instrument(instrument_name, instrument_path)
-            self.listeners[instrument_name] = midi.start_listener(instrument_name, renderer, self.bus, self.stop_listening)
+            instrument = orc.load_instrument(instrument_name, instrument_path, self.bus)
+            self.listeners[instrument_name] = midi.start_listener(instrument)
 
     def load_instrument(self, instrument_name):
         instrument_path = os.path.join(self.cwd, names.ORC_DIR, '%s.py' % instrument_name)
@@ -175,14 +174,14 @@ class AstridServer:
         """
         logger.info('Starting envelope follower')
         try:
-            self.envelope_follower = mp.Process(name='astrid-envelope-follower', target=analysis.envelope_follower, args=(self.bus, self.read_q, self.envelope_follower_response_q, self.shutdown_flag))
+            self.envelope_follower = mp.Process(name='astrid-envelope-follower', target=analysis.envelope_follower, args=(self.bus, self.read_q, self.envelope_follower_response_q, self.bus.shutdown_flag))
             self.envelope_follower.start()
         except Exception as e:
             logger.error(e)
 
         logger.info('Starting pitch tracker')
         try:
-            self.pitch_tracker = mp.Process(name='astrid-pitch-tracker', target=analysis.pitch_tracker, args=(self.bus, self.read_q, self.pitch_tracker_response_q, self.shutdown_flag))
+            self.pitch_tracker = mp.Process(name='astrid-pitch-tracker', target=analysis.pitch_tracker, args=(self.bus, self.read_q, self.pitch_tracker_response_q, self.bus.shutdown_flag))
             self.pitch_tracker.start()
         except Exception as e:
             logger.error(e)
@@ -195,9 +194,6 @@ class AstridServer:
                     self.event_q,
                     self.load_q, 
                     self.reply_q, 
-                    self.shutdown_flag,
-                    self.stop_all, 
-                    self.stop_listening, 
                     self.bus, 
                     self.event_loop,
                     self.cwd
@@ -246,15 +242,15 @@ class AstridServer:
 
                 elif names.ntoc(action) == names.STOP_ALL_VOICES:
                     logger.info('STOP_ALL_VOICES %s' % cmd)
-                    self.stop_all.set()
+                    self.bus.stop_all.set()
 
                 elif names.ntoc(action) == names.LIST_INSTRUMENTS:
                     logger.info('LIST_INSTRUMENTS %s' % cmd)
                     reply = [ str(instrument) for name, instrument in self.instruments.items() ]
 
                 elif names.ntoc(action) == names.PLAY_INSTRUMENT:
-                    if self.stop_all.is_set():
-                        self.stop_all.clear() # FIXME this probably doesn't always work
+                    if self.bus.stop_all.is_set():
+                        self.bus.stop_all.clear() # FIXME this probably doesn't always work
 
                     self.play_q.put(cmd)
 

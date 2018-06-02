@@ -20,7 +20,7 @@ from .mixer import StreamContextView
 
 INSTRUMENT_RENDERER_KEY_TEMPLATE = '{}-renderer'
 
-def load_instrument(name, path):
+def load_instrument(name, path, bus=None):
     """ Loads a renderer module from the script 
         at self.path 
 
@@ -37,12 +37,13 @@ def load_instrument(name, path):
             except Exception as e:
                 logger.error(e)
 
-            return renderer
+            return Instrument(name, renderer, bus)
         else:
             logger.error(path)
     except TypeError as e:
         logger.error(e)
         raise InstrumentNotFoundError(name) from e
+
 
 
 class ParamBucket:
@@ -62,6 +63,7 @@ class ParamBucket:
 
 class EventContext:
     before = None
+    sounds = None
 
     def __init__(self, 
             params=None, 
@@ -112,6 +114,52 @@ class EventContext:
 
     def get_params(self):
         return self.p._params
+
+class Instrument:
+    def __init__(self, name, renderer, bus):
+        self.name = name
+        self.renderer = renderer
+        self.bus = bus
+
+    def map_midi_devices(self):
+        device_aliases = []
+        midi_maps = {}
+
+        if hasattr(self.renderer, 'MIDI'): 
+            if isinstance(self.renderer.MIDI, list):
+                device_aliases = self.renderer.MIDI
+            else:
+                device_aliases = [ self.renderer.MIDI ]
+
+        for i, device in enumerate(device_aliases):
+            mapping = None
+            if hasattr(self.renderer, 'MAP'):
+                if isinstance(self.renderer.MAP, list):
+                    try:
+                        mapping = self.renderer.MAP[i]
+                    except IndexError:
+                        pass
+                else:
+                    mapping = self.renderer.MAP
+
+                midi_maps[device] = mapping 
+
+        return device_aliases, midi_maps
+
+    def create_ctx(self, params):
+        device_aliases, midi_maps = self.map_midi_devices()
+
+        return EventContext(
+                    params=params, 
+                    instrument_name=self.name, 
+                    running=threading.Event(),
+                    stop_all=self.bus.stop_all, 
+                    stop_me=threading.Event(),
+                    bus=self.bus, 
+                    midi_devices=device_aliases, 
+                    midi_maps=midi_maps, 
+                )
+
 
 
 class InstrumentNotFoundError(Exception):

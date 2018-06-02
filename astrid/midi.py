@@ -107,7 +107,7 @@ class MidiOutput(mp.Process):
         super().__init__()
         self.event_loop = event_loop
         self.event_q = event_q
-        self.out = mido.open_output('MidiSport 2x2 MIDI 1')
+        #self.out = mido.open_output('MidiSport 2x2 MIDI 1')
         self.pool = ThreadPoolExecutor(max_workers=256)
         logger.info('MidiOutput started up')
 
@@ -121,12 +121,11 @@ class MidiOutput(mp.Process):
             #self.event_loop.run_in_executor(self.pool, self._play, freq, amp, length)
 
 class MidiListener(mp.Process):
-    def __init__(self, instrument_name, device, triggers, bus, stop_listening=None):
+    def __init__(self, instrument_name, device, triggers, bus):
         super(MidiListener, self).__init__()
         self.client = client.AstridClient()
         self.instrument_name = instrument_name
         self.device = device
-        self.stop_listening = stop_listening
         self.bus = bus
         self.triggers = triggers
         self.name = 'astrid-%s-midi-listener' % instrument_name
@@ -135,7 +134,7 @@ class MidiListener(mp.Process):
         with mido.open_input(self.device) as events:
             for msg in events:
                 #logger.info('midi: %s %s' % (self.device, msg))
-                if self.stop_listening.is_set():
+                if self.bus.stop_listening.is_set():
                     break
 
                 if msg.type == 'note_on':
@@ -151,29 +150,29 @@ class MidiListener(mp.Process):
                     value = msg.value / 127.0
                     setattr(self.bus, MIDI_MSG_CC_TEMPLATE.format(device=self.device, cc=msg.control), value)
 
-def start_listener(name, renderer, bus, stop_listening):
+def start_listener(instrument):
     listener = None
-    if hasattr(renderer, 'MIDI'):
+    if hasattr(instrument.renderer, 'MIDI'):
         devices = []
-        if isinstance(renderer.MIDI, list):
-            devices = renderer.MIDI
+        if isinstance(instrument.renderer.MIDI, list):
+            devices = instrument.renderer.MIDI
         else:
-            devices = [ renderer.MIDI ]
+            devices = [ instrument.renderer.MIDI ]
 
         for i, device in enumerate(devices):
             triggers = None
-            if hasattr(renderer, 'TRIG'):
-                if isinstance(renderer.TRIG, list):
+            if hasattr(instrument.renderer, 'TRIG'):
+                if isinstance(instrument.renderer.TRIG, list):
                     try:
-                        triggers = renderer.TRIG[i]
+                        triggers = instrument.renderer.TRIG[i]
                     except IndexError:
                         pass
                 else:
-                    triggers = renderer.TRIG
+                    triggers = instrument.renderer.TRIG
 
             device = find_device(device)
 
-            listener = MidiListener(name, device, triggers, bus, stop_listening)
+            listener = MidiListener(instrument.name, device, triggers, instrument.bus)
             listener.start()
 
     return listener
