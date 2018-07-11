@@ -1,4 +1,4 @@
-from aubio import pitch
+#from aubio import pitch
 import numpy as np
 import threading
 import queue
@@ -8,6 +8,8 @@ from . import names
 from .mixer import StreamContextView
 
 def pitch_tracker(bus, read_q, response_q, shutdown_signal):
+    pass
+    """
     logger.info('starting pitch tracker %s %s' % (bus.block_size, bus.samplerate))
     window_size = 4096
     hop_size = 4096
@@ -39,6 +41,7 @@ def pitch_tracker(bus, read_q, response_q, shutdown_signal):
             logger.error(e)
 
         delay.wait(timeout=wait_time)
+    """
 
 def envelope_follower(bus, read_q, response_q, shutdown_flag):
     logger.info('started envelope follower')

@@ -3,6 +3,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 import queue
 import time
+import os
 
 from . import io
 from . import midi
@@ -104,7 +105,7 @@ class RenderProcess(mp.Process):
                 action, cmd = self.q.get()
 
                 if action == names.LOAD_INSTRUMENT:
-                    self.load_renderer(*cmd)
+                    self.load_instrument(*cmd)
 
                 elif action == names.PLAY_INSTRUMENT:
                     instrument_name = cmd[0]
