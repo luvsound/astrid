@@ -46,7 +46,7 @@ Builder.load_string('''
         halign: 'left'
 
     BoxLayout:
-        width: 400
+        width: 420
         size_hint: (None, 1)
         pos: (root.width - self.width, self.parent.pos[1])
         orientation: 'horizontal'
@@ -56,6 +56,9 @@ Builder.load_string('''
         SelectButton:
             font_size: '10sp'
             text: '(S)elect'
+        SelectAllButton:
+            font_size: '10sp'
+            text: 'Select (A)ll'
         ClearButton:
             font_size: '10sp'
             text: '(C)lear Selections'
@@ -139,6 +142,11 @@ class SelectButton(Button):
     def on_press(self):
         app = App.get_running_app()
         app.input_mode = 'select'
+
+class SelectAllButton(Button):
+    def on_press(self):
+        app = App.get_running_app()
+        app.select_all()
 
 class ClearButton(Button):
     def on_press(self):
@@ -266,6 +274,8 @@ class NoteLanes(FloatLayout):
             app.input_mode = 'insert'
         elif keycode[1] == 's':
             app.input_mode = 'select'
+        elif keycode[1] == 'a':
+            app.select_all()
         elif keycode[1] == 'c':
             app.clear_selections()
         elif keycode[1] == 'd':
@@ -369,6 +379,11 @@ class PianoRoll(App):
     def on_input_mode(self, obj, value):
         self.header.update_status()
 
+    def select_all(self):
+        for notelane in self.lanes.notes:
+            for note in notelane.notes:
+                note.highlighted = True
+
     def clear_selections(self):
         for notelane in self.lanes.notes:
             for note in notelane.notes:
@@ -379,7 +394,8 @@ class PianoRoll(App):
             for noteindex, note in enumerate(notelane.notes):
                 if note.highlighted:
                     notelane.remove_widget(note)
-                    del notelane.notes[noteindex]
+                    notelane.notes[noteindex] = None
+            notelane.notes = filter(None, notelane.notes)
 
 if __name__ == '__main__':
     PianoRoll().run()
