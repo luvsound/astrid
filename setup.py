@@ -11,29 +11,34 @@ try:
         'astrid/midi.pyx', 
         'astrid/names.pyx', 
         'astrid/server.pyx', 
-        #'astrid/player.pyx', 
-        'astrid/mixer.pyx', 
-        'astrid/workers.pyx', 
-    ], include_path=[np.get_include()]) 
+        'astrid/q.pyx', 
+    ], include_path=[np.get_include()], annotate=True) 
 
 except ImportError:
     from setuptools.extension import Extension
     ext_modules = [
-        Extension('astrid.io', ['astrid/io.c']), 
+        Extension('astrid.io', 
+                 ['astrid/io.c'], 
+                 extra_compile_args=['-fopenmp'], 
+                 extra_link_args=['-fopenmp']
+        ), 
         Extension('astrid.logger', ['astrid/logger.c']), 
         Extension('astrid.orc', ['astrid/orc.c']), 
         Extension('astrid.midi', ['astrid/midi.c']), 
         Extension('astrid.names', ['astrid/names.c']), 
         Extension('astrid.server', ['astrid/server.c']), 
-        #Extension('astrid.player', ['astrid/player.c']), 
-        Extension('astrid.mixer', ['astrid/mixer.c']), 
-        Extension('astrid.workers', ['astrid/workers.c']), 
+        Extension('astrid.q', 
+                 ['astrid/q.c'], 
+                 extra_compile_args=['-fopenmp', '-pthreads'], 
+                 extra_link_args=['-fopenmp', '-pthreads']
+        ), 
+
     ]
 
 
 setup(
     name='astrid',
-    version='1.0.0-alpha-1',
+    version='1.0.0-alpha-3',
     description='Interactive computer music with Python',
     author='He Can Jog',
     author_email='erik@hecanjog.com',

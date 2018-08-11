@@ -13,6 +13,8 @@ ANALYSIS = 9
 MSG_INVALID_INSTRUMENT = 10
 ADD_BUFFER = 11
 READ_INPUT = 12
+MSG_BAD_PARAMS = 16
+REGISTER_PORT = 17
 
 ENVELOPE_FOLLOWER = 14
 PITCH_TRACKER = 15
@@ -31,6 +33,8 @@ _cmdToName = {
     ANALYSIS: 'analysis', 
     SHUTDOWN: 'shutdown', 
     MSG_OK: 'ok', 
+    MSG_BAD_PARAMS: 'bad_params', 
+    REGISTER_PORT: 'register_port', 
     MSG_INVALID_INSTRUMENT: 'invalid_instrument', 
     ADD_BUFFER: 'add_buffer',
     READ_INPUT: 'read_input',
@@ -46,6 +50,8 @@ _nameToCmd = {
     'analysis': ANALYSIS,
     'shutdown': SHUTDOWN,
     'ok': MSG_OK, 
+    'bad_params': MSG_BAD_PARAMS, 
+    'register_port': REGISTER_PORT,
     'invalid_instrument': MSG_INVALID_INSTRUMENT,
     'add_buffer': ADD_BUFFER,
     'read_input': READ_INPUT,

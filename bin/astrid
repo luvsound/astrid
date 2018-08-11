@@ -23,6 +23,10 @@ elif len(sys.argv) > 1 and sys.argv[1] == 'server':
     except KeyboardInterrupt as e:
         server.cleanup()
 
+elif len(sys.argv) > 1 and sys.argv[1] == 'seq':
+    from astrid.ui.pianoroll import PianoRoll
+    PianoRoll().run()
+
 else:
     from astrid.ui import cmdconsole
     console = cmdconsole.AstridConsole()

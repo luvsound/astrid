@@ -8,19 +8,22 @@ import time
 import threading
 import random
 import queue
+import uuid
 
+from libc.stdlib cimport malloc, calloc, free
 import msgpack
 import numpy as np
 import zmq
 
-from . import analysis
 from . import midi
 from . import io
 from . import orc
-from . import workers
 from . import names
-from .mixer import StreamContext, StreamContextView
+from . cimport q 
 from .logger import logger
+from pippi import dsp
+from pippi.soundbuffer cimport SoundBuffer
+import jack
 
 BANNER = """
  █████╗ ███████╗████████╗██████╗ ██╗██████╗ 
@@ -39,58 +42,8 @@ RINGBUFFERLENGTH = 30
 
 class AstridServer:
     def __init__(self):
-        self.manager = mp.Manager()
-
-        self.bus = self.manager.Namespace()
         self.cwd = os.getcwd()
-        self.event_loop = asyncio.get_event_loop()
-
-        self.buf_q = self.manager.Queue()
-        self.event_q = self.manager.Queue()
-        self.envelope_follower_response_q = self.manager.Queue()
-        self.pitch_tracker_response_q = self.manager.Queue()
-        self.load_q = self.manager.Queue()
-        self.play_q = self.manager.Queue()
-        self.read_q = self.manager.Queue()
-        self.reply_q = self.manager.Queue()
-
-        #stream_ctx = StreamContext()
-        #self.stream_ctx_ptr = stream_ctx.get_pointer()
-
-        # FIXME get this from env
-        self.block_size = BLOCKSIZE
-        self.channels = CHANNELS
-        self.input_buffer_length = RINGBUFFERLENGTH
-        self.numrenderers = NUMRENDERERS
-        self.samplerate = SAMPLERATE
-
-        self.bus.samplerate = SAMPLERATE
-        self.bus.channels = CHANNELS
-        self.bus.block_size = BLOCKSIZE
-        self.bus.input_pitch = 220
-        self.bus.input_amp = 0
-        #self.bus.stream_ctx_ptr = self.stream_ctx_ptr
-
-        self.bus.stop_all = self.manager.Event() # voices
-        self.bus.shutdown_flag = self.manager.Event() # render & analysis processes
-        self.bus.stop_listening = self.manager.Event() # midi listeners
-
-        self.renderers = []
-        self.observers = {}
         self.listeners = {}
-
-        self.audiostream = io.AudioStream(
-                                        self.buf_q, 
-                                        self.read_q, 
-                                        self.envelope_follower_response_q, 
-                                        self.pitch_tracker_response_q,
-                                        self.bus.shutdown_flag,
-                                        self.block_size, 
-                                        self.channels, 
-                                        self.samplerate
-                                    )
-
-        self.midiout = midi.MidiOutput(self.event_loop, self.event_q)
 
     @contextmanager
     def msg_context(self):
@@ -107,41 +60,10 @@ class AstridServer:
     def cleanup(self):
         logger.info('cleaning up')
 
-        self.bus.stop_all.set()
-        self.bus.shutdown_flag.set()
-        self.bus.stop_listening.set()
-
-        for r in self.renderers:
-            r.join()
-
-        logger.info('renderers cleaned up')
-
         for instrument_name, listener in self.listeners.items():
-            logger.debug('stopping listeners')
-            logger.debug(instrument_name)
-            logger.debug(listener)
             if listener is not None:
                 listener.join()
 
-        logger.info('listeners cleaned up')
-
-        #self.envelope_follower.join()
-        #logger.info('envelope follower stopped')
-
-        #self.pitch_tracker.join()
-        #logger.info('pitch tracker stopped')
-
-        self.midiout.join()
-        logger.info('midiout cleaned up')
-
-        self.audiostream.join()
-        logger.info('audiostream cleaned up')
-
-        self.event_loop.stop()
-        self.event_loop.close()
-        logger.info('stopped event loop')
-
-        logger.info('stopping instrument observer')
         self.instrument_observer.stop()
         self.instrument_observer.join()
 
@@ -167,40 +89,60 @@ class AstridServer:
 
     def run(self):
         logger.info(BANNER)
+        self.jack_client = jack.Client('astrid')
+        self.buffer_stack = {}
 
-        self.audiostream.start()
-        self.midiout.start()
+        cdef q.BufQ* buf_q = q.bufq_init()
 
-        """
-        logger.info('Starting envelope follower')
-        try:
-            self.envelope_follower = mp.Process(name='astrid-envelope-follower', target=analysis.envelope_follower, args=(self.bus, self.read_q, self.envelope_follower_response_q, self.bus.shutdown_flag))
-            self.envelope_follower.start()
-        except Exception as e:
-            logger.error(e)
+        # FIXME get number of hardware channels
+        for channel in range(CHANNELS):
+            self.jack_client.inports.register('input_{0}'.format(channel))
+            self.jack_client.outports.register('output_{0}'.format(channel))
 
-        logger.info('Starting pitch tracker')
-        try:
-            self.pitch_tracker = mp.Process(name='astrid-pitch-tracker', target=analysis.pitch_tracker, args=(self.bus, self.read_q, self.pitch_tracker_response_q, self.bus.shutdown_flag))
-            self.pitch_tracker.start()
-        except Exception as e:
-            logger.error(e)
-        """
+        self.block_size = self.jack_client.blocksize
+        self.channels = len(self.jack_client.outports)
+        self.input_buffer_length = RINGBUFFERLENGTH
+        self.numrenderers = NUMRENDERERS
+        self.samplerate = self.jack_client.samplerate
+        RUNNING = True
 
-        for _ in range(self.numrenderers):
-            rp = workers.RenderProcess(
-                    self.buf_q, 
-                    self.play_q, 
-                    self.event_q,
-                    self.load_q, 
-                    self.reply_q, 
-                    self.bus, 
-                    self.event_loop,
-                    self.cwd
-                )
-            rp.start()
-            self.renderers += [ rp ]
+        def jack_callback(frames):
+            if RUNNING:
+                for channel, port in enumerate(self.jack_client.outports):
+                    port.get_array().fill(0)
+                raise jack.CallbackExit
 
+            """
+            with self.buffer_stack_lock:
+                for buf_id, playbuf in self.buffer_stack.items():
+                    snd = _cbuf_to_py(playbuf.snd, playbuf.channels, playbuf.samplerate, playbuf.length)
+                    end = min(playbuf.playhead+frames, len(snd))
+                    out.dub(buf.snd[buf.playhead:end], 0)
+
+                    if end >= len(buf.snd):
+                        # TODO trigger a done action / callback here?
+                        del self.buffer_stack[buf_id]
+                    else:
+                        self.buffer_stack[buf_id].playhead += frames
+            """
+            out = q.mixed(buf_q, self.channels, self.samplerate, self.block_size)
+
+            for channel, port in enumerate(self.jack_client.outports):
+                port.get_array()[:] = out[:,channel % out.channels]
+
+        self.jack_client.set_process_callback(jack_callback)
+
+        def buf_listener(buffer_stack, buf_q):
+            while True:
+                buf_id = uuid.uuid4()
+                buf = buf_q.get()
+                with self.buffer_stack_lock:
+                    buffer_stack[buf_id] = buf
+
+        #self.buf_listener_thread = threading.Thread(target=buf_listener, args=(self.buffer_stack, buf_q))
+        #self.buf_listener_thread.start()
+
+        # Instrument reload listeners watch orc dir for saves
         orc_fullpath = os.path.join(self.cwd, names.ORC_DIR)
         self.instrument_handler = orc.InstrumentHandler(self.load_q, orc_fullpath, self.numrenderers)
         self.instrument_observer = orc.Observer()
@@ -208,56 +150,82 @@ class AstridServer:
         self.instrument_observer.start()
 
         with self.msg_context():
-            while True:
-                reply = None
-                cmd = self.msgsock.recv()
-                cmd = msgpack.unpackb(cmd, encoding='utf-8')
+            with self.jack_client:
+                capture = self.jack_client.get_ports(is_physical=True, is_output=True)
+                if not capture:
+                    raise RuntimeError('No physical capture ports')
 
-                if len(cmd) == 0:
-                    action = None
-                else:
-                    action = cmd.pop(0)
+                for src, dest in zip(capture, self.jack_client.inports):
+                    self.jack_client.connect(src, dest)
 
-                if names.ntoc(action) == names.LOAD_INSTRUMENT:
-                    if len(cmd) > 0:
-                        reply = self.load_instrument(cmd[0])
+                playback = self.jack_client.get_ports(is_physical=True, is_input=True)
+                if not playback:
+                    raise RuntimeError('No physical playback ports')
 
-                elif names.ntoc(action) == names.RELOAD_INSTRUMENT:
-                    if len(cmd) > 0:
-                        reply = self.load_instrument(cmd[0])
+                # FIXME -- add interface to zmq cmds for adding and removing synth/voice ports, 
+                # which default to connecting to the master outputs... how to handle runtime 
+                # choice of output port from instrument scripts?
+                for src, dest in zip(self.jack_client.outports, playback):
+                    self.jack_client.connect(src, dest)
 
-                elif names.ntoc(action) == names.ANALYSIS:
-                    # TODO probably be nice to toggle 
-                    # these on demand, maybe change params...
-                    logger.info('ANALYSIS %s' % cmd)
+                while True:
+                    reply = None
+                    cmd = self.msgsock.recv()
+                    cmd = msgpack.unpackb(cmd, encoding='utf-8')
 
-                elif names.ntoc(action) == names.SHUTDOWN:
-                    logger.info('SHUTDOWN %s' % cmd)
-                    for _ in range(self.numrenderers):
-                        self.load_q.put(names.SHUTDOWN)
-                        self.play_q.put(names.SHUTDOWN)
+                    if len(cmd) == 0:
+                        action = None
+                    else:
+                        action = cmd.pop(0)
 
-                    self.msgsock.send(msgpack.packb(names.MSG_OK))
-                    break
+                    if names.ntoc(action) == names.LOAD_INSTRUMENT:
+                        if len(cmd) > 0:
+                            reply = self.load_instrument(cmd[0])
 
-                elif names.ntoc(action) == names.STOP_ALL_VOICES:
-                    logger.info('STOP_ALL_VOICES %s' % cmd)
-                    self.bus.stop_all.set()
+                    elif names.ntoc(action) == names.RELOAD_INSTRUMENT:
+                        if len(cmd) > 0:
+                            reply = self.load_instrument(cmd[0])
 
-                elif names.ntoc(action) == names.LIST_INSTRUMENTS:
-                    logger.info('LIST_INSTRUMENTS %s' % cmd)
-                    reply = [ str(instrument) for name, instrument in self.instruments.items() ]
+                    elif names.ntoc(action) == names.REGISTER_PORT:
+                        if len(cmd) > 0:
+                            try:
+                                port_name, port_channels = cmd
+                                print(port_name, port_channels)
+                            except TypeError:
+                                self.msgsock.send(msgpack.packb(names.MSG_BAD_PARAMS))
+                                continue
 
-                elif names.ntoc(action) == names.PLAY_INSTRUMENT:
-                    if self.bus.stop_all.is_set():
-                        self.bus.stop_all.clear() # FIXME this probably doesn't always work
+                            # Check for a port with this name that already exists
+                            # If not, register the port with jack
+                            # Connect the port to the master output, mapping ports 
+                            # to channels incrementally from hardware out 0
 
-                    self.play_q.put(cmd)
+                    elif names.ntoc(action) == names.SHUTDOWN:
+                        logger.info('SHUTDOWN %s' % cmd)
+                        for _ in range(self.numrenderers):
+                            self.load_q.put(names.SHUTDOWN)
+                            self.play_q.put(names.SHUTDOWN)
 
-                self.msgsock.send(msgpack.packb(reply or names.MSG_OK))
+                        self.msgsock.send(msgpack.packb(names.MSG_OK))
+                        break
+
+                    elif names.ntoc(action) == names.STOP_ALL_VOICES:
+                        logger.info('STOP_ALL_VOICES %s' % cmd)
+                        #self.bus.stop_all.set()
+
+                    elif names.ntoc(action) == names.LIST_INSTRUMENTS:
+                        logger.info('LIST_INSTRUMENTS %s' % cmd)
+                        reply = [ str(instrument) for name, instrument in self.instruments.items() ]
+
+                    elif names.ntoc(action) == names.PLAY_INSTRUMENT:
+                        self.play_q.put(cmd)
+
+                    self.msgsock.send(msgpack.packb(reply or names.MSG_OK))
 
         self.cleanup()
         logger.info('Astrid cleanup finished')
+
+        q.bufq_destroy(buf_q)
 
         self.stop()
         logger.info('Astrid stopped')

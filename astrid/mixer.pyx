@@ -261,12 +261,6 @@ cdef class AstridMixer:
                 current.frames = NULL
             current = current.next
 
-    """
-    cdef void _append(self, SoundBuffer snd) except *:
-        # get track and append to buffer
-        pass
-    """
-
     cdef void _add(self, SoundBuffer snd) except *:
         cdef int length = len(snd)
         cdef int channels = snd.channels

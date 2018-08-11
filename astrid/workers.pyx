@@ -1,25 +1,28 @@
 import multiprocessing as mp
 import threading
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 import queue
 import time
 import os
+import jack
+import numpy as np
 
-from . import io
+from .io cimport init_voice
 from . import midi
 from . import orc
 from . import names
+from . cimport q
 from .logger import logger
 
 class RenderProcess(mp.Process):
-    def __init__(self, 
-            buf_q, 
+    cdef public q.Q* buf_q
+    def __cinit__(self, 
+            q.Q* buf_q, 
             play_q, 
             event_q, 
             load_q, 
             reply_q, 
             bus,
-            event_loop, 
             cwd
         ):
 
@@ -31,23 +34,11 @@ class RenderProcess(mp.Process):
         self.play_q = play_q
         self.event_q = event_q
         self.load_q = load_q
-        self.reply_q = reply_q
-        self.stop_all = bus.stop_all
         self.shutdown_flag = bus.shutdown_flag
-        self.stop_listening = bus.stop_listening
         self.bus = bus
-        self.render_pool = ThreadPoolExecutor(max_workers=16)
-        self.event_loop = event_loop
         self.cwd = cwd
         self.q = queue.Queue()
         self.name = 'astrid-render-process'
-
-        # FIXME get from env
-        self.channels = 2
-        self.samplerate = 44100
-        self.blocksize = 0
-        self.latency = 'low'
-        self.device = None
 
     def load_instrument(self, instrument_name, instrument_path):
         instrument = orc.load_instrument(instrument_name, instrument_path, self.bus)
@@ -100,6 +91,8 @@ class RenderProcess(mp.Process):
         shutdown_listener = threading.Thread(name='astrid-render-shutdown-listener', target=wait_for_shutdown, args=(self.q, self.shutdown_flag))
         shutdown_listener.start()
 
+        voices = []
+
         try:
             while True:
                 action, cmd = self.q.get()
@@ -118,16 +111,21 @@ class RenderProcess(mp.Process):
                         logger.error('No instrument loaded for %s' % instrument_name)
                         continue
 
-                    io.start_voice(self.event_loop, self.render_pool, instrument, params, self.buf_q, self.play_q, self.event_q)
+                    # FIXME start voice
+                    #logger.error('start voice')
+                    voice = threading.Thread(target=init_voice, args=(instrument, params, self.buf_q, self.event_q))
+                    voice.start()
+                    voices += [ voice ]
 
                 elif action == names.SHUTDOWN:
                     logger.debug('got shutdown')
+                    for voice in voices:
+                        voice.join()
                     break
 
         except Exception as e:
             logger.error(e)
      
-        self.render_pool.shutdown(wait=True)
         load_listener.join()
         play_listener.join()
         shutdown_listener.join()

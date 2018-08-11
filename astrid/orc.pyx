@@ -17,7 +17,6 @@ from . import client
 from . import midi
 from . import names
 from .logger import logger
-from .mixer import StreamContextView
 
 INSTRUMENT_RENDERER_KEY_TEMPLATE = '{}-renderer'
 
@@ -47,7 +46,7 @@ def load_instrument(name, path, bus=None):
 
 
 
-class ParamBucket:
+cdef class ParamBucket:
     """ params[key] to params.key
     """
     def __init__(self, params):
@@ -62,9 +61,7 @@ class ParamBucket:
         return self._params.get(key, default)
 
 
-class EventContext:
-    before = None
-
+cdef class EventContext:
     def __init__(self, 
             params=None, 
             instrument_name=None, 
@@ -74,11 +71,11 @@ class EventContext:
             bus=None,
             sounds=None,
             midi_devices=None, 
-            midi_maps=None
+            midi_maps=None, 
+            before=None
         ):
 
-        #self.stream_ctx = StreamContextView(self.bus.stream_ctx_ptr)
-
+        self.before = before
         self.m = midi.MidiBucket(midi_devices, midi_maps, bus)
         self.p = ParamBucket(params)
         #self.client = client.AstridClient()
@@ -117,8 +114,8 @@ class EventContext:
     def get_params(self):
         return self.p._params
 
-class Instrument:
-    def __init__(self, name, renderer, bus):
+cdef class Instrument:
+    def __init__(self, str name, object renderer, object bus):
         self.name = name
         self.renderer = renderer
         self.bus = bus

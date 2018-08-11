@@ -37,11 +37,11 @@ def play(ctx):
     mpk = ctx.m('MPK')
     freqs = tune.fromdegrees([1,2,3,5,6,8,9], octave=random.randint(1, 5), root='c')
     numvoices = random.randint(1, 3)
-    length = random.triangular(0.15, 0.5)
+    length = random.triangular(0.15, 3.5)
 
     for _ in range(numvoices):
         freq = ctx.p.freq or random.choice(freqs)
-        amp = mpk.cc2 or ctx.p.amp or random.triangular(0.1, 0.5)
+        amp = mpk.cc2 or ctx.p.amp or random.triangular(0.5, 0.85)
 
         out = make_note(freq, amp, length)
         out = out.adsr(random.triangular(0.005, 0.5), 0.01, 0.35, random.triangular(0.1, 0.5))

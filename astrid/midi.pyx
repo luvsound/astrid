@@ -59,7 +59,7 @@ class MidiDeviceBucket:
         return getattr(self._bus, MIDI_MSG_NOTE_TEMPLATE.format(device=self._device, note=key), default)
 
 
-class MidiBucket:
+cdef class MidiBucket:
     def __init__(self, devices, mappings, bus):
         self.bus = bus
         self.devices = self.map_device_buckets(devices, mappings)
