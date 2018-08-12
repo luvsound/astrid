@@ -6,6 +6,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
+from kivy.uix.checkbox import CheckBox
 from kivy.uix.label import Label
 from kivy.graphics import Color, Bezier, Line, Ellipse, Rectangle
 from kivy.lang import Builder
@@ -47,18 +48,33 @@ Builder.load_string('''
         halign: 'left'
 
     BoxLayout:
-        width: 300
+        width: 340
         size_hint: (None, 1)
         pos: (root.width - self.width, self.parent.pos[1])
         orientation: 'horizontal'
+
+        SnapCheckBox:
+            text: 'Snap  '
+            size_hint: (1.5, 1)
+            font_size: '10sp'
+            text_size: self.size
+            color: 1,1,1,1
+            valign: 'middle'
+            halign: 'left'
+
         SelectAllButton:
             font_size: '10sp'
+            size_hint: (2, 1)
             text: 'Select (A)ll'
+
         ClearButton:
             font_size: '10sp'
+            size_hint: (2, 1)
             text: '(C)lear Selections'
+
         RenderButton:
             font_size: '10sp'
+            size_hint: (2, 1)
             text: '(R)ender'
 
 <Note>:
@@ -148,11 +164,27 @@ Builder.load_string('''
 
 ''')
 
-def length_to_pixels(length, zoom=1):
-    return length * zoom * 60.0
+def length_to_pixels(length, snap=False, grid=1):
+    if snap:
+        length = (length // grid) * grid
+    return length * 60.0
 
-def pixels_to_length(pixels, zoom=1):
-    return pixels / 60.0
+def pixels_to_length(pixels, snap=False, grid=1):
+    length = pixels / 60.0
+    if snap:
+        length = (length // grid) * grid
+    return length
+
+class SnapCheckBox(CheckBox, Label):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        app = App.get_running_app()
+        self.active = app.snap
+        self.bind(active=self.on_checkbox_active)
+
+    def on_checkbox_active(self, obj, value):
+        app = App.get_running_app()
+        app.snap = value
 
 class SelectAllButton(Button):
     def on_press(self):
@@ -228,8 +260,9 @@ class NoteLanes(FloatLayout):
 
     def init_new_note(self, index, pos):
         if pos[0] > 60:
+            app = App.get_running_app()
             notelane = self.notes[index]
-            self.new_note = Note(index, pos, notelane) 
+            self.new_note = Note(index, pos, notelane, app.snap, app.grid) 
             self.drawing_note = True
             notelane.notes.append(self.new_note)
             notelane.add_widget(self.new_note)
@@ -242,6 +275,56 @@ class NoteLanes(FloatLayout):
         if self.drawing_note:
             self.new_note.update(pos)
             self.drawing_note = False
+
+class Note(Widget):
+    index = NumericProperty()
+    notelane = ObjectProperty()
+    highlighted = BooleanProperty(False)
+    freq = StringProperty()
+    onset = NumericProperty()
+    length = NumericProperty()
+    minlength = NumericProperty(0.01)
+    beat = NumericProperty() # index pos in grid
+    snap = BooleanProperty(False)
+    grid = NumericProperty() # gridsize
+
+    def __init__(self, index, pos, notelane, snap, grid, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.notelane = notelane
+        self.index = index
+        self.freq = notelane.freq
+        self.snap = snap
+        self.grid = grid
+        self.minlength = self.grid if self.snap else self.minlength
+
+        self.bind(length=self._redraw)
+        self.bind(onset=self._redraw)
+
+        self.onset = pixels_to_length(pos[0], snap, grid)
+        self.length = self.minlength
+
+    def _redraw(self, obj, value):
+        self.width = max(length_to_pixels(self.length), 5)
+        self.pos = (length_to_pixels(self.onset), self.notelane.pos[1])
+
+    def update(self, pos):
+        width = pos[0] - self.pos[0]
+        print(width, self.snap, self.grid, self.minlength)
+        self.length = max(pixels_to_length(width, self.snap, self.grid), self.minlength)
+
+    def toggle_highlight(self):
+        self.highlighted = not self.highlighted
+
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos):
+            app = App.get_running_app()
+            if app.input_mode == 'select':
+                if not app.shift_enabled:
+                    app.clear_selections()
+                self.toggle_highlight()
+                return True
+
+        return super().on_touch_down(touch)
 
 class NoteLane(Widget):
     note = StringProperty() # pitch class name
@@ -289,51 +372,6 @@ class PianoKey(Widget):
     octave = NumericProperty()
     freq = StringProperty()
 
-class Note(Widget):
-    index = NumericProperty()
-    notelane = ObjectProperty()
-    highlighted = BooleanProperty(False)
-    freq = StringProperty()
-    onset = NumericProperty()
-    length = NumericProperty()
-    minlength = NumericProperty(0.01)
-    bpm = NumericProperty()
-    beatdiv = NumericProperty()
-
-    def __init__(self, index, pos, notelane, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.notelane = notelane
-        #self.pos = (pos[0], self.notelane.pos[1])
-        self.index = index
-        self.freq = notelane.freq
-
-        self.bind(length=self._redraw)
-        self.bind(onset=self._redraw)
-
-        self.onset = pixels_to_length(pos[0])
-        self.length = self.minlength
-
-    def _redraw(self, obj, value):
-        self.width = length_to_pixels(self.length)
-        self.pos = (length_to_pixels(self.onset), self.notelane.pos[1])
-
-    def update(self, pos):
-        width = pos[0] - self.pos[0]
-        self.length = max(pixels_to_length(width), self.minlength)
-
-    def toggle_highlight(self):
-        self.highlighted = not self.highlighted
-
-    def on_touch_down(self, touch):
-        if self.collide_point(*touch.pos):
-            app = App.get_running_app()
-            if app.input_mode == 'select':
-                if not app.shift_enabled:
-                    app.clear_selections()
-                self.toggle_highlight()
-                return True
-
-        return super().on_touch_down(touch)
 
 class HeaderBar(FloatLayout):
     statusline = StringProperty()
@@ -351,7 +389,7 @@ class HeaderBar(FloatLayout):
 
     def get_div(self):
         app = App.get_running_app()
-        return app.grid_div
+        return app.grid
 
     def get_barlength(self):
         app = App.get_running_app()
@@ -365,8 +403,8 @@ class PianoRollWrapper(BoxLayout):
     orientation = 'vertical'
     gridwidth = NumericProperty(30)
     barlength = NumericProperty(4)
-    zoom = NumericProperty(1)
     bpm = NumericProperty(120.0)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         with self.canvas:
@@ -398,10 +436,18 @@ class PianoRollWrapper(BoxLayout):
 class PianoRoll(App):
     input_mode = StringProperty('insert')
     bpm = NumericProperty(120.0)
-    grid_div = NumericProperty(1)
+    snap = BooleanProperty(True)
+    grid = NumericProperty(0.5)
     barlength = NumericProperty(4)
     shift_enabled = BooleanProperty(False)
     rendering = BooleanProperty(False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.bind(bpm=self._calc_gridsize)
+
+    def _calc_gridsize(self, obj, value):
+        self.grid = 60.0 / self.bpm
 
     def build(self):
         self.wrapper = PianoRollWrapper()
