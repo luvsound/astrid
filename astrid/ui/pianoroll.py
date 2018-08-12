@@ -164,15 +164,23 @@ Builder.load_string('''
 
 ''')
 
-def length_to_pixels(length, snap=False, grid=1):
-    if snap:
+def snap_to_grid(length=1, grid=1, roundup=False):
+    if roundup:
+        trunclength = (length // grid) * grid
+        length = grid + trunclength if length - trunclength > 0 else trunclength
+    else:
         length = (length // grid) * grid
+    return length
+
+def length_to_pixels(length, snap=False, grid=1, roundup=False):
+    if snap:
+        length = snap_to_grid(length, grid, roundup)
     return length * 60.0
 
-def pixels_to_length(pixels, snap=False, grid=1):
+def pixels_to_length(pixels, snap=False, grid=1, roundup=False):
     length = pixels / 60.0
     if snap:
-        length = (length // grid) * grid
+        length = snap_to_grid(length, grid, roundup)
     return length
 
 class SnapCheckBox(CheckBox, Label):
@@ -310,7 +318,7 @@ class Note(Widget):
     def update(self, pos):
         width = pos[0] - self.pos[0]
         print(width, self.snap, self.grid, self.minlength)
-        self.length = max(pixels_to_length(width, self.snap, self.grid), self.minlength)
+        self.length = max(pixels_to_length(width, self.snap, self.grid, True), self.minlength)
 
     def toggle_highlight(self):
         self.highlighted = not self.highlighted
@@ -350,11 +358,12 @@ class NoteLane(Widget):
     def on_touch_move(self, touch):
         if self.collide_point(*touch.pos):
             app = App.get_running_app()
-            if app.shift_enabled or self.parent.new_note.index == self.index:
-                self.parent.update_new_note(touch.pos)       
-            elif app.input_mode == 'insert':
-                self.parent.init_new_note(self.index, touch.pos)
-            return True
+            if app.input_mode == 'insert':
+                if app.shift_enabled or self.parent.new_note.index == self.index:
+                    self.parent.update_new_note(touch.pos)       
+                else:
+                    self.parent.init_new_note(self.index, touch.pos)
+                return True
         return super().on_touch_move(touch)
 
     def on_touch_up(self, touch):
