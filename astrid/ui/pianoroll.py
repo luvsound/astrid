@@ -11,7 +11,9 @@ from kivy.graphics import Color, Bezier, Line, Ellipse, Rectangle
 from kivy.lang import Builder
 from kivy.properties import NumericProperty, StringProperty, ListProperty, ObjectProperty, BooleanProperty
 import random
-from pippi import tune
+from pippi import dsp, tune
+from astrid import orc
+import multiprocessing as mp
 
 UPDATE_INTERVAL = 1/30
 NOTELANE_HEIGHT = 12 
@@ -27,7 +29,7 @@ Builder.load_string('''
 
     canvas:
         Color:
-            rgba: 0,0,0.5,1
+            rgba: 0.1,0.1,0.1,1
         Rectangle:
             pos: self.pos
             size: self.size
@@ -35,7 +37,6 @@ Builder.load_string('''
     Label:
         text: self.parent.statusline
         color: 1, 1, 1, 1
-        pos: self.parent.pos
         size: self.parent.size
         text_size: self.size
         size_hint: (None, 1)
@@ -46,35 +47,46 @@ Builder.load_string('''
         halign: 'left'
 
     BoxLayout:
-        width: 420
+        width: 300
         size_hint: (None, 1)
         pos: (root.width - self.width, self.parent.pos[1])
         orientation: 'horizontal'
-        InsertButton:
-            font_size: '10sp'
-            text: '(I)nsert'
-        SelectButton:
-            font_size: '10sp'
-            text: '(S)elect'
         SelectAllButton:
             font_size: '10sp'
             text: 'Select (A)ll'
         ClearButton:
             font_size: '10sp'
             text: '(C)lear Selections'
-        DeleteButton:
+        RenderButton:
             font_size: '10sp'
-            text: '(D)elete Selected'
+            text: '(R)ender'
 
 <Note>:
     height: 12
     minimum_width: 5
     canvas:
         Color:
-            rgba: (0,0.25,0.25,0.5) if self.highlighted else (0.75,0,0.75,0.5)
+            rgba: (0,0,0.5,0.5) if self.highlighted else (0.75,0,0.75,0.5)
         Rectangle:
             pos: self.pos
             size: self.size
+        Color:
+            rgba: (0,0,0.5,0.25) if self.highlighted else (0.75,0,0.75,0.25)
+        Rectangle:
+            pos: (self.pos[0]+2, self.pos[1]-2)
+            size: self.size
+
+    Label:
+        text: ' ' + self.parent.freq
+        color: 1, 1, 1, 1
+        pos: self.parent.pos
+        size: self.parent.size
+        size_hint: (None, 1)
+        font_size: '8sp'
+        bold: True
+        valign: 'middle'
+        halign: 'left'
+
 
 <NoteLanes>:
     pos: (0, self.scroll_offset)
@@ -84,6 +96,8 @@ Builder.load_string('''
     height: 12
     size_hint: (1, None)
     pos: (0, (self.index * 13))
+    freq: '%5.2f  ' % tune.ntf(self.note.lower(), self.octave)
+
     canvas:
         Color:
             rgba: (0.85,0.85,0.85,0.75) if self.note.lower() == 'c' else (0.9,0.9,0.9,0.75)
@@ -95,6 +109,7 @@ Builder.load_string('''
         pos: (0, self.parent.pos[1])
         note: self.parent.note
         octave: self.parent.octave
+        freq: self.parent.freq
         width: 60
         height: 12
 
@@ -106,7 +121,7 @@ Builder.load_string('''
                 size: self.size
 
         Label:
-            text: '%5.2f  ' % tune.ntf(self.parent.note.lower(), self.parent.octave)
+            text: self.parent.freq
             color: 0.5, 0.5, 0.5, 1
             pos: self.parent.pos
             size: self.parent.size
@@ -133,15 +148,11 @@ Builder.load_string('''
 
 ''')
 
-class InsertButton(Button):
-    def on_press(self):
-        app = App.get_running_app()
-        app.input_mode = 'insert'
+def length_to_pixels(length, zoom=1):
+    return length * zoom * 60.0
 
-class SelectButton(Button):
-    def on_press(self):
-        app = App.get_running_app()
-        app.input_mode = 'select'
+def pixels_to_length(pixels, zoom=1):
+    return pixels / 60.0
 
 class SelectAllButton(Button):
     def on_press(self):
@@ -153,14 +164,89 @@ class ClearButton(Button):
         app = App.get_running_app()
         app.clear_selections()
 
-class DeleteButton(Button):
+class RenderButton(Button):
     def on_press(self):
         app = App.get_running_app()
-        app.delete_selected()
+        app.offline_render()
+
+class NoteLanes(FloatLayout):
+    new_note = ObjectProperty()
+    drawing_note = BooleanProperty(False)
+    notes = ListProperty([])
+    scroll_offset = NumericProperty(0)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._keyboard = Window.request_keyboard(self._cleanup_keyboard, self)
+        self._keyboard.bind(on_key_down=self._on_key_down)
+        self._keyboard.bind(on_key_up=self._on_key_up)
+
+        count = 0
+        for octave in range(11):
+            for note in NOTES:
+                n = NoteLane(count, note, octave)
+                self.add_widget(n)
+                self.notes.append(n)
+                count += 1
+
+    def _cleanup_keyboard(self):
+        self._keyboard.unbind(on_key_down=self._on_key_down)
+        self._keyboard.unbind(on_key_up=self._on_key_up)
+
+    def _on_key_up(self, keyboard, keycode):
+        app = App.get_running_app()
+        if keycode[1] == 'shift':
+            app.shift_enabled = False
+
+        print('up',keycode)
+
+    def _on_key_down(self, keyboard, keycode, text, modifiers):
+        print('down',keycode, modifiers)
+        app = App.get_running_app()
+        app.shift_enabled = 'shift' in modifiers
+        scroll_amount = 13 if 'shift' not in modifiers else 130
+        if keycode[1] in ('up', 'k'):
+            self.scroll_offset -= scroll_amount
+        elif keycode[1] in ('down', 'j'):
+            self.scroll_offset += scroll_amount
+        elif keycode[1] == 'i':
+            app.input_mode = 'insert'
+        elif keycode[1] == 's':
+            app.input_mode = 'select'
+        elif keycode[1] == 'a':
+            app.select_all()
+        elif keycode[1] == 'c':
+            app.clear_selections()
+        elif keycode[1] == 'r':
+            app.offline_render()
+        elif keycode[1] in ('x', 'delete', 'backspace'):
+            app.delete_selected()
+
+    def on_pos(self, obj, value):
+        for notelane in self.notes:
+            notelane.pos = (0, (notelane.index * 13) + self.scroll_offset)
+
+    def init_new_note(self, index, pos):
+        if pos[0] > 60:
+            notelane = self.notes[index]
+            self.new_note = Note(index, pos, notelane) 
+            self.drawing_note = True
+            notelane.notes.append(self.new_note)
+            notelane.add_widget(self.new_note)
+
+    def update_new_note(self, pos):
+        if self.drawing_note:
+            self.new_note.update(pos)
+
+    def finalize_new_note(self, pos):
+        if self.drawing_note:
+            self.new_note.update(pos)
+            self.drawing_note = False
 
 class NoteLane(Widget):
     note = StringProperty() # pitch class name
     octave = NumericProperty()
+    freq = StringProperty()
     notes = ListProperty() # Note() widget references
     index = NumericProperty()
 
@@ -201,22 +287,39 @@ class NoteLane(Widget):
 class PianoKey(Widget):
     note = StringProperty()
     octave = NumericProperty()
+    freq = StringProperty()
 
 class Note(Widget):
     index = NumericProperty()
     notelane = ObjectProperty()
     highlighted = BooleanProperty(False)
+    freq = StringProperty()
+    onset = NumericProperty()
+    length = NumericProperty()
+    minlength = NumericProperty(0.01)
+    bpm = NumericProperty()
+    beatdiv = NumericProperty()
 
     def __init__(self, index, pos, notelane, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.notelane = notelane
-        self.pos = (pos[0], self.notelane.pos[1])
-        self.width = 5
+        #self.pos = (pos[0], self.notelane.pos[1])
         self.index = index
+        self.freq = notelane.freq
+
+        self.bind(length=self._redraw)
+        self.bind(onset=self._redraw)
+
+        self.onset = pixels_to_length(pos[0])
+        self.length = self.minlength
+
+    def _redraw(self, obj, value):
+        self.width = length_to_pixels(self.length)
+        self.pos = (length_to_pixels(self.onset), self.notelane.pos[1])
 
     def update(self, pos):
         width = pos[0] - self.pos[0]
-        self.width = max(width, 5)
+        self.length = max(pixels_to_length(width), self.minlength)
 
     def toggle_highlight(self):
         self.highlighted = not self.highlighted
@@ -231,75 +334,6 @@ class Note(Widget):
                 return True
 
         return super().on_touch_down(touch)
-
-
-class NoteLanes(FloatLayout):
-    new_note = ObjectProperty()
-    drawing_note = BooleanProperty(False)
-    notes = ListProperty([])
-    scroll_offset = NumericProperty(0)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._keyboard = Window.request_keyboard(self._cleanup_keyboard, self)
-        self._keyboard.bind(on_key_down=self._on_key_down)
-        self._keyboard.bind(on_key_up=self._on_key_up)
-
-        count = 0
-        for octave in range(11):
-            for note in NOTES:
-                n = NoteLane(count, note, octave)
-                self.add_widget(n)
-                self.notes.append(n)
-                count += 1
-
-    def _cleanup_keyboard(self):
-        self._keyboard.unbind(on_key_down=self._on_key_down)
-        self._keyboard.unbind(on_key_up=self._on_key_up)
-
-    def _on_key_up(self, keyboard, keycode):
-        app = App.get_running_app()
-        if keycode[1] == 'shift':
-            app.shift_enabled = False
-
-    def _on_key_down(self, keyboard, keycode, text, modifiers):
-        app = App.get_running_app()
-        app.shift_enabled = 'shift' in modifiers
-        scroll_amount = 13 if 'shift' not in modifiers else 130
-        if keycode[1] in ('up', 'k'):
-            self.scroll_offset -= scroll_amount
-        elif keycode[1] in ('down', 'j'):
-            self.scroll_offset += scroll_amount
-        elif keycode[1] == 'i':
-            app.input_mode = 'insert'
-        elif keycode[1] == 's':
-            app.input_mode = 'select'
-        elif keycode[1] == 'a':
-            app.select_all()
-        elif keycode[1] == 'c':
-            app.clear_selections()
-        elif keycode[1] == 'd':
-            app.delete_selected()
-
-    def on_pos(self, obj, value):
-        for notelane in self.notes:
-            notelane.pos = (0, (notelane.index * 13) + self.scroll_offset)
-
-    def init_new_note(self, index, pos):
-        notelane = self.notes[index]
-        self.new_note = Note(index, pos, notelane) 
-        self.drawing_note = True
-        notelane.notes.append(self.new_note)
-        notelane.add_widget(self.new_note)
-
-    def update_new_note(self, pos):
-        if self.drawing_note:
-            self.new_note.update(pos)
-
-    def finalize_new_note(self, pos):
-        if self.drawing_note:
-            self.new_note.update(pos)
-            self.drawing_note = False
 
 class HeaderBar(FloatLayout):
     statusline = StringProperty()
@@ -327,11 +361,12 @@ class HeaderBar(FloatLayout):
         app = App.get_running_app()
         return app.input_mode
 
-
 class PianoRollWrapper(BoxLayout):
     orientation = 'vertical'
     gridwidth = NumericProperty(30)
     barlength = NumericProperty(4)
+    zoom = NumericProperty(1)
+    bpm = NumericProperty(120.0)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         with self.canvas:
@@ -346,7 +381,7 @@ class PianoRollWrapper(BoxLayout):
                     Color(0,0,0,0.3)
 
                 if i > 0:
-                    points = [i * self.gridwidth, 0, i * self.gridwidth, self.height]
+                    points = [i * self.gridwidth + 60, 0, i * self.gridwidth + 60, self.height]
                     l = Line(points=points, width=1)
                     self.lines += [ l ]
 
@@ -355,17 +390,18 @@ class PianoRollWrapper(BoxLayout):
 
     def update_grid(self, *args):
         self.r.size = self.size
+        self.gridwidth = length_to_pixels(60.0 / self.bpm)
         for i, l in enumerate(self.lines):
             x = (i+1) * self.gridwidth + 60
             l.points = [x, 0, x, self.height]
         
-
 class PianoRoll(App):
     input_mode = StringProperty('insert')
     bpm = NumericProperty(120.0)
     grid_div = NumericProperty(1)
     barlength = NumericProperty(4)
     shift_enabled = BooleanProperty(False)
+    rendering = BooleanProperty(False)
 
     def build(self):
         self.wrapper = PianoRollWrapper()
@@ -396,6 +432,38 @@ class PianoRoll(App):
                     notelane.remove_widget(note)
                     notelane.notes[noteindex] = None
             notelane.notes = filter(None, notelane.notes)
+
+    def offline_render(self):
+        print('BEGIN RENDER')
+        self.rendering = True
+        notes = []
+        maxlength = 0
+        for notelane in self.lanes.notes:
+            for noteindex, note in enumerate(notelane.notes):
+                notes += [(note.onset, note.length, note.freq)]
+                maxlength = max(maxlength, note.onset + note.length)
+
+        out = dsp.buffer(length=maxlength)
+
+        # load instrument
+        manager = mp.Manager()
+        bus = manager.Namespace()
+        bus.stop_all = manager.Event() # voices
+        bus.shutdown_flag = manager.Event() # render & analysis processes
+        bus.stop_listening = manager.Event() # midi listeners
+        instrument = orc.load_instrument('default', 'orc/pianotone.py', bus)
+
+        for note in notes:
+            params = {'length': float(note[1]), 'freq': float(note[2])}
+            ctx = instrument.create_ctx(params)
+            generator = instrument.renderer.play(ctx)
+            for snd in generator:
+                out.dub(snd, float(note[0]))
+
+        # render
+        out.write('pianoroll_render.wav')
+        self.rendering = False
+        print('DONE RENDERING')
 
 if __name__ == '__main__':
     PianoRoll().run()
