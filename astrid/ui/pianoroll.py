@@ -1,5 +1,6 @@
 from kivy.app import App
 from kivy.core.window import Window
+from kivy.core.audio import SoundLoader
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
@@ -75,7 +76,7 @@ Builder.load_string('''
         RenderButton:
             font_size: '10sp'
             size_hint: (2, 1)
-            text: '(R)ender'
+            text: '(R)ender & Play'
 
 <Note>:
     height: 12
@@ -173,12 +174,14 @@ def snap_to_grid(length=1, grid=1, roundup=False):
     return length
 
 def length_to_pixels(length, snap=False, grid=1, roundup=False):
+    app = App.get_running_app()
     if snap:
         length = snap_to_grid(length, grid, roundup)
-    return length * 60.0
+    return length * (60.0 * app.zoom)
 
 def pixels_to_length(pixels, snap=False, grid=1, roundup=False):
-    length = pixels / 60.0
+    app = App.get_running_app()
+    length = pixels / (60.0 * app.zoom)
     if snap:
         length = snap_to_grid(length, grid, roundup)
     return length
@@ -213,7 +216,7 @@ class NoteLanes(FloatLayout):
     new_note = ObjectProperty()
     drawing_note = BooleanProperty(False)
     notes = ListProperty([])
-    scroll_offset = NumericProperty(0)
+    scroll_offset = NumericProperty(-340)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -446,6 +449,7 @@ class PianoRoll(App):
     input_mode = StringProperty('insert')
     bpm = NumericProperty(120.0)
     snap = BooleanProperty(True)
+    zoom = NumericProperty(1)
     grid = NumericProperty(0.5)
     barlength = NumericProperty(4)
     shift_enabled = BooleanProperty(False)
@@ -517,6 +521,9 @@ class PianoRoll(App):
 
         # render
         out.write('pianoroll_render.wav')
+        sndfile = SoundLoader.load('pianoroll_render.wav')
+        if sndfile:
+            sndfile.play()
         self.rendering = False
         print('DONE RENDERING')
 
