@@ -432,8 +432,7 @@ class PianoRollWrapper(BoxLayout):
 
                 if i > 0:
                     points = [i * self.gridwidth + 60, 0, i * self.gridwidth + 60, self.height]
-                    l = Line(points=points, width=1)
-                    self.lines += [ l ]
+                    self.lines += [ Line(points=points, width=1) ]
 
         self.bind(pos=self.update_grid)
         self.bind(size=self.update_grid)
