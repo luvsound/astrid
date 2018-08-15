@@ -241,10 +241,7 @@ class NoteLanes(FloatLayout):
         if keycode[1] == 'shift':
             app.shift_enabled = False
 
-        print('up',keycode)
-
     def _on_key_down(self, keyboard, keycode, text, modifiers):
-        print('down',keycode, modifiers)
         app = App.get_running_app()
         app.shift_enabled = 'shift' in modifiers
         scroll_amount = 13 if 'shift' not in modifiers else 130
@@ -311,16 +308,15 @@ class Note(Widget):
         self.bind(length=self._redraw)
         self.bind(onset=self._redraw)
 
-        self.onset = pixels_to_length(pos[0], snap, grid)
+        self.onset = pixels_to_length(pos[0] - 60, snap, grid)
         self.length = self.minlength
 
     def _redraw(self, obj, value):
         self.width = max(length_to_pixels(self.length), 5)
-        self.pos = (length_to_pixels(self.onset), self.notelane.pos[1])
+        self.pos = (length_to_pixels(self.onset) + 60, self.notelane.pos[1])
 
     def update(self, pos):
         width = pos[0] - self.pos[0]
-        print(width, self.snap, self.grid, self.minlength)
         self.length = max(pixels_to_length(width, self.snap, self.grid, True), self.minlength)
 
     def toggle_highlight(self):
@@ -414,52 +410,72 @@ class HeaderBar(FloatLayout):
 class PianoRollWrapper(BoxLayout):
     orientation = 'vertical'
     gridwidth = NumericProperty(30)
-    barlength = NumericProperty(4)
-    bpm = NumericProperty(120.0)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        with self.canvas:
+        self.bind(pos=self.update_grid)
+        self.bind(size=self.update_grid)
+        self.bind(pos=self.update_playhead)
+        self.bind(size=self.update_playhead)
+
+    def update_grid(self, *args):
+        app = App.get_running_app()
+        self.gridwidth = length_to_pixels(app.grid)
+        barlength = int(app.barlength * app.grid_div)
+        beatwidth = barlength // app.barlength
+
+        self.canvas.before.clear()
+        with self.canvas.before:
             Color(0.8,0.8,0.8,1)
             self.r = Rectangle(pos=self.pos, size=self.size)
 
             self.lines = []
             for i in range(100):
-                if i % self.barlength == 0:
+                if i % barlength == 0:
                     Color(0,0,0,1)
+                elif i % beatwidth == 0:
+                    Color(0,0,0,0.4)
                 else:
-                    Color(0,0,0,0.3)
+                    Color(0,0,0,0.2)
 
                 if i > 0:
-                    points = [i * self.gridwidth + 60, 0, i * self.gridwidth + 60, self.height]
+                    x = i * self.gridwidth + 60
+                    points = [x, 0, x, self.height]
                     self.lines += [ Line(points=points, width=1) ]
 
-        self.bind(pos=self.update_grid)
-        self.bind(size=self.update_grid)
-
-    def update_grid(self, *args):
-        self.r.size = self.size
-        self.gridwidth = length_to_pixels(60.0 / self.bpm)
-        for i, l in enumerate(self.lines):
-            x = (i+1) * self.gridwidth + 60
-            l.points = [x, 0, x, self.height]
+    def update_playhead(self, *args):
+        app = App.get_running_app()
+        playheadpos = length_to_pixels(app.playhead_pos) + 60
+        self.canvas.after.clear()
+        with self.canvas.after:
+            Color(1,0,0,0.75)
+            self.playhead = Line(points=[playheadpos, 20, playheadpos, self.height], width=1)
         
 class PianoRoll(App):
     input_mode = StringProperty('insert')
-    bpm = NumericProperty(120.0)
+    bpm = NumericProperty(100.0)
     snap = BooleanProperty(True)
     zoom = NumericProperty(1)
-    grid = NumericProperty(0.5)
+    grid = NumericProperty(0.25)
+    grid_div = NumericProperty(2)
     barlength = NumericProperty(4)
+    playhead_pos = NumericProperty(0)
     shift_enabled = BooleanProperty(False)
     rendering = BooleanProperty(False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.soundfile = None
         self.bind(bpm=self._calc_gridsize)
+        self.bind(grid_div=self._calc_gridsize)
+        self.bind(playhead_pos=self._update_playhead)
+
+    def _update_playhead(self, obj, value):
+        self.wrapper.update_playhead()
 
     def _calc_gridsize(self, obj, value):
-        self.grid = 60.0 / self.bpm
+        self.grid = (60.0 / self.bpm) / self.grid_div
+        self.wrapper.update_grid()
 
     def build(self):
         self.wrapper = PianoRollWrapper()
@@ -491,6 +507,13 @@ class PianoRoll(App):
                     notelane.notes[noteindex] = None
             notelane.notes = filter(None, notelane.notes)
 
+    def update_playhead(self, *args):
+        if self.sndfile is not None:
+            if self.sndfile.state == 'stop':
+                self.playhead_clock.cancel()
+            else:
+                self.playhead_pos = self.sndfile.get_pos()
+
     def offline_render(self):
         print('BEGIN RENDER')
         self.rendering = True
@@ -520,9 +543,10 @@ class PianoRoll(App):
 
         # render
         out.write('pianoroll_render.wav')
-        sndfile = SoundLoader.load('pianoroll_render.wav')
-        if sndfile:
-            sndfile.play()
+        self.sndfile = SoundLoader.load('pianoroll_render.wav')
+        if self.sndfile:
+            self.sndfile.play()
+        self.playhead_clock = Clock.schedule_interval(self.update_playhead, 0.01)
         self.rendering = False
         print('DONE RENDERING')
 
