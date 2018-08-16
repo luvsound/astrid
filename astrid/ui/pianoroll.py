@@ -11,11 +11,13 @@ from kivy.uix.checkbox import CheckBox
 from kivy.uix.label import Label
 from kivy.graphics import Color, Bezier, Line, Ellipse, Rectangle
 from kivy.lang import Builder
+from kivy import metrics
 from kivy.properties import NumericProperty, StringProperty, ListProperty, ObjectProperty, BooleanProperty
 import random
 from pippi import dsp, tune
 from astrid import orc
 import multiprocessing as mp
+import yaml
 
 UPDATE_INTERVAL = 1/30
 NOTELANE_HEIGHT = 12 
@@ -27,7 +29,7 @@ Builder.load_string('''
 
 <HeaderBar>:
     size_hint: (1, None)
-    height: 20
+    height: '20dp'
 
     canvas:
         Color:
@@ -41,15 +43,15 @@ Builder.load_string('''
         color: 1, 1, 1, 1
         size: self.parent.size
         text_size: self.size
-        size_hint: (None, 1)
+        size_hint: (None, None)
         font_size: '10sp'
         bold: True
-        pos: (2, self.parent.pos[1])
+        pos: ('2dp', self.parent.pos[1])
         valign: 'middle'
         halign: 'left'
 
     BoxLayout:
-        width: 340
+        width: '340dp'
         size_hint: (None, 1)
         pos: (root.width - self.width, self.parent.pos[1])
         orientation: 'horizontal'
@@ -79,8 +81,8 @@ Builder.load_string('''
             text: '(R)ender & Play'
 
 <Note>:
-    height: 12
-    minimum_width: 5
+    height: '12dp'
+    minimum_width: '5dp'
     canvas:
         Color:
             rgba: (0,0,0.5,0.5) if self.highlighted else (0.75,0,0.75,0.5)
@@ -110,7 +112,7 @@ Builder.load_string('''
 
 <NoteLane>:
     width: root.width
-    height: 12
+    height: '12dp'
     size_hint: (1, None)
     pos: (0, (self.index * 13))
     freq: '%5.2f  ' % tune.ntf(self.note.lower(), self.octave)
@@ -127,8 +129,9 @@ Builder.load_string('''
         note: self.parent.note
         octave: self.parent.octave
         freq: self.parent.freq
-        width: 60
-        height: 12
+        width: '60dp'
+        height: '12dp'
+        size_hint: (None, None)
 
         canvas:
             Color:
@@ -177,11 +180,11 @@ def length_to_pixels(length, snap=False, grid=1, roundup=False):
     app = App.get_running_app()
     if snap:
         length = snap_to_grid(length, grid, roundup)
-    return length * (60.0 * app.zoom)
+    return metrics.dp(length * (60.0 * app.zoom))
 
 def pixels_to_length(pixels, snap=False, grid=1, roundup=False):
     app = App.get_running_app()
-    length = pixels / (60.0 * app.zoom)
+    length = pixels / (metrics.dp(60.0) * app.zoom)
     if snap:
         length = snap_to_grid(length, grid, roundup)
     return length
@@ -216,10 +219,12 @@ class NoteLanes(FloatLayout):
     new_note = ObjectProperty()
     drawing_note = BooleanProperty(False)
     notes = ListProperty([])
-    scroll_offset = NumericProperty(-340)
+    scroll_offset = NumericProperty(metrics.dp(-340))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.last_command = None
+        self.command = ''
         self._keyboard = Window.request_keyboard(self._cleanup_keyboard, self)
         self._keyboard.bind(on_key_down=self._on_key_down)
         self._keyboard.bind(on_key_up=self._on_key_up)
@@ -242,17 +247,48 @@ class NoteLanes(FloatLayout):
             app.shift_enabled = False
 
     def _on_key_down(self, keyboard, keycode, text, modifiers):
+        print(keycode, text, modifiers)
+        if self.last_command is not None and keycode[1] == 'enter':
+            app = App.get_running_app()
+
+            try:
+                if self.last_command == 'change_div':
+                    app.grid_div = int(self.command)
+                elif self.last_command == 'change_bpm':
+                    app.bpm = float(self.command)
+
+            except ValueError:
+                print(self.command)
+
+            self.command = ''
+            self.last_command = None
+
+        elif self.last_command is not None:
+            self.command += keycode[1]
+            return None
+
         app = App.get_running_app()
         app.shift_enabled = 'shift' in modifiers
-        scroll_amount = 13 if 'shift' not in modifiers else 130
+        scroll_amount = metrics.dp(13) if 'shift' not in modifiers else metrics.dp(130)
         if keycode[1] in ('up', 'k'):
             self.scroll_offset -= scroll_amount
         elif keycode[1] in ('down', 'j'):
             self.scroll_offset += scroll_amount
         elif keycode[1] == 'i':
-            app.input_mode = 'insert'
+            if app.input_mode == 'insert':
+                app.input_mode = 'select'
+            else:
+                app.input_mode = 'insert'
         elif keycode[1] == 's':
-            app.input_mode = 'select'
+            print('SAVE')
+            app.save_project()
+        elif keycode[1] == 'l':
+            print('LOAD')
+            app.load_project()
+        elif keycode[1] == 'd':
+            self.last_command = 'change_div'
+        elif keycode[1] == 'b':
+            self.last_command = 'change_bpm'
         elif keycode[1] == 'a':
             app.select_all()
         elif keycode[1] == 'c':
@@ -264,10 +300,10 @@ class NoteLanes(FloatLayout):
 
     def on_pos(self, obj, value):
         for notelane in self.notes:
-            notelane.pos = (0, (notelane.index * 13) + self.scroll_offset)
+            notelane.pos = (0, (notelane.index * metrics.dp(13)) + self.scroll_offset)
 
     def init_new_note(self, index, pos):
-        if pos[0] > 60:
+        if pos[0] > metrics.dp(60):
             app = App.get_running_app()
             notelane = self.notes[index]
             self.new_note = Note(index, pos, notelane, app.snap, app.grid) 
@@ -292,7 +328,8 @@ class Note(Widget):
     onset = NumericProperty()
     length = NumericProperty()
     minlength = NumericProperty(0.01)
-    beat = NumericProperty() # index pos in grid
+    beatstart = NumericProperty() # index start pos in grid
+    beatend = NumericProperty()   # index end pos in grid
     snap = BooleanProperty(False)
     grid = NumericProperty() # gridsize
 
@@ -308,12 +345,12 @@ class Note(Widget):
         self.bind(length=self._redraw)
         self.bind(onset=self._redraw)
 
-        self.onset = pixels_to_length(pos[0] - 60, snap, grid)
+        self.onset = pixels_to_length(pos[0] - metrics.dp(60), snap, grid)
         self.length = self.minlength
 
     def _redraw(self, obj, value):
-        self.width = max(length_to_pixels(self.length), 5)
-        self.pos = (length_to_pixels(self.onset) + 60, self.notelane.pos[1])
+        self.width = max(length_to_pixels(self.length), metrics.dp(5))
+        self.pos = (length_to_pixels(self.onset) + metrics.dp(60), self.notelane.pos[1])
 
     def update(self, pos):
         width = pos[0] - self.pos[0]
@@ -409,7 +446,7 @@ class HeaderBar(FloatLayout):
 
 class PianoRollWrapper(BoxLayout):
     orientation = 'vertical'
-    gridwidth = NumericProperty(30)
+    gridwidth = NumericProperty(metrics.dp(30))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -439,17 +476,17 @@ class PianoRollWrapper(BoxLayout):
                     Color(0,0,0,0.2)
 
                 if i > 0:
-                    x = i * self.gridwidth + 60
+                    x = i * self.gridwidth + metrics.dp(60)
                     points = [x, 0, x, self.height]
                     self.lines += [ Line(points=points, width=1) ]
 
     def update_playhead(self, *args):
         app = App.get_running_app()
-        playheadpos = length_to_pixels(app.playhead_pos) + 60
+        playheadpos = length_to_pixels(app.playhead_pos) + metrics.dp(60)
         self.canvas.after.clear()
         with self.canvas.after:
             Color(1,0,0,0.75)
-            self.playhead = Line(points=[playheadpos, 20, playheadpos, self.height], width=1)
+            self.playhead = Line(points=[playheadpos, metrics.dp(20), playheadpos, self.height], width=1)
         
 class PianoRoll(App):
     input_mode = StringProperty('insert')
@@ -513,6 +550,29 @@ class PianoRoll(App):
                 self.playhead_clock.cancel()
             else:
                 self.playhead_pos = self.sndfile.get_pos()
+
+    def save_project(self):
+        notes = []
+        for notelane in self.lanes.notes:
+            for noteindex, note in enumerate(notelane.notes):
+                notes += [{'onset': note.onset, 'length': note.length, 'freq': float(note.freq)}]
+
+        notes = sorted(notes, key=lambda n: n['onset'])
+        project = {
+            'bpm': self.bpm, 
+            'grid_div': self.grid_div, 
+            'barlength': self.barlength,
+            'snap': self.snap,
+            'zoom': self.zoom,
+            'notes': notes,
+        }
+
+        s = yaml.dump(project)
+        with open('mycoolproject.yml', 'w') as f:
+            f.write(s)
+
+    def load_project(self):
+        pass
 
     def offline_render(self):
         print('BEGIN RENDER')
