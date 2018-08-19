@@ -1,366 +1,86 @@
-# distutils: libraries = portaudio
 # cython: language_level=3
  
-from __future__ import absolute_import
-from libc.stdint cimport uintptr_t
 from libc.stdlib cimport malloc, calloc, free
 from pippi.soundbuffer cimport SoundBuffer
 cimport cython
 import numpy as np
 
+cdef N* bufnode_init(SoundBuffer snd, double onset):
+    cdef N* node = <N*>malloc(sizeof(N))
+    cdef BufNode* bufnode = <BufNode*>malloc(sizeof(BufNode))
+    cdef int length = len(snd)
+    cdef int channels = snd.channels
+    cdef int i = 0
+    cdef int j = 0
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef int mix_block(stream_ctx* ctx, unsigned long block_size):
-    """ Add frames to output, removing from 
-        playing list and adding to done queu 
-        if no more frames are available.
-    """
+    bufnode.snd = <double*>calloc(length * channels, sizeof(double))
+    bufnode.channels = channels
+    bufnode.samplerate = <int>snd.samplerate
+    bufnode.length = length
+    bufnode.onset = onset
+    bufnode.pos = 0
+
+    for i in range(length):
+        for j in range(channels):
+            bufnode.snd[i * channels + j] = snd.frames[i][j]
+
+    node.data = <void*>bufnode
+
+    return node
+
+cdef void mix_block(BufNode* node, double* out, int blocksize) nogil:
     cdef int i = 0
     cdef int c = 0
 
-    for i in range(<int>block_size):
-        if ctx.playing_current.pos < ctx.playing_current.length:
-            for c in range(ctx.channels):
-                ctx.out[i * ctx.channels + c] += ctx.playing_current.frames[ctx.playing_current.pos * ctx.channels + c]
+    for i in range(blocksize):
+        if node.pos < node.length:
+            for c in range(node.channels):
+                out[i * node.channels + c] += node.snd[node.pos * node.channels + c]
         else:
             break
-        ctx.playing_current.pos = ctx.playing_current.pos + 1
+        node.pos += 1
 
-    return 0
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef int output_callback(const void* inputbuffer, 
-                             void* output,
-                     unsigned long frameCount,
-   const PaStreamCallbackTimeInfo* timeInfo,
-             PaStreamCallbackFlags statusFlags,
-                             void* current_context):
-    cdef int i = 0
-    cdef int j = 0
-    cdef int c = 0
+cdef void mix_bufnodes(Q* q, double* out, int blocksize) nogil:
+    pthread_mutex_lock(q.lock)
+    cdef N* current = q.head 
+    pthread_mutex_unlock(q.lock)
 
-    cdef stream_ctx* ctx = <stream_ctx*>current_context
+    cdef BufNode* buf = <BufNode*>current.data
 
-    for i in range(<int>frameCount):
-        for c in range(ctx.channels):
-            ctx.out[i * ctx.channels + c] = 0
-
-    ctx.playing_current = ctx.playing_head
-    cdef int count = 0
-    while ctx.playing_current != NULL:
-        if ctx.playing_current.pos < ctx.playing_current.length:
-            mix_block(ctx, frameCount)
+    while current != NULL:
+        if buf.pos < buf.length:
+            mix_block(buf, out, blocksize)
             
-        ctx.playing_current = ctx.playing_current.next
+        current = current.next
+        if current != NULL:
+            buf = <BufNode*>current.data
 
-        count += 1
+cdef double[:,:] to_array(double* snd, int channels, int samplerate, int blocksize):
+    cdef int i = 0
+    cdef int c = 0
+    cdef double[:,:] out = np.zeros((blocksize, channels))
 
-    cdef float* out = <float*>output
-    for i in range(<int>frameCount):
-        for c in range(ctx.channels):
-            out[j] = <float>ctx.out[i * ctx.channels + c]
-            j += 1
+    for i in range(blocksize):
+        for c in range(channels):
+            out[i][c] = snd[i * channels * c]
+    free(snd)
+    return out
 
-    return 0
 
+
+cdef double[:,:] mixed(Q* q, int channels, int samplerate, int blocksize):
+    cdef double* out = <double*>calloc(blocksize * channels, sizeof(double))
+    mix_bufnodes(q, out, blocksize)
+    return to_array(out, channels, samplerate, blocksize)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef int input_callback(const void* inputbuffer, 
-                             void* output,
-                     unsigned long frameCount,
-   const PaStreamCallbackTimeInfo* timeInfo,
-             PaStreamCallbackFlags statusFlags,
-                             void* current_context):
-    cdef int i = 0
-    cdef int j = 0
-    cdef int c = 0
-
-    cdef stream_ctx* ctx = <stream_ctx*>current_context
-
-    cdef const float* inp = <const float*>inputbuffer
-
-    if inputbuffer != NULL:
-        for i in range(<int>frameCount * ctx.channels):
-            ctx.ringbuffer[ctx.ringbuffer_pos % ctx.ringbuffer_length] = <double>inp[i]
-            ctx.ringbuffer_pos += 1
-
-    return 0
-
-cdef class StreamContext:
-    def __cinit__(self):
-        # TODO maybe best to free memory from here too?
-        # but at the moment cleanup still happens in AstridMixer.shutdown
-        self.ctx = <stream_ctx*>malloc(sizeof(stream_ctx))
-
-    def get_pointer(self):
-        return <uintptr_t><void *>self.ctx
-
-    def set_data(self):
-        self._set_data()
-
-    cdef void _set_data(self):
-        self.ctx.channels = 3
-        self.ctx.samplerate = 10
-
-
-cdef class StreamContextView:
-    def __cinit__(self, uintptr_t ptr):
-        print('StreamContextView INIT PTR', ptr)
-        self.ctx = <stream_ctx*>ptr
-
-    @property
-    def channels(self):
-        if self.ctx == NULL:
-            return -1
-        return self.ctx.channels
-
-    @property
-    def samplerate(self):
-        if self.ctx == NULL:
-            return -1
-
-        return self.ctx.samplerate
-
-    @property
-    def ringbuffer_length(self):
-        if self.ctx == NULL:
-            return -1
-
-        return self.ctx.ringbuffer_length
-
-    def read(self, int frames, int offset=0):
-        return self._read_input(frames, offset)
-
-    cdef SoundBuffer _read_input(self, int frames, int offset):
-        self.ctx.channels = 2
-        self.ctx.samplerate = 44100
-        cdef int i = 0
-        cdef int c = 0
-        cdef int read_head = 0
-        cdef double[:,:] out = np.zeros((frames, self.ctx.channels))
-
-        print('self.ctx.channels', self.ctx.channels)
-        print('self.ctx.samplerate', self.ctx.samplerate)
-
-        if frames * self.ctx.channels > self.ctx.ringbuffer_length:
-            frames = self.ctx.ringbuffer_length // self.ctx.channels
-
-        read_head = (self.ctx.ringbuffer_pos - ((frames + offset) * self.ctx.channels)) % self.ctx.ringbuffer_length
-        for i in range(frames):
-            for c in range(self.ctx.channels):
-                out[i][c] = self.ctx.ringbuffer[read_head % self.ctx.ringbuffer_length]
-                read_head += 1
-
-        return SoundBuffer(out, self.ctx.channels, self.ctx.samplerate)
-
-
-cdef class AstridMixer:
-    def __cinit__(self, 
-            #uintptr_t stream_ctx_ptr, 
-            int block_size=64, 
-            int channels=2, 
-            int samplerate=44100, 
-            double ringbuffer_length=30
-        ):
-
-        self.block_size = block_size
-        self.channels = channels
-        self.samplerate = samplerate
-
-        cdef PaStream* input_stream
-        cdef PaStream* output_stream
-        cdef PaError err
-        cdef PaStreamCallback* inputcb
-        cdef PaStreamCallback* outputcb
-
-        self.ctx = <stream_ctx*>malloc(sizeof(stream_ctx))
-        #self.ctx = <stream_ctx*>stream_ctx_ptr
-        self.ctx.out = <double*>calloc(block_size * channels, sizeof(double))
-        self.ctx.ringbuffer_length = <int>(ringbuffer_length * samplerate * channels)
-        self.ctx.ringbuffer = <double*>calloc(self.ctx.ringbuffer_length, sizeof(double))
-        self.ctx.ringbuffer_pos = 0
-        #self.ctx.ringbuffer_length = ringbuffer_length
-        #self.ctx.ringbuffer = ringbuffer
-        #self.ctx.ringbuffer_pos = ringbuffer_pos
-        self.ctx.channels = channels
-        self.ctx.samplerate = samplerate
-        self.ctx.playing_head = NULL
-        self.ctx.playing_tail = NULL
-        self.ctx.playing_current = NULL
-
-        inputcb = <PaStreamCallback*>&input_callback
-        outputcb = <PaStreamCallback*>&output_callback
-
-        err = Pa_Initialize()
-        if(err != paNoError):
-            print("Initialize err: %s" % Pa_GetErrorText(err))
-
-        self.input_params = <PaStreamParameters*>malloc(sizeof(PaStreamParameters))
-        self.input_params.device = Pa_GetDefaultInputDevice()
-        self.input_params.channelCount = channels
-        self.input_params.sampleFormat = paFloat32
-        self.input_params.suggestedLatency = Pa_GetDeviceInfo(self.input_params.device).defaultLowInputLatency
-        self.input_params.hostApiSpecificStreamInfo = NULL
-
-        self.output_params = <PaStreamParameters*>malloc(sizeof(PaStreamParameters))
-        self.output_params.device = Pa_GetDefaultOutputDevice()
-        self.output_params.channelCount = channels
-        self.output_params.sampleFormat = paFloat32
-        self.output_params.suggestedLatency = Pa_GetDeviceInfo(self.output_params.device).defaultLowInputLatency
-        self.output_params.hostApiSpecificStreamInfo = NULL
-
-        err = Pa_OpenStream(
-                &output_stream, 
-                NULL,
-                self.output_params, 
-                <double>samplerate, 
-                <unsigned long>block_size, 
-                0, 
-                outputcb, 
-                self.ctx
-            )
-
-        if(err != paNoError):
-            print("Open default stream err: %s" % Pa_GetErrorText(err))
-
-        self.ctx.output_stream = output_stream
-
-        err = Pa_StartStream(output_stream)
-        if(err != paNoError):
-            print("Start stream err: %s" % Pa_GetErrorText(err))
-
-        err = Pa_OpenStream(
-                &input_stream,
-                self.input_params,
-                NULL,
-                <double>samplerate, 
-                paFramesPerBufferUnspecified,
-                0, 
-                inputcb, 
-                self.ctx
-            )
-
-        if(err != paNoError):
-            print("Open default stream err: %s" % Pa_GetErrorText(err))
-
-        self.ctx.input_stream = input_stream
-
-        err = Pa_StartStream(input_stream)
-        if(err != paNoError):
-            print("Start stream err: %s" % Pa_GetErrorText(err))
-
-
-    cdef void _flush(self) except *:
-        cdef playbuf* current = self.ctx.playing_head
-        while current != NULL:
-            if current.pos > current.length and current.frames != NULL:
-                free(current.frames)
-                current.frames = NULL
-            current = current.next
-
-    cdef void _add(self, SoundBuffer snd) except *:
-        cdef int length = len(snd)
-        cdef int channels = snd.channels
-
-        cdef playbuf* buf = <playbuf*>malloc(sizeof(playbuf))
-        buf.frames = <double*>calloc(length * channels, sizeof(double))
-
-        cdef int i = 0
-        cdef int j = 0
-
-        for i in range(length):
-            for j in range(channels):
-                buf.frames[i * channels + j] = snd.frames[i][j]
-
-        buf.length = length
-        buf.channels = channels
-        buf.pos = 0
-        buf.next = NULL
-        buf.prev = NULL
-
-        if self.ctx.playing_head == NULL:
-            self.ctx.playing_head = buf
-            self.ctx.playing_tail = buf
-        
-        else:
-            buf.prev = self.ctx.playing_tail
-            self.ctx.playing_tail.next = buf
-            self.ctx.playing_tail = buf
-
-        self._flush()
-
-
-    def add(self, SoundBuffer snd):
-        self._add(snd)
-
-    def sleep(self, unsigned long msec):
-        Pa_Sleep(msec)
-
-    def read(self, int frames, int offset=0):
-        return self._read_input(frames, offset)
-
-    cdef SoundBuffer _read_input(self, int frames, int offset):
-        cdef int i = 0
-        cdef int c = 0
-        cdef int read_head = 0
-        cdef double[:,:] out = np.zeros((frames, self.ctx.channels))
-
-        if frames * self.ctx.channels > self.ctx.ringbuffer_length:
-            frames = self.ctx.ringbuffer_length // self.ctx.channels
-
-        read_head = (self.ctx.ringbuffer_pos - ((frames + offset) * self.ctx.channels)) % self.ctx.ringbuffer_length
-        for i in range(frames):
-            for c in range(self.ctx.channels):
-                out[i][c] = self.ctx.ringbuffer[read_head % self.ctx.ringbuffer_length]
-                read_head += 1
-
-        return SoundBuffer(out, self.ctx.channels, self.ctx.samplerate)
-
-
-    cdef void _shutdown(self) except *:
-        cdef PaError err
-
-        err = Pa_StopStream(self.ctx.output_stream)
-        if(err != paNoError):
-            print("Stop output stream err: %s" % Pa_GetErrorText(err))
-
-        err = Pa_CloseStream(self.ctx.output_stream)
-        if(err != paNoError):
-            print("Close output stream err: %s" % Pa_GetErrorText(err))
-
-        err = Pa_StopStream(self.ctx.input_stream)
-        if(err != paNoError):
-            print("Stop input stream err: %s" % Pa_GetErrorText(err))
-
-        err = Pa_CloseStream(self.ctx.input_stream)
-        if(err != paNoError):
-            print("Close input stream err: %s" % Pa_GetErrorText(err))
-     
-        err = Pa_Terminate()
-        if(err != paNoError):
-            print("Terminate err: %s" % Pa_GetErrorText(err))
-
-        self._flush()
-
-        if self.ctx != NULL:
-            if self.ctx.ringbuffer != NULL:
-                free(self.ctx.ringbuffer)
-
-            if self.ctx.out != NULL:
-                free(self.ctx.out)
-
-            free(self.ctx)
-
-        if self.input_params != NULL:
-            free(self.input_params)
-
-        if self.output_params != NULL:
-            free(self.output_params)
-
-    def shutdown(self):
-        self._shutdown()
-
+cdef void _flush(self) except *:
+    cdef playbuf* current = self.ctx.playing_head
+    while current != NULL:
+        if current.pos > current.length and current.frames != NULL:
+            free(current.frames)
+            current.frames = NULL
+        current = current.next
 

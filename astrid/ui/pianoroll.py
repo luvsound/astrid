@@ -106,6 +106,19 @@ Builder.load_string('''
         valign: 'middle'
         halign: 'left'
 
+<CommandOverlay>:
+    text_size: root.size
+    font_size: '18sp'
+    bold: True
+    valign: 'middle'
+    halign: 'center'
+    color: 1,1,1,1
+    canvas.before:
+        Color:
+            rgba: 0,0,0.75,0.75
+        Rectangle:
+            pos: self.pos
+            size: self.size
 
 <NoteLanes>:
     pos: (0, self.scroll_offset)
@@ -169,6 +182,8 @@ Builder.load_string('''
 ''')
 
 def snap_to_grid(length=1, grid=1, roundup=False):
+    app = App.get_running_app()
+    grid /= app.grid_div
     if roundup:
         trunclength = (length // grid) * grid
         length = grid + trunclength if length - trunclength > 0 else trunclength
@@ -188,6 +203,9 @@ def pixels_to_length(pixels, snap=False, grid=1, roundup=False):
     if snap:
         length = snap_to_grid(length, grid, roundup)
     return length
+
+class CommandOverlay(Label):
+    pass
 
 class SnapCheckBox(CheckBox, Label):
     def __init__(self, *args, **kwargs):
@@ -218,13 +236,14 @@ class RenderButton(Button):
 class NoteLanes(FloatLayout):
     new_note = ObjectProperty()
     drawing_note = BooleanProperty(False)
+    entering_command = BooleanProperty(False)
     notes = ListProperty([])
+    command = StringProperty('')
     scroll_offset = NumericProperty(metrics.dp(-340))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.last_command = None
-        self.command = ''
         self._keyboard = Window.request_keyboard(self._cleanup_keyboard, self)
         self._keyboard.bind(on_key_down=self._on_key_down)
         self._keyboard.bind(on_key_up=self._on_key_up)
@@ -236,6 +255,22 @@ class NoteLanes(FloatLayout):
                 self.add_widget(n)
                 self.notes.append(n)
                 count += 1
+
+        self.overlay = CommandOverlay()
+        self.add_widget(self.overlay)
+        self.bind(size=self._update_overlay)
+        self.bind(pos=self._update_overlay)
+        self.bind(entering_command=self._update_overlay)
+        self.bind(command=self._update_overlay)
+
+    def _update_overlay(self, obj, value):
+        app = App.get_running_app()
+        self.overlay.text = '%s: %s' % (self.last_command or '', self.command)
+        self.overlay.size_hint_y = None
+        if self.entering_command:
+            self.overlay.height = Window.size[1]
+        else:
+            self.overlay.height = '0dp'
 
     def _cleanup_keyboard(self):
         self._keyboard.unbind(on_key_down=self._on_key_down)
@@ -252,16 +287,19 @@ class NoteLanes(FloatLayout):
             app = App.get_running_app()
 
             try:
-                if self.last_command == 'change_div':
+                if self.last_command == 'div':
                     app.grid_div = int(self.command)
-                elif self.last_command == 'change_bpm':
+                elif self.last_command == 'bpm':
                     app.bpm = float(self.command)
+                elif self.last_command == 'meter':
+                    app.meter = self.command
 
             except ValueError:
                 print(self.command)
 
             self.command = ''
             self.last_command = None
+            self.entering_command = False
 
         elif self.last_command is not None:
             self.command += keycode[1]
@@ -286,9 +324,14 @@ class NoteLanes(FloatLayout):
             print('LOAD')
             app.load_project()
         elif keycode[1] == 'd':
-            self.last_command = 'change_div'
+            self.last_command = 'div'
+            self.entering_command = True
         elif keycode[1] == 'b':
-            self.last_command = 'change_bpm'
+            self.last_command = 'bpm'
+            self.entering_command = True
+        elif keycode[1] == 'm':
+            self.last_command = 'meter'
+            self.entering_command = True
         elif keycode[1] == 'a':
             app.select_all()
         elif keycode[1] == 'c':
@@ -335,12 +378,13 @@ class Note(Widget):
 
     def __init__(self, index, pos, notelane, snap, grid, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        app = App.get_running_app()
         self.notelane = notelane
         self.index = index
         self.freq = notelane.freq
         self.snap = snap
         self.grid = grid
-        self.minlength = self.grid if self.snap else self.minlength
+        self.minlength = self.grid / app.grid_div if self.snap else self.minlength
 
         self.bind(length=self._redraw)
         self.bind(onset=self._redraw)
@@ -424,7 +468,6 @@ class HeaderBar(FloatLayout):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.update_status()
-
     def update_status(self):
         self.statusline = '%5.2f | %s | %s | %s' % (self.get_bpm(), self.get_div(), self.get_barlength(), self.get_input_mode())
 
@@ -457,9 +500,9 @@ class PianoRollWrapper(BoxLayout):
 
     def update_grid(self, *args):
         app = App.get_running_app()
+        app.update_meter()
         self.gridwidth = length_to_pixels(app.grid)
-        barlength = int(app.barlength * app.grid_div)
-        beatwidth = barlength // app.barlength
+        print('UPDATE GRID')
 
         self.canvas.before.clear()
         with self.canvas.before:
@@ -468,10 +511,8 @@ class PianoRollWrapper(BoxLayout):
 
             self.lines = []
             for i in range(100):
-                if i % barlength == 0:
+                if i % app.barlength == 0:
                     Color(0,0,0,1)
-                elif i % beatwidth == 0:
-                    Color(0,0,0,0.4)
                 else:
                     Color(0,0,0,0.2)
 
@@ -490,11 +531,12 @@ class PianoRollWrapper(BoxLayout):
         
 class PianoRoll(App):
     input_mode = StringProperty('insert')
-    bpm = NumericProperty(100.0)
+    bpm = NumericProperty(120.0)
+    meter = StringProperty('4/4')
     snap = BooleanProperty(True)
     zoom = NumericProperty(1)
-    grid = NumericProperty(0.25)
-    grid_div = NumericProperty(2)
+    grid = NumericProperty(0.5)
+    grid_div = NumericProperty(1)
     barlength = NumericProperty(4)
     playhead_pos = NumericProperty(0)
     shift_enabled = BooleanProperty(False)
@@ -506,12 +548,18 @@ class PianoRoll(App):
         self.bind(bpm=self._calc_gridsize)
         self.bind(grid_div=self._calc_gridsize)
         self.bind(playhead_pos=self._update_playhead)
+        self.bind(meter=self.update_meter)
+
+    def update_meter(self, *args):
+        barlength, _ = tuple(self.meter.split('/'))
+        self.barlength = int(barlength)
+        #if b & (b-1) == 0:
 
     def _update_playhead(self, obj, value):
         self.wrapper.update_playhead()
 
     def _calc_gridsize(self, obj, value):
-        self.grid = (60.0 / self.bpm) / self.grid_div
+        self.grid = 60.0 / self.bpm
         self.wrapper.update_grid()
 
     def build(self):

@@ -19,7 +19,6 @@ class RenderProcess(mp.Process):
     def __cinit__(self, 
             q.Q* buf_q, 
             play_q, 
-            event_q, 
             load_q, 
             reply_q, 
             bus,
@@ -32,7 +31,6 @@ class RenderProcess(mp.Process):
         self.voices = []
         self.buf_q = buf_q
         self.play_q = play_q
-        self.event_q = event_q
         self.load_q = load_q
         self.shutdown_flag = bus.shutdown_flag
         self.bus = bus
@@ -113,7 +111,7 @@ class RenderProcess(mp.Process):
 
                     # FIXME start voice
                     #logger.error('start voice')
-                    voice = threading.Thread(target=init_voice, args=(instrument, params, self.buf_q, self.event_q))
+                    voice = threading.Thread(target=init_voice, args=(instrument, params, self.buf_q))
                     voice.start()
                     voices += [ voice ]
 

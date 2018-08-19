@@ -10,12 +10,14 @@ from . import names
 from .orc cimport EventContext, Instrument
 from . cimport q
 from . import q
+from . cimport mixer as m
+from . import mixer as m
 from pippi.soundbuffer cimport SoundBuffer
 
 from cython.parallel import parallel, prange
 from libc.stdlib cimport malloc, calloc, free
 
-cdef void play_sequence(q.BufQ* buf_q, object event_q, object player, EventContext ctx, tuple onsets):
+cdef void play_sequence(q.Q* buf_q, object player, EventContext ctx, tuple onsets):
     """ Play a sequence of overlapping oneshots
     """
     cdef double delay_time = 0
@@ -42,15 +44,15 @@ cdef void play_sequence(q.BufQ* buf_q, object event_q, object player, EventConte
         delay(onset)
         try:
             for snd in generator:
-                playbuf = q.bufnode_init(snd, start_time + onset)
-                q.bufq_push(buf_q, playbuf)
+                playbuf = m.bufnode_init(snd, start_time + onset)
+                q.q_push(buf_q, playbuf)
 
         except Exception as e:
             logger.error('Error during %s generator render: %s' % (ctx.instrument_name, e))
 
         #elapsed = time.clock_gettime(time.CLOCK_MONOTONIC_RAW) - start_time
 
-cdef void init_voice(object instrument, object params, q.BufQ* buf_q, object event_q):
+cdef void init_voice(object instrument, object params, q.Q* buf_q):
     cdef EventContext ctx = instrument.create_ctx(params)
     ctx.running.set()
 
@@ -95,7 +97,7 @@ cdef void init_voice(object instrument, object params, q.BufQ* buf_q, object eve
                     if callable(onsets):
                         onset_list = tuple(onsets(ctx))
                 
-                play_sequence(buf_q, event_q, player, ctx, onset_list)
+                play_sequence(buf_q, player, ctx, onset_list)
             except Exception as e:
                 logger.error('error calling play_sequence: %s' % e)
            

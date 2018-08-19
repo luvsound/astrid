@@ -576,8 +576,6 @@ static CYTHON_INLINE float __PYX_NAN() {
 #define __PYX_HAVE_API__astrid__io
 /* Early includes */
 #include <pthread.h>
-#include <sys/types.h>
-#include <mqueue.h>
 #include <string.h>
 #include <stdlib.h>
 #include "pythread.h"
@@ -788,11 +786,11 @@ static const char *__pyx_filename;
 static const char *__pyx_f[] = {
   "astrid/io.pyx",
   "stringsource",
+  "astrid/midi.pxd",
+  "astrid/orc.pxd",
   "wavetables.pxd",
   "grains.pxd",
   "soundbuffer.pxd",
-  "astrid/midi.pxd",
-  "astrid/orc.pxd",
 };
 /* MemviewSliceStruct.proto */
 struct __pyx_memoryview_obj;
@@ -904,18 +902,62 @@ typedef struct {
 
 
 /*--- Type declarations ---*/
-struct __pyx_obj_5pippi_10wavetables_Wavetable;
-struct __pyx_obj_5pippi_6grains_GrainCloud;
-struct __pyx_obj_5pippi_11soundbuffer_SoundBuffer;
-struct __pyx_obj_5pippi_11soundbuffer_RingBuffer;
 struct __pyx_obj_6astrid_4midi_MidiBucket;
 struct __pyx_obj_6astrid_3orc_ParamBucket;
 struct __pyx_obj_6astrid_3orc_EventContext;
 struct __pyx_obj_6astrid_3orc_Instrument;
+struct __pyx_obj_5pippi_10wavetables_Wavetable;
+struct __pyx_obj_5pippi_6grains_GrainCloud;
+struct __pyx_obj_5pippi_11soundbuffer_SoundBuffer;
+struct __pyx_obj_5pippi_11soundbuffer_RingBuffer;
 struct __pyx_array_obj;
 struct __pyx_MemviewEnum_obj;
 struct __pyx_memoryview_obj;
 struct __pyx_memoryviewslice_obj;
+struct __pyx_t_6astrid_1q_MSGNode;
+struct __pyx_t_6astrid_1q_Q;
+struct __pyx_t_6astrid_1q_N;
+
+/* "q.pxd":3
+ * from .pthread cimport *
+ * 
+ * cdef struct MSGNode:             # <<<<<<<<<<<<<<
+ *     # Messages translated from zmq: play, load, etc
+ *     # Passed from main Q to msg handler Q based on msgtype.
+ */
+struct __pyx_t_6astrid_1q_MSGNode {
+  int msgtype;
+  void *params;
+};
+
+/* "q.pxd":9
+ *     void* params
+ * 
+ * cdef struct Q:             # <<<<<<<<<<<<<<
+ *     N* head
+ *     N* tail
+ */
+struct __pyx_t_6astrid_1q_Q {
+  struct __pyx_t_6astrid_1q_N *head;
+  struct __pyx_t_6astrid_1q_N *tail;
+  struct __pyx_t_6astrid_1q_N *current;
+  pthread_mutex_t *pop_lock;
+  pthread_mutex_t *push_lock;
+  pthread_cond_t *empty_cond;
+};
+
+/* "q.pxd":17
+ *     pthread_cond_t* empty_cond
+ * 
+ * cdef struct N:             # <<<<<<<<<<<<<<
+ *     N* prev
+ *     N* next
+ */
+struct __pyx_t_6astrid_1q_N {
+  struct __pyx_t_6astrid_1q_N *prev;
+  struct __pyx_t_6astrid_1q_N *next;
+  void *data;
+};
 struct __pyx_opt_args_5pippi_6grains_10GrainCloud_play;
 
 /* "grains.pxd":47
@@ -944,19 +986,16 @@ struct __pyx_opt_args_5pippi_11soundbuffer_11SoundBuffer_adsr {
   double s;
   double r;
 };
-struct __pyx_t_6astrid_1q_BufNode;
-struct __pyx_t_6astrid_1q_MSGNode;
-struct __pyx_t_6astrid_1q_BufQ;
-struct __pyx_t_6astrid_1q_N;
+struct __pyx_t_6astrid_5mixer_BufNode;
 
-/* "q.pxd":5
- * from .mqueue cimport *
+/* "mixer.pxd":4
+ * from .q cimport *
  * 
  * cdef struct BufNode:             # <<<<<<<<<<<<<<
  *     # Stack of currently playing buffers,
  *     # looped over in the main jack callback
  */
-struct __pyx_t_6astrid_1q_BufNode {
+struct __pyx_t_6astrid_5mixer_BufNode {
   double *snd;
   int channels;
   int samplerate;
@@ -965,44 +1004,70 @@ struct __pyx_t_6astrid_1q_BufNode {
   int pos;
 };
 
-/* "q.pxd":16
- *     int pos
- * 
- * cdef struct MSGNode:             # <<<<<<<<<<<<<<
- *     # Messages translated from zmq: play, load, etc
- *     # Passed from main Q to msg handler Q based on msgtype.
+/* "midi.pxd":1
+ * cdef class MidiBucket:             # <<<<<<<<<<<<<<
+ *     cdef public object bus
+ *     cdef public object devices
  */
-struct __pyx_t_6astrid_1q_MSGNode {
-  int msgtype;
-  void *params;
+struct __pyx_obj_6astrid_4midi_MidiBucket {
+  PyObject_HEAD
+  PyObject *bus;
+  PyObject *devices;
+  PyObject *dummy;
 };
 
-/* "q.pxd":22
- *     void* params
+
+/* "orc.pxd":3
+ * from .midi cimport MidiBucket
  * 
- * cdef struct BufQ:             # <<<<<<<<<<<<<<
- *     N* head
- *     N* tail
+ * cdef class ParamBucket:             # <<<<<<<<<<<<<<
+ *     cdef object _params
+ * 
  */
-struct __pyx_t_6astrid_1q_BufQ {
-  struct __pyx_t_6astrid_1q_N *head;
-  struct __pyx_t_6astrid_1q_N *tail;
-  struct __pyx_t_6astrid_1q_N *current;
-  pthread_mutex_t *lock;
+struct __pyx_obj_6astrid_3orc_ParamBucket {
+  PyObject_HEAD
+  PyObject *_params;
 };
 
-/* "q.pxd":28
- *     pthread_mutex_t* lock
+
+/* "orc.pxd":6
+ *     cdef object _params
  * 
- * cdef struct N:             # <<<<<<<<<<<<<<
- *     N* prev
- *     N* next
+ * cdef class EventContext:             # <<<<<<<<<<<<<<
+ *     cdef public object before
+ *     cdef public MidiBucket m
  */
-struct __pyx_t_6astrid_1q_N {
-  struct __pyx_t_6astrid_1q_N *prev;
-  struct __pyx_t_6astrid_1q_N *next;
-  void *data;
+struct __pyx_obj_6astrid_3orc_EventContext {
+  PyObject_HEAD
+  PyObject *before;
+  struct __pyx_obj_6astrid_4midi_MidiBucket *m;
+  struct __pyx_obj_6astrid_3orc_ParamBucket *p;
+  PyObject *client;
+  PyObject *instrument_name;
+  PyObject *running;
+  PyObject *stop_all;
+  PyObject *stop_me;
+  PyObject *bus;
+  PyObject *sounds;
+  int count;
 };
+
+
+/* "orc.pxd":19
+ *     cdef public int count
+ * 
+ * cdef class Instrument:             # <<<<<<<<<<<<<<
+ *     cdef public str name
+ *     cdef public object renderer
+ */
+struct __pyx_obj_6astrid_3orc_Instrument {
+  PyObject_HEAD
+  PyObject *name;
+  PyObject *renderer;
+  PyObject *bus;
+  PyObject *sounds;
+};
+
 
 /* "wavetables.pxd":5
  * cdef double[:] _adsr(int framelength, int attack, int decay, double sustain, int release)
@@ -1095,71 +1160,6 @@ struct __pyx_obj_5pippi_11soundbuffer_RingBuffer {
   int write_head;
   __Pyx_memviewslice frames;
   __Pyx_memviewslice copyout;
-};
-
-
-/* "midi.pxd":1
- * cdef class MidiBucket:             # <<<<<<<<<<<<<<
- *     cdef public object bus
- *     cdef public object devices
- */
-struct __pyx_obj_6astrid_4midi_MidiBucket {
-  PyObject_HEAD
-  PyObject *bus;
-  PyObject *devices;
-  PyObject *dummy;
-};
-
-
-/* "orc.pxd":3
- * from .midi cimport MidiBucket
- * 
- * cdef class ParamBucket:             # <<<<<<<<<<<<<<
- *     cdef object _params
- * 
- */
-struct __pyx_obj_6astrid_3orc_ParamBucket {
-  PyObject_HEAD
-  PyObject *_params;
-};
-
-
-/* "orc.pxd":6
- *     cdef object _params
- * 
- * cdef class EventContext:             # <<<<<<<<<<<<<<
- *     cdef public object before
- *     cdef public MidiBucket m
- */
-struct __pyx_obj_6astrid_3orc_EventContext {
-  PyObject_HEAD
-  PyObject *before;
-  struct __pyx_obj_6astrid_4midi_MidiBucket *m;
-  struct __pyx_obj_6astrid_3orc_ParamBucket *p;
-  PyObject *client;
-  PyObject *instrument_name;
-  PyObject *running;
-  PyObject *stop_all;
-  PyObject *stop_me;
-  PyObject *bus;
-  PyObject *sounds;
-  int count;
-};
-
-
-/* "orc.pxd":19
- *     cdef public int count
- * 
- * cdef class Instrument:             # <<<<<<<<<<<<<<
- *     cdef public str name
- *     cdef public object renderer
- */
-struct __pyx_obj_6astrid_3orc_Instrument {
-  PyObject_HEAD
-  PyObject *name;
-  PyObject *renderer;
-  PyObject *bus;
-  PyObject *sounds;
 };
 
 
@@ -1938,6 +1938,21 @@ static PyObject *__pyx_memoryview_assign_item_from_object(struct __pyx_memoryvie
 static PyObject *__pyx_memoryviewslice_convert_item_to_object(struct __pyx_memoryviewslice_obj *__pyx_v_self, char *__pyx_v_itemp); /* proto*/
 static PyObject *__pyx_memoryviewslice_assign_item_from_object(struct __pyx_memoryviewslice_obj *__pyx_v_self, char *__pyx_v_itemp, PyObject *__pyx_v_value); /* proto*/
 
+/* Module declarations from 'astrid.pthread' */
+
+/* Module declarations from 'astrid.q' */
+static void (*__pyx_f_6astrid_1q_q_push)(struct __pyx_t_6astrid_1q_Q *, struct __pyx_t_6astrid_1q_N *); /*proto*/
+
+/* Module declarations from 'astrid.midi' */
+static PyTypeObject *__pyx_ptype_6astrid_4midi_MidiBucket = 0;
+
+/* Module declarations from 'astrid.orc' */
+static PyTypeObject *__pyx_ptype_6astrid_3orc_ParamBucket = 0;
+static PyTypeObject *__pyx_ptype_6astrid_3orc_EventContext = 0;
+static PyTypeObject *__pyx_ptype_6astrid_3orc_Instrument = 0;
+
+/* Module declarations from 'astrid' */
+
 /* Module declarations from 'pippi' */
 
 /* Module declarations from 'pippi.wavetables' */
@@ -1998,25 +2013,8 @@ static PyTypeObject *__pyx_ptype_5pippi_6grains_GrainCloud = 0;
 static PyTypeObject *__pyx_ptype_5pippi_11soundbuffer_SoundBuffer = 0;
 static PyTypeObject *__pyx_ptype_5pippi_11soundbuffer_RingBuffer = 0;
 
-/* Module declarations from 'astrid.pthread' */
-
-/* Module declarations from 'posix.types' */
-
-/* Module declarations from 'astrid.mqueue' */
-
-/* Module declarations from 'astrid.q' */
-static void (*__pyx_f_6astrid_1q_bufq_push)(struct __pyx_t_6astrid_1q_BufQ *, struct __pyx_t_6astrid_1q_N *); /*proto*/
-static struct __pyx_t_6astrid_1q_N *(*__pyx_f_6astrid_1q_bufnode_init)(struct __pyx_obj_5pippi_11soundbuffer_SoundBuffer *, double); /*proto*/
-
-/* Module declarations from 'astrid.midi' */
-static PyTypeObject *__pyx_ptype_6astrid_4midi_MidiBucket = 0;
-
-/* Module declarations from 'astrid.orc' */
-static PyTypeObject *__pyx_ptype_6astrid_3orc_ParamBucket = 0;
-static PyTypeObject *__pyx_ptype_6astrid_3orc_EventContext = 0;
-static PyTypeObject *__pyx_ptype_6astrid_3orc_Instrument = 0;
-
-/* Module declarations from 'astrid' */
+/* Module declarations from 'astrid.mixer' */
+static struct __pyx_t_6astrid_1q_N *(*__pyx_f_6astrid_5mixer_bufnode_init)(struct __pyx_obj_5pippi_11soundbuffer_SoundBuffer *, double); /*proto*/
 
 /* Module declarations from 'libc.string' */
 
@@ -2034,7 +2032,7 @@ static PyObject *contiguous = 0;
 static PyObject *indirect_contiguous = 0;
 static int __pyx_memoryview_thread_locks_used;
 static PyThread_type_lock __pyx_memoryview_thread_locks[8];
-static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *, PyObject *, PyObject *, struct __pyx_obj_6astrid_3orc_EventContext *, PyObject *); /*proto*/
+static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_Q *, PyObject *, struct __pyx_obj_6astrid_3orc_EventContext *, PyObject *); /*proto*/
 static struct __pyx_array_obj *__pyx_array_new(PyObject *, Py_ssize_t, char *, char *, char *); /*proto*/
 static void *__pyx_align_pointer(void *, size_t); /*proto*/
 static PyObject *__pyx_memoryview_new(PyObject *, int, int, __Pyx_TypeInfo *); /*proto*/
@@ -2085,6 +2083,7 @@ static PyObject *__pyx_builtin_IndexError;
 static const char __pyx_k_O[] = "O";
 static const char __pyx_k_c[] = "c";
 static const char __pyx_k_d[] = "d";
+static const char __pyx_k_m[] = "m";
 static const char __pyx_k_q[] = "q";
 static const char __pyx_k_id[] = "id";
 static const char __pyx_k_np[] = "np";
@@ -2115,6 +2114,7 @@ static const char __pyx_k_class[] = "__class__";
 static const char __pyx_k_clear[] = "clear";
 static const char __pyx_k_error[] = "error";
 static const char __pyx_k_flags[] = "flags";
+static const char __pyx_k_mixer[] = "mixer";
 static const char __pyx_k_names[] = "names";
 static const char __pyx_k_numpy[] = "numpy";
 static const char __pyx_k_queue[] = "queue";
@@ -2259,8 +2259,10 @@ static PyObject *__pyx_n_s_itemsize;
 static PyObject *__pyx_kp_s_itemsize_0_for_cython_array;
 static PyObject *__pyx_n_s_logger;
 static PyObject *__pyx_n_s_loop;
+static PyObject *__pyx_n_s_m;
 static PyObject *__pyx_n_s_main;
 static PyObject *__pyx_n_s_memview;
+static PyObject *__pyx_n_s_mixer;
 static PyObject *__pyx_n_s_mode;
 static PyObject *__pyx_n_s_name;
 static PyObject *__pyx_n_s_name_2;
@@ -2395,15 +2397,15 @@ static PyObject *__pyx_tuple__31;
 static PyObject *__pyx_codeobj__32;
 /* Late includes */
 
-/* "astrid/io.pyx":18
+/* "astrid/io.pyx":20
  * from libc.stdlib cimport malloc, calloc, free
  * 
- * cdef void play_sequence(q.BufQ* buf_q, object event_q, object player, EventContext ctx, tuple onsets):             # <<<<<<<<<<<<<<
+ * cdef void play_sequence(q.Q* buf_q, object player, EventContext ctx, tuple onsets):             # <<<<<<<<<<<<<<
  *     """ Play a sequence of overlapping oneshots
  *     """
  */
 
-static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__pyx_v_buf_q, CYTHON_UNUSED PyObject *__pyx_v_event_q, PyObject *__pyx_v_player, struct __pyx_obj_6astrid_3orc_EventContext *__pyx_v_ctx, PyObject *__pyx_v_onsets) {
+static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_Q *__pyx_v_buf_q, PyObject *__pyx_v_player, struct __pyx_obj_6astrid_3orc_EventContext *__pyx_v_ctx, PyObject *__pyx_v_onsets) {
   CYTHON_UNUSED double __pyx_v_delay_time;
   PyObject *__pyx_v_snd = 0;
   CYTHON_UNUSED long __pyx_v_elapsed;
@@ -2443,7 +2445,7 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
   PyObject *__pyx_t_19 = NULL;
   __Pyx_RefNannySetupContext("play_sequence", 0);
 
-  /* "astrid/io.pyx":21
+  /* "astrid/io.pyx":23
  *     """ Play a sequence of overlapping oneshots
  *     """
  *     cdef double delay_time = 0             # <<<<<<<<<<<<<<
@@ -2452,7 +2454,7 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
  */
   __pyx_v_delay_time = 0.0;
 
-  /* "astrid/io.pyx":23
+  /* "astrid/io.pyx":25
  *     cdef double delay_time = 0
  *     cdef object snd
  *     cdef long elapsed = 0             # <<<<<<<<<<<<<<
@@ -2461,16 +2463,16 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
  */
   __pyx_v_elapsed = 0;
 
-  /* "astrid/io.pyx":24
+  /* "astrid/io.pyx":26
  *     cdef object snd
  *     cdef long elapsed = 0
  *     cdef object delay = threading.Event()             # <<<<<<<<<<<<<<
  *     cdef Py_ssize_t numonsets = len(onsets)
  *     cdef Py_ssize_t i = 0
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_threading); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 24, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_threading); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 26, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_Event); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 24, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_Event); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 26, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_2 = NULL;
@@ -2484,17 +2486,17 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
     }
   }
   if (__pyx_t_2) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 24, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 26, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   } else {
-    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 24, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 26, __pyx_L1_error)
   }
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_v_delay = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "astrid/io.pyx":25
+  /* "astrid/io.pyx":27
  *     cdef long elapsed = 0
  *     cdef object delay = threading.Event()
  *     cdef Py_ssize_t numonsets = len(onsets)             # <<<<<<<<<<<<<<
@@ -2503,12 +2505,12 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
  */
   if (unlikely(__pyx_v_onsets == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-    __PYX_ERR(0, 25, __pyx_L1_error)
+    __PYX_ERR(0, 27, __pyx_L1_error)
   }
-  __pyx_t_4 = PyTuple_GET_SIZE(__pyx_v_onsets); if (unlikely(__pyx_t_4 == ((Py_ssize_t)-1))) __PYX_ERR(0, 25, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_GET_SIZE(__pyx_v_onsets); if (unlikely(__pyx_t_4 == ((Py_ssize_t)-1))) __PYX_ERR(0, 27, __pyx_L1_error)
   __pyx_v_numonsets = __pyx_t_4;
 
-  /* "astrid/io.pyx":26
+  /* "astrid/io.pyx":28
  *     cdef object delay = threading.Event()
  *     cdef Py_ssize_t numonsets = len(onsets)
  *     cdef Py_ssize_t i = 0             # <<<<<<<<<<<<<<
@@ -2517,7 +2519,7 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
  */
   __pyx_v_i = 0;
 
-  /* "astrid/io.pyx":27
+  /* "astrid/io.pyx":29
  *     cdef Py_ssize_t numonsets = len(onsets)
  *     cdef Py_ssize_t i = 0
  *     cdef Py_ssize_t j = 0             # <<<<<<<<<<<<<<
@@ -2526,7 +2528,7 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
  */
   __pyx_v_j = 0;
 
-  /* "astrid/io.pyx":28
+  /* "astrid/io.pyx":30
  *     cdef Py_ssize_t i = 0
  *     cdef Py_ssize_t j = 0
  *     cdef Py_ssize_t k = 0             # <<<<<<<<<<<<<<
@@ -2535,7 +2537,7 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
  */
   __pyx_v_k = 0;
 
-  /* "astrid/io.pyx":29
+  /* "astrid/io.pyx":31
  *     cdef Py_ssize_t j = 0
  *     cdef Py_ssize_t k = 0
  *     cdef Py_ssize_t length = 0             # <<<<<<<<<<<<<<
@@ -2544,7 +2546,7 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
  */
   __pyx_v_length = 0;
 
-  /* "astrid/io.pyx":30
+  /* "astrid/io.pyx":32
  *     cdef Py_ssize_t k = 0
  *     cdef Py_ssize_t length = 0
  *     cdef double onset = 0             # <<<<<<<<<<<<<<
@@ -2553,7 +2555,7 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
  */
   __pyx_v_onset = 0.0;
 
-  /* "astrid/io.pyx":32
+  /* "astrid/io.pyx":34
  *     cdef double onset = 0
  *     cdef q.N* playbuf
  *     cdef int channels = 2             # <<<<<<<<<<<<<<
@@ -2562,7 +2564,7 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
  */
   __pyx_v_channels = 2;
 
-  /* "astrid/io.pyx":33
+  /* "astrid/io.pyx":35
  *     cdef q.N* playbuf
  *     cdef int channels = 2
  *     cdef int samplerate = 44100             # <<<<<<<<<<<<<<
@@ -2571,21 +2573,21 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
  */
   __pyx_v_samplerate = 0xAC44;
 
-  /* "astrid/io.pyx":34
+  /* "astrid/io.pyx":36
  *     cdef int channels = 2
  *     cdef int samplerate = 44100
  *     cdef double start_time = time.clock_gettime(time.CLOCK_MONOTONIC_RAW)             # <<<<<<<<<<<<<<
  *     cdef double[:] _onsets = np.array(onsets, 'd')
  * 
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 34, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 36, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_clock_gettime); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 34, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_clock_gettime); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 36, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 34, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_time); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 36, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_CLOCK_MONOTONIC_RAW); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 34, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_CLOCK_MONOTONIC_RAW); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 36, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_3 = NULL;
@@ -2599,14 +2601,14 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
     }
   }
   if (!__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 34, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 36, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_t_5};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 34, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 36, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -2615,39 +2617,39 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_t_5};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 34, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 36, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     } else
     #endif
     {
-      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 34, __pyx_L1_error)
+      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 36, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_3); __pyx_t_3 = NULL;
       __Pyx_GIVEREF(__pyx_t_5);
       PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_5);
       __pyx_t_5 = 0;
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 34, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 36, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     }
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_7 = __pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_7 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 34, __pyx_L1_error)
+  __pyx_t_7 = __pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_7 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 36, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_start_time = __pyx_t_7;
 
-  /* "astrid/io.pyx":35
+  /* "astrid/io.pyx":37
  *     cdef int samplerate = 44100
  *     cdef double start_time = time.clock_gettime(time.CLOCK_MONOTONIC_RAW)
  *     cdef double[:] _onsets = np.array(onsets, 'd')             # <<<<<<<<<<<<<<
  * 
  *     # FIXME onsets should be a python generator too
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 35, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 37, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_array); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 35, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_array); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 37, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_2 = NULL;
@@ -2665,7 +2667,7 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
   #if CYTHON_FAST_PYCALL
   if (PyFunction_Check(__pyx_t_6)) {
     PyObject *__pyx_temp[3] = {__pyx_t_2, __pyx_v_onsets, __pyx_n_s_d};
-    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_8, 2+__pyx_t_8); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 35, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_8, 2+__pyx_t_8); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 37, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else
@@ -2673,13 +2675,13 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
   #if CYTHON_FAST_PYCCALL
   if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
     PyObject *__pyx_temp[3] = {__pyx_t_2, __pyx_v_onsets, __pyx_n_s_d};
-    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_8, 2+__pyx_t_8); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 35, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_8, 2+__pyx_t_8); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 37, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else
   #endif
   {
-    __pyx_t_5 = PyTuple_New(2+__pyx_t_8); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 35, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_New(2+__pyx_t_8); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 37, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     if (__pyx_t_2) {
       __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_2); __pyx_t_2 = NULL;
@@ -2690,18 +2692,18 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
     __Pyx_INCREF(__pyx_n_s_d);
     __Pyx_GIVEREF(__pyx_n_s_d);
     PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_8, __pyx_n_s_d);
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 35, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 37, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_9 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_1, PyBUF_WRITABLE); if (unlikely(!__pyx_t_9.memview)) __PYX_ERR(0, 35, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_1, PyBUF_WRITABLE); if (unlikely(!__pyx_t_9.memview)) __PYX_ERR(0, 37, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v__onsets = __pyx_t_9;
   __pyx_t_9.memview = NULL;
   __pyx_t_9.data = NULL;
 
-  /* "astrid/io.pyx":38
+  /* "astrid/io.pyx":40
  * 
  *     # FIXME onsets should be a python generator too
  *     for onset in onsets:             # <<<<<<<<<<<<<<
@@ -2710,22 +2712,22 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
  */
   if (unlikely(__pyx_v_onsets == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 38, __pyx_L1_error)
+    __PYX_ERR(0, 40, __pyx_L1_error)
   }
   __pyx_t_1 = __pyx_v_onsets; __Pyx_INCREF(__pyx_t_1); __pyx_t_4 = 0;
   for (;;) {
     if (__pyx_t_4 >= PyTuple_GET_SIZE(__pyx_t_1)) break;
     #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    __pyx_t_6 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_4); __Pyx_INCREF(__pyx_t_6); __pyx_t_4++; if (unlikely(0 < 0)) __PYX_ERR(0, 38, __pyx_L1_error)
+    __pyx_t_6 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_4); __Pyx_INCREF(__pyx_t_6); __pyx_t_4++; if (unlikely(0 < 0)) __PYX_ERR(0, 40, __pyx_L1_error)
     #else
-    __pyx_t_6 = PySequence_ITEM(__pyx_t_1, __pyx_t_4); __pyx_t_4++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 38, __pyx_L1_error)
+    __pyx_t_6 = PySequence_ITEM(__pyx_t_1, __pyx_t_4); __pyx_t_4++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 40, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     #endif
-    __pyx_t_7 = __pyx_PyFloat_AsDouble(__pyx_t_6); if (unlikely((__pyx_t_7 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 38, __pyx_L1_error)
+    __pyx_t_7 = __pyx_PyFloat_AsDouble(__pyx_t_6); if (unlikely((__pyx_t_7 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 40, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __pyx_v_onset = __pyx_t_7;
 
-    /* "astrid/io.pyx":39
+    /* "astrid/io.pyx":41
  *     # FIXME onsets should be a python generator too
  *     for onset in onsets:
  *         generator = player(ctx)             # <<<<<<<<<<<<<<
@@ -2744,13 +2746,13 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
       }
     }
     if (!__pyx_t_2) {
-      __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_5, ((PyObject *)__pyx_v_ctx)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 39, __pyx_L1_error)
+      __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_5, ((PyObject *)__pyx_v_ctx)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 41, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_5)) {
         PyObject *__pyx_temp[2] = {__pyx_t_2, ((PyObject *)__pyx_v_ctx)};
-        __pyx_t_6 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 39, __pyx_L1_error)
+        __pyx_t_6 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 41, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_GOTREF(__pyx_t_6);
       } else
@@ -2758,19 +2760,19 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
         PyObject *__pyx_temp[2] = {__pyx_t_2, ((PyObject *)__pyx_v_ctx)};
-        __pyx_t_6 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 39, __pyx_L1_error)
+        __pyx_t_6 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 41, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_GOTREF(__pyx_t_6);
       } else
       #endif
       {
-        __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 39, __pyx_L1_error)
+        __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 41, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2); __pyx_t_2 = NULL;
         __Pyx_INCREF(((PyObject *)__pyx_v_ctx));
         __Pyx_GIVEREF(((PyObject *)__pyx_v_ctx));
         PyTuple_SET_ITEM(__pyx_t_3, 0+1, ((PyObject *)__pyx_v_ctx));
-        __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_3, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 39, __pyx_L1_error)
+        __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_3, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 41, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       }
@@ -2779,7 +2781,7 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
     __Pyx_XDECREF_SET(__pyx_v_generator, __pyx_t_6);
     __pyx_t_6 = 0;
 
-    /* "astrid/io.pyx":40
+    /* "astrid/io.pyx":42
  *     for onset in onsets:
  *         generator = player(ctx)
  *         onset = _onsets[i]             # <<<<<<<<<<<<<<
@@ -2794,18 +2796,18 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
     } else if (unlikely(__pyx_t_10 >= __pyx_v__onsets.shape[0])) __pyx_t_8 = 0;
     if (unlikely(__pyx_t_8 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_8);
-      __PYX_ERR(0, 40, __pyx_L1_error)
+      __PYX_ERR(0, 42, __pyx_L1_error)
     }
     __pyx_v_onset = (*((double *) ( /* dim=0 */ (__pyx_v__onsets.data + __pyx_t_10 * __pyx_v__onsets.strides[0]) )));
 
-    /* "astrid/io.pyx":42
+    /* "astrid/io.pyx":44
  *         onset = _onsets[i]
  * 
  *         delay(onset)             # <<<<<<<<<<<<<<
  *         try:
  *             for snd in generator:
  */
-    __pyx_t_5 = PyFloat_FromDouble(__pyx_v_onset); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_5 = PyFloat_FromDouble(__pyx_v_onset); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 44, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_INCREF(__pyx_v_delay);
     __pyx_t_3 = __pyx_v_delay; __pyx_t_2 = NULL;
@@ -2819,14 +2821,14 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
       }
     }
     if (!__pyx_t_2) {
-      __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+      __pyx_t_6 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 44, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_6);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_t_5};
-        __pyx_t_6 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_6 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 44, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_GOTREF(__pyx_t_6);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -2835,20 +2837,20 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_t_5};
-        __pyx_t_6 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_6 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 44, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_GOTREF(__pyx_t_6);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       } else
       #endif
       {
-        __pyx_t_11 = PyTuple_New(1+1); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_11 = PyTuple_New(1+1); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 44, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_11);
         __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_11, 0, __pyx_t_2); __pyx_t_2 = NULL;
         __Pyx_GIVEREF(__pyx_t_5);
         PyTuple_SET_ITEM(__pyx_t_11, 0+1, __pyx_t_5);
         __pyx_t_5 = 0;
-        __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_11, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_11, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 44, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_6);
         __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
       }
@@ -2856,12 +2858,12 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "astrid/io.pyx":43
+    /* "astrid/io.pyx":45
  * 
  *         delay(onset)
  *         try:             # <<<<<<<<<<<<<<
  *             for snd in generator:
- *                 playbuf = q.bufnode_init(snd, start_time + onset)
+ *                 playbuf = m.bufnode_init(snd, start_time + onset)
  */
     {
       __Pyx_PyThreadState_declare
@@ -2872,37 +2874,37 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
       __Pyx_XGOTREF(__pyx_t_14);
       /*try:*/ {
 
-        /* "astrid/io.pyx":44
+        /* "astrid/io.pyx":46
  *         delay(onset)
  *         try:
  *             for snd in generator:             # <<<<<<<<<<<<<<
- *                 playbuf = q.bufnode_init(snd, start_time + onset)
- *                 q.bufq_push(buf_q, playbuf)
+ *                 playbuf = m.bufnode_init(snd, start_time + onset)
+ *                 q.q_push(buf_q, playbuf)
  */
         if (likely(PyList_CheckExact(__pyx_v_generator)) || PyTuple_CheckExact(__pyx_v_generator)) {
           __pyx_t_6 = __pyx_v_generator; __Pyx_INCREF(__pyx_t_6); __pyx_t_15 = 0;
           __pyx_t_16 = NULL;
         } else {
-          __pyx_t_15 = -1; __pyx_t_6 = PyObject_GetIter(__pyx_v_generator); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 44, __pyx_L5_error)
+          __pyx_t_15 = -1; __pyx_t_6 = PyObject_GetIter(__pyx_v_generator); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 46, __pyx_L5_error)
           __Pyx_GOTREF(__pyx_t_6);
-          __pyx_t_16 = Py_TYPE(__pyx_t_6)->tp_iternext; if (unlikely(!__pyx_t_16)) __PYX_ERR(0, 44, __pyx_L5_error)
+          __pyx_t_16 = Py_TYPE(__pyx_t_6)->tp_iternext; if (unlikely(!__pyx_t_16)) __PYX_ERR(0, 46, __pyx_L5_error)
         }
         for (;;) {
           if (likely(!__pyx_t_16)) {
             if (likely(PyList_CheckExact(__pyx_t_6))) {
               if (__pyx_t_15 >= PyList_GET_SIZE(__pyx_t_6)) break;
               #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-              __pyx_t_3 = PyList_GET_ITEM(__pyx_t_6, __pyx_t_15); __Pyx_INCREF(__pyx_t_3); __pyx_t_15++; if (unlikely(0 < 0)) __PYX_ERR(0, 44, __pyx_L5_error)
+              __pyx_t_3 = PyList_GET_ITEM(__pyx_t_6, __pyx_t_15); __Pyx_INCREF(__pyx_t_3); __pyx_t_15++; if (unlikely(0 < 0)) __PYX_ERR(0, 46, __pyx_L5_error)
               #else
-              __pyx_t_3 = PySequence_ITEM(__pyx_t_6, __pyx_t_15); __pyx_t_15++; if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 44, __pyx_L5_error)
+              __pyx_t_3 = PySequence_ITEM(__pyx_t_6, __pyx_t_15); __pyx_t_15++; if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 46, __pyx_L5_error)
               __Pyx_GOTREF(__pyx_t_3);
               #endif
             } else {
               if (__pyx_t_15 >= PyTuple_GET_SIZE(__pyx_t_6)) break;
               #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-              __pyx_t_3 = PyTuple_GET_ITEM(__pyx_t_6, __pyx_t_15); __Pyx_INCREF(__pyx_t_3); __pyx_t_15++; if (unlikely(0 < 0)) __PYX_ERR(0, 44, __pyx_L5_error)
+              __pyx_t_3 = PyTuple_GET_ITEM(__pyx_t_6, __pyx_t_15); __Pyx_INCREF(__pyx_t_3); __pyx_t_15++; if (unlikely(0 < 0)) __PYX_ERR(0, 46, __pyx_L5_error)
               #else
-              __pyx_t_3 = PySequence_ITEM(__pyx_t_6, __pyx_t_15); __pyx_t_15++; if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 44, __pyx_L5_error)
+              __pyx_t_3 = PySequence_ITEM(__pyx_t_6, __pyx_t_15); __pyx_t_15++; if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 46, __pyx_L5_error)
               __Pyx_GOTREF(__pyx_t_3);
               #endif
             }
@@ -2912,7 +2914,7 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
               PyObject* exc_type = PyErr_Occurred();
               if (exc_type) {
                 if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-                else __PYX_ERR(0, 44, __pyx_L5_error)
+                else __PYX_ERR(0, 46, __pyx_L5_error)
               }
               break;
             }
@@ -2921,41 +2923,41 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
           __Pyx_XDECREF_SET(__pyx_v_snd, __pyx_t_3);
           __pyx_t_3 = 0;
 
-          /* "astrid/io.pyx":45
+          /* "astrid/io.pyx":47
  *         try:
  *             for snd in generator:
- *                 playbuf = q.bufnode_init(snd, start_time + onset)             # <<<<<<<<<<<<<<
- *                 q.bufq_push(buf_q, playbuf)
+ *                 playbuf = m.bufnode_init(snd, start_time + onset)             # <<<<<<<<<<<<<<
+ *                 q.q_push(buf_q, playbuf)
  * 
  */
-          if (!(likely(((__pyx_v_snd) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_snd, __pyx_ptype_5pippi_11soundbuffer_SoundBuffer))))) __PYX_ERR(0, 45, __pyx_L5_error)
-          __pyx_v_playbuf = __pyx_f_6astrid_1q_bufnode_init(((struct __pyx_obj_5pippi_11soundbuffer_SoundBuffer *)__pyx_v_snd), (__pyx_v_start_time + __pyx_v_onset));
+          if (!(likely(((__pyx_v_snd) == Py_None) || likely(__Pyx_TypeTest(__pyx_v_snd, __pyx_ptype_5pippi_11soundbuffer_SoundBuffer))))) __PYX_ERR(0, 47, __pyx_L5_error)
+          __pyx_v_playbuf = __pyx_f_6astrid_5mixer_bufnode_init(((struct __pyx_obj_5pippi_11soundbuffer_SoundBuffer *)__pyx_v_snd), (__pyx_v_start_time + __pyx_v_onset));
 
-          /* "astrid/io.pyx":46
+          /* "astrid/io.pyx":48
  *             for snd in generator:
- *                 playbuf = q.bufnode_init(snd, start_time + onset)
- *                 q.bufq_push(buf_q, playbuf)             # <<<<<<<<<<<<<<
+ *                 playbuf = m.bufnode_init(snd, start_time + onset)
+ *                 q.q_push(buf_q, playbuf)             # <<<<<<<<<<<<<<
  * 
  *         except Exception as e:
  */
-          __pyx_f_6astrid_1q_bufq_push(__pyx_v_buf_q, __pyx_v_playbuf);
+          __pyx_f_6astrid_1q_q_push(__pyx_v_buf_q, __pyx_v_playbuf);
 
-          /* "astrid/io.pyx":44
+          /* "astrid/io.pyx":46
  *         delay(onset)
  *         try:
  *             for snd in generator:             # <<<<<<<<<<<<<<
- *                 playbuf = q.bufnode_init(snd, start_time + onset)
- *                 q.bufq_push(buf_q, playbuf)
+ *                 playbuf = m.bufnode_init(snd, start_time + onset)
+ *                 q.q_push(buf_q, playbuf)
  */
         }
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-        /* "astrid/io.pyx":43
+        /* "astrid/io.pyx":45
  * 
  *         delay(onset)
  *         try:             # <<<<<<<<<<<<<<
  *             for snd in generator:
- *                 playbuf = q.bufnode_init(snd, start_time + onset)
+ *                 playbuf = m.bufnode_init(snd, start_time + onset)
  */
       }
       __Pyx_XDECREF(__pyx_t_12); __pyx_t_12 = 0;
@@ -2970,8 +2972,8 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __PYX_XDEC_MEMVIEW(&__pyx_t_9, 1);
 
-      /* "astrid/io.pyx":48
- *                 q.bufq_push(buf_q, playbuf)
+      /* "astrid/io.pyx":50
+ *                 q.q_push(buf_q, playbuf)
  * 
  *         except Exception as e:             # <<<<<<<<<<<<<<
  *             logger.error('Error during %s generator render: %s' % (ctx.instrument_name, e))
@@ -2980,26 +2982,26 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
       __pyx_t_8 = __Pyx_PyErr_ExceptionMatches(((PyObject *)(&((PyTypeObject*)PyExc_Exception)[0])));
       if (__pyx_t_8) {
         __Pyx_AddTraceback("astrid.io.play_sequence", __pyx_clineno, __pyx_lineno, __pyx_filename);
-        if (__Pyx_GetException(&__pyx_t_6, &__pyx_t_3, &__pyx_t_11) < 0) __PYX_ERR(0, 48, __pyx_L7_except_error)
+        if (__Pyx_GetException(&__pyx_t_6, &__pyx_t_3, &__pyx_t_11) < 0) __PYX_ERR(0, 50, __pyx_L7_except_error)
         __Pyx_GOTREF(__pyx_t_6);
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_GOTREF(__pyx_t_11);
         __Pyx_INCREF(__pyx_t_3);
         __Pyx_XDECREF_SET(__pyx_v_e, __pyx_t_3);
 
-        /* "astrid/io.pyx":49
+        /* "astrid/io.pyx":51
  * 
  *         except Exception as e:
  *             logger.error('Error during %s generator render: %s' % (ctx.instrument_name, e))             # <<<<<<<<<<<<<<
  * 
  *         #elapsed = time.clock_gettime(time.CLOCK_MONOTONIC_RAW) - start_time
  */
-        __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_logger); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 49, __pyx_L7_except_error)
+        __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_logger); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 51, __pyx_L7_except_error)
         __Pyx_GOTREF(__pyx_t_2);
-        __pyx_t_17 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_error); if (unlikely(!__pyx_t_17)) __PYX_ERR(0, 49, __pyx_L7_except_error)
+        __pyx_t_17 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_error); if (unlikely(!__pyx_t_17)) __PYX_ERR(0, 51, __pyx_L7_except_error)
         __Pyx_GOTREF(__pyx_t_17);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 49, __pyx_L7_except_error)
+        __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 51, __pyx_L7_except_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_INCREF(__pyx_v_ctx->instrument_name);
         __Pyx_GIVEREF(__pyx_v_ctx->instrument_name);
@@ -3007,7 +3009,7 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
         __Pyx_INCREF(__pyx_v_e);
         __Pyx_GIVEREF(__pyx_v_e);
         PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_v_e);
-        __pyx_t_18 = __Pyx_PyString_Format(__pyx_kp_s_Error_during_s_generator_render, __pyx_t_2); if (unlikely(!__pyx_t_18)) __PYX_ERR(0, 49, __pyx_L7_except_error)
+        __pyx_t_18 = __Pyx_PyString_Format(__pyx_kp_s_Error_during_s_generator_render, __pyx_t_2); if (unlikely(!__pyx_t_18)) __PYX_ERR(0, 51, __pyx_L7_except_error)
         __Pyx_GOTREF(__pyx_t_18);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
         __pyx_t_2 = NULL;
@@ -3021,14 +3023,14 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
           }
         }
         if (!__pyx_t_2) {
-          __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_17, __pyx_t_18); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 49, __pyx_L7_except_error)
+          __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_17, __pyx_t_18); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 51, __pyx_L7_except_error)
           __Pyx_DECREF(__pyx_t_18); __pyx_t_18 = 0;
           __Pyx_GOTREF(__pyx_t_5);
         } else {
           #if CYTHON_FAST_PYCALL
           if (PyFunction_Check(__pyx_t_17)) {
             PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_t_18};
-            __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_17, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 49, __pyx_L7_except_error)
+            __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_17, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 51, __pyx_L7_except_error)
             __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
             __Pyx_GOTREF(__pyx_t_5);
             __Pyx_DECREF(__pyx_t_18); __pyx_t_18 = 0;
@@ -3037,20 +3039,20 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
           #if CYTHON_FAST_PYCCALL
           if (__Pyx_PyFastCFunction_Check(__pyx_t_17)) {
             PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_t_18};
-            __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_17, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 49, __pyx_L7_except_error)
+            __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_17, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 51, __pyx_L7_except_error)
             __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
             __Pyx_GOTREF(__pyx_t_5);
             __Pyx_DECREF(__pyx_t_18); __pyx_t_18 = 0;
           } else
           #endif
           {
-            __pyx_t_19 = PyTuple_New(1+1); if (unlikely(!__pyx_t_19)) __PYX_ERR(0, 49, __pyx_L7_except_error)
+            __pyx_t_19 = PyTuple_New(1+1); if (unlikely(!__pyx_t_19)) __PYX_ERR(0, 51, __pyx_L7_except_error)
             __Pyx_GOTREF(__pyx_t_19);
             __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_19, 0, __pyx_t_2); __pyx_t_2 = NULL;
             __Pyx_GIVEREF(__pyx_t_18);
             PyTuple_SET_ITEM(__pyx_t_19, 0+1, __pyx_t_18);
             __pyx_t_18 = 0;
-            __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_17, __pyx_t_19, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 49, __pyx_L7_except_error)
+            __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_17, __pyx_t_19, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 51, __pyx_L7_except_error)
             __Pyx_GOTREF(__pyx_t_5);
             __Pyx_DECREF(__pyx_t_19); __pyx_t_19 = 0;
           }
@@ -3065,12 +3067,12 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
       goto __pyx_L7_except_error;
       __pyx_L7_except_error:;
 
-      /* "astrid/io.pyx":43
+      /* "astrid/io.pyx":45
  * 
  *         delay(onset)
  *         try:             # <<<<<<<<<<<<<<
  *             for snd in generator:
- *                 playbuf = q.bufnode_init(snd, start_time + onset)
+ *                 playbuf = m.bufnode_init(snd, start_time + onset)
  */
       __Pyx_XGIVEREF(__pyx_t_12);
       __Pyx_XGIVEREF(__pyx_t_13);
@@ -3085,7 +3087,7 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
       __pyx_L12_try_end:;
     }
 
-    /* "astrid/io.pyx":38
+    /* "astrid/io.pyx":40
  * 
  *     # FIXME onsets should be a python generator too
  *     for onset in onsets:             # <<<<<<<<<<<<<<
@@ -3095,10 +3097,10 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "astrid/io.pyx":18
+  /* "astrid/io.pyx":20
  * from libc.stdlib cimport malloc, calloc, free
  * 
- * cdef void play_sequence(q.BufQ* buf_q, object event_q, object player, EventContext ctx, tuple onsets):             # <<<<<<<<<<<<<<
+ * cdef void play_sequence(q.Q* buf_q, object player, EventContext ctx, tuple onsets):             # <<<<<<<<<<<<<<
  *     """ Play a sequence of overlapping oneshots
  *     """
  */
@@ -3126,15 +3128,15 @@ static void __pyx_f_6astrid_2io_play_sequence(struct __pyx_t_6astrid_1q_BufQ *__
   __Pyx_RefNannyFinishContext();
 }
 
-/* "astrid/io.pyx":53
+/* "astrid/io.pyx":55
  *         #elapsed = time.clock_gettime(time.CLOCK_MONOTONIC_RAW) - start_time
  * 
- * cdef void init_voice(object instrument, object params, q.BufQ* buf_q, object event_q):             # <<<<<<<<<<<<<<
+ * cdef void init_voice(object instrument, object params, q.Q* buf_q):             # <<<<<<<<<<<<<<
  *     cdef EventContext ctx = instrument.create_ctx(params)
  *     ctx.running.set()
  */
 
-static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObject *__pyx_v_params, struct __pyx_t_6astrid_1q_BufQ *__pyx_v_buf_q, PyObject *__pyx_v_event_q) {
+static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObject *__pyx_v_params, struct __pyx_t_6astrid_1q_Q *__pyx_v_buf_q) {
   struct __pyx_obj_6astrid_3orc_EventContext *__pyx_v_ctx = 0;
   PyObject *__pyx_v_loop = NULL;
   PyObject *__pyx_v_players = NULL;
@@ -3168,14 +3170,14 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
   PyObject *__pyx_t_22 = NULL;
   __Pyx_RefNannySetupContext("init_voice", 0);
 
-  /* "astrid/io.pyx":54
+  /* "astrid/io.pyx":56
  * 
- * cdef void init_voice(object instrument, object params, q.BufQ* buf_q, object event_q):
+ * cdef void init_voice(object instrument, object params, q.Q* buf_q):
  *     cdef EventContext ctx = instrument.create_ctx(params)             # <<<<<<<<<<<<<<
  *     ctx.running.set()
  * 
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_create_ctx); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 54, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_create_ctx); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 56, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_3 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -3188,13 +3190,13 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
     }
   }
   if (!__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_params); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 54, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_params); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 56, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_params};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 54, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 56, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
@@ -3202,36 +3204,36 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_params};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 54, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 56, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
     #endif
     {
-      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 54, __pyx_L1_error)
+      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 56, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __pyx_t_3 = NULL;
       __Pyx_INCREF(__pyx_v_params);
       __Pyx_GIVEREF(__pyx_v_params);
       PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_params);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 54, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 56, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     }
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_6astrid_3orc_EventContext))))) __PYX_ERR(0, 54, __pyx_L1_error)
+  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_6astrid_3orc_EventContext))))) __PYX_ERR(0, 56, __pyx_L1_error)
   __pyx_v_ctx = ((struct __pyx_obj_6astrid_3orc_EventContext *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "astrid/io.pyx":55
- * cdef void init_voice(object instrument, object params, q.BufQ* buf_q, object event_q):
+  /* "astrid/io.pyx":57
+ * cdef void init_voice(object instrument, object params, q.Q* buf_q):
  *     cdef EventContext ctx = instrument.create_ctx(params)
  *     ctx.running.set()             # <<<<<<<<<<<<<<
  * 
  *     loop = False
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_ctx->running, __pyx_n_s_set); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 55, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_ctx->running, __pyx_n_s_set); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 57, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_4 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -3244,16 +3246,16 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
     }
   }
   if (__pyx_t_4) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 55, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 57, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   } else {
-    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 55, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 57, __pyx_L1_error)
   }
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "astrid/io.pyx":57
+  /* "astrid/io.pyx":59
  *     ctx.running.set()
  * 
  *     loop = False             # <<<<<<<<<<<<<<
@@ -3263,36 +3265,36 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
   __Pyx_INCREF(Py_False);
   __pyx_v_loop = Py_False;
 
-  /* "astrid/io.pyx":58
+  /* "astrid/io.pyx":60
  * 
  *     loop = False
  *     if hasattr(instrument.renderer, 'loop'):             # <<<<<<<<<<<<<<
  *         loop = instrument.renderer.loop
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 58, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 60, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_5 = __Pyx_HasAttr(__pyx_t_1, __pyx_n_s_loop); if (unlikely(__pyx_t_5 == ((int)-1))) __PYX_ERR(0, 58, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_HasAttr(__pyx_t_1, __pyx_n_s_loop); if (unlikely(__pyx_t_5 == ((int)-1))) __PYX_ERR(0, 60, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_6 = (__pyx_t_5 != 0);
   if (__pyx_t_6) {
 
-    /* "astrid/io.pyx":59
+    /* "astrid/io.pyx":61
  *     loop = False
  *     if hasattr(instrument.renderer, 'loop'):
  *         loop = instrument.renderer.loop             # <<<<<<<<<<<<<<
  * 
  *     if hasattr(instrument.renderer, 'before'):
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 59, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 61, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_loop); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 59, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_loop); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 61, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF_SET(__pyx_v_loop, __pyx_t_2);
     __pyx_t_2 = 0;
 
-    /* "astrid/io.pyx":58
+    /* "astrid/io.pyx":60
  * 
  *     loop = False
  *     if hasattr(instrument.renderer, 'loop'):             # <<<<<<<<<<<<<<
@@ -3301,30 +3303,30 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
  */
   }
 
-  /* "astrid/io.pyx":61
+  /* "astrid/io.pyx":63
  *         loop = instrument.renderer.loop
  * 
  *     if hasattr(instrument.renderer, 'before'):             # <<<<<<<<<<<<<<
  *         # blocking before callback makes
  *         # its results available to voices
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 61, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 63, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_6 = __Pyx_HasAttr(__pyx_t_2, __pyx_n_s_before); if (unlikely(__pyx_t_6 == ((int)-1))) __PYX_ERR(0, 61, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_HasAttr(__pyx_t_2, __pyx_n_s_before); if (unlikely(__pyx_t_6 == ((int)-1))) __PYX_ERR(0, 63, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_5 = (__pyx_t_6 != 0);
   if (__pyx_t_5) {
 
-    /* "astrid/io.pyx":64
+    /* "astrid/io.pyx":66
  *         # blocking before callback makes
  *         # its results available to voices
  *         ctx.before = instrument.renderer.before(ctx)             # <<<<<<<<<<<<<<
  * 
  *     # find all play methods
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 64, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 66, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_before); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 64, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_before); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 66, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_1 = NULL;
@@ -3338,13 +3340,13 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
       }
     }
     if (!__pyx_t_1) {
-      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_4, ((PyObject *)__pyx_v_ctx)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 64, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_4, ((PyObject *)__pyx_v_ctx)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 66, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_4)) {
         PyObject *__pyx_temp[2] = {__pyx_t_1, ((PyObject *)__pyx_v_ctx)};
-        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 64, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 66, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
@@ -3352,19 +3354,19 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
         PyObject *__pyx_temp[2] = {__pyx_t_1, ((PyObject *)__pyx_v_ctx)};
-        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 64, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 66, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
         __Pyx_GOTREF(__pyx_t_2);
       } else
       #endif
       {
-        __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 64, __pyx_L1_error)
+        __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 66, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1); __pyx_t_1 = NULL;
         __Pyx_INCREF(((PyObject *)__pyx_v_ctx));
         __Pyx_GIVEREF(((PyObject *)__pyx_v_ctx));
         PyTuple_SET_ITEM(__pyx_t_3, 0+1, ((PyObject *)__pyx_v_ctx));
-        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 64, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 66, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       }
@@ -3376,7 +3378,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
     __pyx_v_ctx->before = __pyx_t_2;
     __pyx_t_2 = 0;
 
-    /* "astrid/io.pyx":61
+    /* "astrid/io.pyx":63
  *         loop = instrument.renderer.loop
  * 
  *     if hasattr(instrument.renderer, 'before'):             # <<<<<<<<<<<<<<
@@ -3385,19 +3387,19 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
  */
   }
 
-  /* "astrid/io.pyx":67
+  /* "astrid/io.pyx":69
  * 
  *     # find all play methods
  *     players = set()             # <<<<<<<<<<<<<<
  * 
  *     cdef tuple onset_list = (0,)
  */
-  __pyx_t_2 = PySet_New(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 67, __pyx_L1_error)
+  __pyx_t_2 = PySet_New(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 69, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_v_players = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "astrid/io.pyx":69
+  /* "astrid/io.pyx":71
  *     players = set()
  * 
  *     cdef tuple onset_list = (0,)             # <<<<<<<<<<<<<<
@@ -3407,50 +3409,50 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
   __Pyx_INCREF(__pyx_tuple_);
   __pyx_v_onset_list = __pyx_tuple_;
 
-  /* "astrid/io.pyx":73
+  /* "astrid/io.pyx":75
  *     # The simplest case is a single play method
  *     # with an optional onset list or callback
  *     if hasattr(instrument.renderer, 'play'):             # <<<<<<<<<<<<<<
  *         onsets = getattr(instrument.renderer, 'onsets', (0,))
  *         players.add((instrument.renderer.play, onsets))
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 73, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 75, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_HasAttr(__pyx_t_2, __pyx_n_s_play); if (unlikely(__pyx_t_5 == ((int)-1))) __PYX_ERR(0, 73, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_HasAttr(__pyx_t_2, __pyx_n_s_play); if (unlikely(__pyx_t_5 == ((int)-1))) __PYX_ERR(0, 75, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_6 = (__pyx_t_5 != 0);
   if (__pyx_t_6) {
 
-    /* "astrid/io.pyx":74
+    /* "astrid/io.pyx":76
  *     # with an optional onset list or callback
  *     if hasattr(instrument.renderer, 'play'):
  *         onsets = getattr(instrument.renderer, 'onsets', (0,))             # <<<<<<<<<<<<<<
  *         players.add((instrument.renderer.play, onsets))
  * 
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 74, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 76, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_4 = __Pyx_GetAttr3(__pyx_t_2, __pyx_n_s_onsets, __pyx_tuple__2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 74, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_GetAttr3(__pyx_t_2, __pyx_n_s_onsets, __pyx_tuple__2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 76, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_v_onsets = __pyx_t_4;
     __pyx_t_4 = 0;
 
-    /* "astrid/io.pyx":75
+    /* "astrid/io.pyx":77
  *     if hasattr(instrument.renderer, 'play'):
  *         onsets = getattr(instrument.renderer, 'onsets', (0,))
  *         players.add((instrument.renderer.play, onsets))             # <<<<<<<<<<<<<<
  * 
  *     # Play methods can also be registered via
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_players, __pyx_n_s_add); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 75, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_players, __pyx_n_s_add); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 77, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 75, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 77, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_play); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 75, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_play); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 77, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 75, __pyx_L1_error)
+    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 77, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_1);
     PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
@@ -3469,14 +3471,14 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
       }
     }
     if (!__pyx_t_1) {
-      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 75, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 77, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_2)) {
         PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_t_3};
-        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 75, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 77, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -3485,20 +3487,20 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
         PyObject *__pyx_temp[2] = {__pyx_t_1, __pyx_t_3};
-        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 75, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 77, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       } else
       #endif
       {
-        __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 75, __pyx_L1_error)
+        __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 77, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_7);
         __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_1); __pyx_t_1 = NULL;
         __Pyx_GIVEREF(__pyx_t_3);
         PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_t_3);
         __pyx_t_3 = 0;
-        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_7, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 75, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_7, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 77, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       }
@@ -3506,7 +3508,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "astrid/io.pyx":73
+    /* "astrid/io.pyx":75
  *     # The simplest case is a single play method
  *     # with an optional onset list or callback
  *     if hasattr(instrument.renderer, 'play'):             # <<<<<<<<<<<<<<
@@ -3515,16 +3517,16 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
  */
   }
 
-  /* "astrid/io.pyx":80
+  /* "astrid/io.pyx":82
  *     # an @player.init decorator, which also registers
  *     # an optional onset list or callback
  *     if hasattr(instrument.renderer, 'player') \             # <<<<<<<<<<<<<<
  *         and hasattr(instrument.renderer.player, 'players') \
  *         and isinstance(instrument.renderer.player.players, set):
  */
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 80, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 82, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_HasAttr(__pyx_t_4, __pyx_n_s_player); if (unlikely(__pyx_t_5 == ((int)-1))) __PYX_ERR(0, 80, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_HasAttr(__pyx_t_4, __pyx_n_s_player); if (unlikely(__pyx_t_5 == ((int)-1))) __PYX_ERR(0, 82, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_t_8 = (__pyx_t_5 != 0);
   if (__pyx_t_8) {
@@ -3533,19 +3535,19 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
     goto __pyx_L7_bool_binop_done;
   }
 
-  /* "astrid/io.pyx":81
+  /* "astrid/io.pyx":83
  *     # an optional onset list or callback
  *     if hasattr(instrument.renderer, 'player') \
  *         and hasattr(instrument.renderer.player, 'players') \             # <<<<<<<<<<<<<<
  *         and isinstance(instrument.renderer.player.players, set):
  *         players |= instrument.renderer.player.players
  */
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 81, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 83, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_player); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 81, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_player); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 83, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_8 = __Pyx_HasAttr(__pyx_t_2, __pyx_n_s_players); if (unlikely(__pyx_t_8 == ((int)-1))) __PYX_ERR(0, 81, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_HasAttr(__pyx_t_2, __pyx_n_s_players); if (unlikely(__pyx_t_8 == ((int)-1))) __PYX_ERR(0, 83, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_5 = (__pyx_t_8 != 0);
   if (__pyx_t_5) {
@@ -3554,19 +3556,19 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
     goto __pyx_L7_bool_binop_done;
   }
 
-  /* "astrid/io.pyx":82
+  /* "astrid/io.pyx":84
  *     if hasattr(instrument.renderer, 'player') \
  *         and hasattr(instrument.renderer.player, 'players') \
  *         and isinstance(instrument.renderer.player.players, set):             # <<<<<<<<<<<<<<
  *         players |= instrument.renderer.player.players
  * 
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 82, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 84, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_player); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 82, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_player); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 84, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_players); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 82, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_players); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 84, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_t_5 = PySet_Check(__pyx_t_2); 
@@ -3575,7 +3577,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
   __pyx_t_6 = __pyx_t_8;
   __pyx_L7_bool_binop_done:;
 
-  /* "astrid/io.pyx":80
+  /* "astrid/io.pyx":82
  *     # an @player.init decorator, which also registers
  *     # an optional onset list or callback
  *     if hasattr(instrument.renderer, 'player') \             # <<<<<<<<<<<<<<
@@ -3584,28 +3586,28 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
  */
   if (__pyx_t_6) {
 
-    /* "astrid/io.pyx":83
+    /* "astrid/io.pyx":85
  *         and hasattr(instrument.renderer.player, 'players') \
  *         and isinstance(instrument.renderer.player.players, set):
  *         players |= instrument.renderer.player.players             # <<<<<<<<<<<<<<
  * 
  *     cdef int count = 0
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 83, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 85, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_player); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 83, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_player); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 85, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_players); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 83, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_players); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 85, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = PyNumber_InPlaceOr(__pyx_v_players, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 83, __pyx_L1_error)
+    __pyx_t_4 = PyNumber_InPlaceOr(__pyx_v_players, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 85, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF_SET(__pyx_v_players, __pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "astrid/io.pyx":80
+    /* "astrid/io.pyx":82
  *     # an @player.init decorator, which also registers
  *     # an optional onset list or callback
  *     if hasattr(instrument.renderer, 'player') \             # <<<<<<<<<<<<<<
@@ -3614,7 +3616,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
  */
   }
 
-  /* "astrid/io.pyx":85
+  /* "astrid/io.pyx":87
  *         players |= instrument.renderer.player.players
  * 
  *     cdef int count = 0             # <<<<<<<<<<<<<<
@@ -3623,7 +3625,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
  */
   __pyx_v_count = 0;
 
-  /* "astrid/io.pyx":87
+  /* "astrid/io.pyx":89
  *     cdef int count = 0
  * 
  *     while True:             # <<<<<<<<<<<<<<
@@ -3632,7 +3634,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
  */
   while (1) {
 
-    /* "astrid/io.pyx":88
+    /* "astrid/io.pyx":90
  * 
  *     while True:
  *         for player, onsets in players:             # <<<<<<<<<<<<<<
@@ -3643,26 +3645,26 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
       __pyx_t_4 = __pyx_v_players; __Pyx_INCREF(__pyx_t_4); __pyx_t_9 = 0;
       __pyx_t_10 = NULL;
     } else {
-      __pyx_t_9 = -1; __pyx_t_4 = PyObject_GetIter(__pyx_v_players); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 88, __pyx_L1_error)
+      __pyx_t_9 = -1; __pyx_t_4 = PyObject_GetIter(__pyx_v_players); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 90, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_10 = Py_TYPE(__pyx_t_4)->tp_iternext; if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 88, __pyx_L1_error)
+      __pyx_t_10 = Py_TYPE(__pyx_t_4)->tp_iternext; if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 90, __pyx_L1_error)
     }
     for (;;) {
       if (likely(!__pyx_t_10)) {
         if (likely(PyList_CheckExact(__pyx_t_4))) {
           if (__pyx_t_9 >= PyList_GET_SIZE(__pyx_t_4)) break;
           #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-          __pyx_t_2 = PyList_GET_ITEM(__pyx_t_4, __pyx_t_9); __Pyx_INCREF(__pyx_t_2); __pyx_t_9++; if (unlikely(0 < 0)) __PYX_ERR(0, 88, __pyx_L1_error)
+          __pyx_t_2 = PyList_GET_ITEM(__pyx_t_4, __pyx_t_9); __Pyx_INCREF(__pyx_t_2); __pyx_t_9++; if (unlikely(0 < 0)) __PYX_ERR(0, 90, __pyx_L1_error)
           #else
-          __pyx_t_2 = PySequence_ITEM(__pyx_t_4, __pyx_t_9); __pyx_t_9++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 88, __pyx_L1_error)
+          __pyx_t_2 = PySequence_ITEM(__pyx_t_4, __pyx_t_9); __pyx_t_9++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 90, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
           #endif
         } else {
           if (__pyx_t_9 >= PyTuple_GET_SIZE(__pyx_t_4)) break;
           #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-          __pyx_t_2 = PyTuple_GET_ITEM(__pyx_t_4, __pyx_t_9); __Pyx_INCREF(__pyx_t_2); __pyx_t_9++; if (unlikely(0 < 0)) __PYX_ERR(0, 88, __pyx_L1_error)
+          __pyx_t_2 = PyTuple_GET_ITEM(__pyx_t_4, __pyx_t_9); __Pyx_INCREF(__pyx_t_2); __pyx_t_9++; if (unlikely(0 < 0)) __PYX_ERR(0, 90, __pyx_L1_error)
           #else
-          __pyx_t_2 = PySequence_ITEM(__pyx_t_4, __pyx_t_9); __pyx_t_9++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 88, __pyx_L1_error)
+          __pyx_t_2 = PySequence_ITEM(__pyx_t_4, __pyx_t_9); __pyx_t_9++; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 90, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
           #endif
         }
@@ -3672,7 +3674,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
           PyObject* exc_type = PyErr_Occurred();
           if (exc_type) {
             if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-            else __PYX_ERR(0, 88, __pyx_L1_error)
+            else __PYX_ERR(0, 90, __pyx_L1_error)
           }
           break;
         }
@@ -3684,7 +3686,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
         if (unlikely(size != 2)) {
           if (size > 2) __Pyx_RaiseTooManyValuesError(2);
           else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-          __PYX_ERR(0, 88, __pyx_L1_error)
+          __PYX_ERR(0, 90, __pyx_L1_error)
         }
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
         if (likely(PyTuple_CheckExact(sequence))) {
@@ -3697,15 +3699,15 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
         __Pyx_INCREF(__pyx_t_7);
         __Pyx_INCREF(__pyx_t_3);
         #else
-        __pyx_t_7 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 88, __pyx_L1_error)
+        __pyx_t_7 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 90, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_7);
-        __pyx_t_3 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 88, __pyx_L1_error)
+        __pyx_t_3 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 90, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         #endif
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       } else {
         Py_ssize_t index = -1;
-        __pyx_t_1 = PyObject_GetIter(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 88, __pyx_L1_error)
+        __pyx_t_1 = PyObject_GetIter(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 90, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
         __pyx_t_11 = Py_TYPE(__pyx_t_1)->tp_iternext;
@@ -3713,7 +3715,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
         __Pyx_GOTREF(__pyx_t_7);
         index = 1; __pyx_t_3 = __pyx_t_11(__pyx_t_1); if (unlikely(!__pyx_t_3)) goto __pyx_L14_unpacking_failed;
         __Pyx_GOTREF(__pyx_t_3);
-        if (__Pyx_IternextUnpackEndCheck(__pyx_t_11(__pyx_t_1), 2) < 0) __PYX_ERR(0, 88, __pyx_L1_error)
+        if (__Pyx_IternextUnpackEndCheck(__pyx_t_11(__pyx_t_1), 2) < 0) __PYX_ERR(0, 90, __pyx_L1_error)
         __pyx_t_11 = NULL;
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
         goto __pyx_L15_unpacking_done;
@@ -3721,7 +3723,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
         __pyx_t_11 = NULL;
         if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-        __PYX_ERR(0, 88, __pyx_L1_error)
+        __PYX_ERR(0, 90, __pyx_L1_error)
         __pyx_L15_unpacking_done:;
       }
       __Pyx_XDECREF_SET(__pyx_v_player, __pyx_t_7);
@@ -3729,7 +3731,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
       __Pyx_XDECREF_SET(__pyx_v_onsets, __pyx_t_3);
       __pyx_t_3 = 0;
 
-      /* "astrid/io.pyx":89
+      /* "astrid/io.pyx":91
  *     while True:
  *         for player, onsets in players:
  *             try:             # <<<<<<<<<<<<<<
@@ -3745,7 +3747,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
         __Pyx_XGOTREF(__pyx_t_14);
         /*try:*/ {
 
-          /* "astrid/io.pyx":90
+          /* "astrid/io.pyx":92
  *         for player, onsets in players:
  *             try:
  *                 ctx.count = count             # <<<<<<<<<<<<<<
@@ -3754,7 +3756,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
  */
           __pyx_v_ctx->count = __pyx_v_count;
 
-          /* "astrid/io.pyx":91
+          /* "astrid/io.pyx":93
  *             try:
  *                 ctx.count = count
  *                 onset_list = (0,)             # <<<<<<<<<<<<<<
@@ -3764,7 +3766,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
           __Pyx_INCREF(__pyx_tuple__3);
           __Pyx_DECREF_SET(__pyx_v_onset_list, __pyx_tuple__3);
 
-          /* "astrid/io.pyx":92
+          /* "astrid/io.pyx":94
  *                 ctx.count = count
  *                 onset_list = (0,)
  *                 try:             # <<<<<<<<<<<<<<
@@ -3780,19 +3782,19 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
             __Pyx_XGOTREF(__pyx_t_17);
             /*try:*/ {
 
-              /* "astrid/io.pyx":93
+              /* "astrid/io.pyx":95
  *                 onset_list = (0,)
  *                 try:
  *                     onset_list = tuple(onsets)             # <<<<<<<<<<<<<<
  *                 except TypeError:
  *                     if callable(onsets):
  */
-              __pyx_t_2 = __Pyx_PySequence_Tuple(__pyx_v_onsets); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 93, __pyx_L24_error)
+              __pyx_t_2 = __Pyx_PySequence_Tuple(__pyx_v_onsets); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 95, __pyx_L24_error)
               __Pyx_GOTREF(__pyx_t_2);
               __Pyx_DECREF_SET(__pyx_v_onset_list, ((PyObject*)__pyx_t_2));
               __pyx_t_2 = 0;
 
-              /* "astrid/io.pyx":92
+              /* "astrid/io.pyx":94
  *                 ctx.count = count
  *                 onset_list = (0,)
  *                 try:             # <<<<<<<<<<<<<<
@@ -3810,7 +3812,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
             __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
             __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-            /* "astrid/io.pyx":94
+            /* "astrid/io.pyx":96
  *                 try:
  *                     onset_list = tuple(onsets)
  *                 except TypeError:             # <<<<<<<<<<<<<<
@@ -3820,28 +3822,28 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
             __pyx_t_18 = __Pyx_PyErr_ExceptionMatches(__pyx_builtin_TypeError);
             if (__pyx_t_18) {
               __Pyx_AddTraceback("astrid.io.init_voice", __pyx_clineno, __pyx_lineno, __pyx_filename);
-              if (__Pyx_GetException(&__pyx_t_2, &__pyx_t_3, &__pyx_t_7) < 0) __PYX_ERR(0, 94, __pyx_L26_except_error)
+              if (__Pyx_GetException(&__pyx_t_2, &__pyx_t_3, &__pyx_t_7) < 0) __PYX_ERR(0, 96, __pyx_L26_except_error)
               __Pyx_GOTREF(__pyx_t_2);
               __Pyx_GOTREF(__pyx_t_3);
               __Pyx_GOTREF(__pyx_t_7);
 
-              /* "astrid/io.pyx":95
+              /* "astrid/io.pyx":97
  *                     onset_list = tuple(onsets)
  *                 except TypeError:
  *                     if callable(onsets):             # <<<<<<<<<<<<<<
  *                         onset_list = tuple(onsets(ctx))
  * 
  */
-              __pyx_t_6 = __Pyx_PyCallable_Check(__pyx_v_onsets); if (unlikely(__pyx_t_6 == ((int)-1))) __PYX_ERR(0, 95, __pyx_L26_except_error)
+              __pyx_t_6 = __Pyx_PyCallable_Check(__pyx_v_onsets); if (unlikely(__pyx_t_6 == ((int)-1))) __PYX_ERR(0, 97, __pyx_L26_except_error)
               __pyx_t_8 = (__pyx_t_6 != 0);
               if (__pyx_t_8) {
 
-                /* "astrid/io.pyx":96
+                /* "astrid/io.pyx":98
  *                 except TypeError:
  *                     if callable(onsets):
  *                         onset_list = tuple(onsets(ctx))             # <<<<<<<<<<<<<<
  * 
- *                 play_sequence(buf_q, event_q, player, ctx, onset_list)
+ *                 play_sequence(buf_q, player, ctx, onset_list)
  */
                 __Pyx_INCREF(__pyx_v_onsets);
                 __pyx_t_19 = __pyx_v_onsets; __pyx_t_20 = NULL;
@@ -3855,13 +3857,13 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
                   }
                 }
                 if (!__pyx_t_20) {
-                  __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_19, ((PyObject *)__pyx_v_ctx)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 96, __pyx_L26_except_error)
+                  __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_19, ((PyObject *)__pyx_v_ctx)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 98, __pyx_L26_except_error)
                   __Pyx_GOTREF(__pyx_t_1);
                 } else {
                   #if CYTHON_FAST_PYCALL
                   if (PyFunction_Check(__pyx_t_19)) {
                     PyObject *__pyx_temp[2] = {__pyx_t_20, ((PyObject *)__pyx_v_ctx)};
-                    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_19, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 96, __pyx_L26_except_error)
+                    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_19, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 98, __pyx_L26_except_error)
                     __Pyx_XDECREF(__pyx_t_20); __pyx_t_20 = 0;
                     __Pyx_GOTREF(__pyx_t_1);
                   } else
@@ -3869,31 +3871,31 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
                   #if CYTHON_FAST_PYCCALL
                   if (__Pyx_PyFastCFunction_Check(__pyx_t_19)) {
                     PyObject *__pyx_temp[2] = {__pyx_t_20, ((PyObject *)__pyx_v_ctx)};
-                    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_19, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 96, __pyx_L26_except_error)
+                    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_19, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 98, __pyx_L26_except_error)
                     __Pyx_XDECREF(__pyx_t_20); __pyx_t_20 = 0;
                     __Pyx_GOTREF(__pyx_t_1);
                   } else
                   #endif
                   {
-                    __pyx_t_21 = PyTuple_New(1+1); if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 96, __pyx_L26_except_error)
+                    __pyx_t_21 = PyTuple_New(1+1); if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 98, __pyx_L26_except_error)
                     __Pyx_GOTREF(__pyx_t_21);
                     __Pyx_GIVEREF(__pyx_t_20); PyTuple_SET_ITEM(__pyx_t_21, 0, __pyx_t_20); __pyx_t_20 = NULL;
                     __Pyx_INCREF(((PyObject *)__pyx_v_ctx));
                     __Pyx_GIVEREF(((PyObject *)__pyx_v_ctx));
                     PyTuple_SET_ITEM(__pyx_t_21, 0+1, ((PyObject *)__pyx_v_ctx));
-                    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_19, __pyx_t_21, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 96, __pyx_L26_except_error)
+                    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_19, __pyx_t_21, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 98, __pyx_L26_except_error)
                     __Pyx_GOTREF(__pyx_t_1);
                     __Pyx_DECREF(__pyx_t_21); __pyx_t_21 = 0;
                   }
                 }
                 __Pyx_DECREF(__pyx_t_19); __pyx_t_19 = 0;
-                __pyx_t_19 = __Pyx_PySequence_Tuple(__pyx_t_1); if (unlikely(!__pyx_t_19)) __PYX_ERR(0, 96, __pyx_L26_except_error)
+                __pyx_t_19 = __Pyx_PySequence_Tuple(__pyx_t_1); if (unlikely(!__pyx_t_19)) __PYX_ERR(0, 98, __pyx_L26_except_error)
                 __Pyx_GOTREF(__pyx_t_19);
                 __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
                 __Pyx_DECREF_SET(__pyx_v_onset_list, ((PyObject*)__pyx_t_19));
                 __pyx_t_19 = 0;
 
-                /* "astrid/io.pyx":95
+                /* "astrid/io.pyx":97
  *                     onset_list = tuple(onsets)
  *                 except TypeError:
  *                     if callable(onsets):             # <<<<<<<<<<<<<<
@@ -3909,7 +3911,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
             goto __pyx_L26_except_error;
             __pyx_L26_except_error:;
 
-            /* "astrid/io.pyx":92
+            /* "astrid/io.pyx":94
  *                 ctx.count = count
  *                 onset_list = (0,)
  *                 try:             # <<<<<<<<<<<<<<
@@ -3929,16 +3931,16 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
             __pyx_L31_try_end:;
           }
 
-          /* "astrid/io.pyx":98
+          /* "astrid/io.pyx":100
  *                         onset_list = tuple(onsets(ctx))
  * 
- *                 play_sequence(buf_q, event_q, player, ctx, onset_list)             # <<<<<<<<<<<<<<
+ *                 play_sequence(buf_q, player, ctx, onset_list)             # <<<<<<<<<<<<<<
  *             except Exception as e:
  *                 logger.error('error calling play_sequence: %s' % e)
  */
-          __pyx_f_6astrid_2io_play_sequence(__pyx_v_buf_q, __pyx_v_event_q, __pyx_v_player, __pyx_v_ctx, __pyx_v_onset_list);
+          __pyx_f_6astrid_2io_play_sequence(__pyx_v_buf_q, __pyx_v_player, __pyx_v_ctx, __pyx_v_onset_list);
 
-          /* "astrid/io.pyx":89
+          /* "astrid/io.pyx":91
  *     while True:
  *         for player, onsets in players:
  *             try:             # <<<<<<<<<<<<<<
@@ -3959,9 +3961,9 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
         __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
         __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-        /* "astrid/io.pyx":99
+        /* "astrid/io.pyx":101
  * 
- *                 play_sequence(buf_q, event_q, player, ctx, onset_list)
+ *                 play_sequence(buf_q, player, ctx, onset_list)
  *             except Exception as e:             # <<<<<<<<<<<<<<
  *                 logger.error('error calling play_sequence: %s' % e)
  * 
@@ -3969,26 +3971,26 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
         __pyx_t_18 = __Pyx_PyErr_ExceptionMatches(((PyObject *)(&((PyTypeObject*)PyExc_Exception)[0])));
         if (__pyx_t_18) {
           __Pyx_AddTraceback("astrid.io.init_voice", __pyx_clineno, __pyx_lineno, __pyx_filename);
-          if (__Pyx_GetException(&__pyx_t_7, &__pyx_t_3, &__pyx_t_2) < 0) __PYX_ERR(0, 99, __pyx_L18_except_error)
+          if (__Pyx_GetException(&__pyx_t_7, &__pyx_t_3, &__pyx_t_2) < 0) __PYX_ERR(0, 101, __pyx_L18_except_error)
           __Pyx_GOTREF(__pyx_t_7);
           __Pyx_GOTREF(__pyx_t_3);
           __Pyx_GOTREF(__pyx_t_2);
           __Pyx_INCREF(__pyx_t_3);
           __Pyx_XDECREF_SET(__pyx_v_e, __pyx_t_3);
 
-          /* "astrid/io.pyx":100
- *                 play_sequence(buf_q, event_q, player, ctx, onset_list)
+          /* "astrid/io.pyx":102
+ *                 play_sequence(buf_q, player, ctx, onset_list)
  *             except Exception as e:
  *                 logger.error('error calling play_sequence: %s' % e)             # <<<<<<<<<<<<<<
  * 
  *         count += 1
  */
-          __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_logger); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 100, __pyx_L18_except_error)
+          __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_logger); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 102, __pyx_L18_except_error)
           __Pyx_GOTREF(__pyx_t_1);
-          __pyx_t_21 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_error); if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 100, __pyx_L18_except_error)
+          __pyx_t_21 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_error); if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 102, __pyx_L18_except_error)
           __Pyx_GOTREF(__pyx_t_21);
           __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-          __pyx_t_1 = __Pyx_PyString_Format(__pyx_kp_s_error_calling_play_sequence_s, __pyx_v_e); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 100, __pyx_L18_except_error)
+          __pyx_t_1 = __Pyx_PyString_Format(__pyx_kp_s_error_calling_play_sequence_s, __pyx_v_e); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 102, __pyx_L18_except_error)
           __Pyx_GOTREF(__pyx_t_1);
           __pyx_t_20 = NULL;
           if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_21))) {
@@ -4001,14 +4003,14 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
             }
           }
           if (!__pyx_t_20) {
-            __pyx_t_19 = __Pyx_PyObject_CallOneArg(__pyx_t_21, __pyx_t_1); if (unlikely(!__pyx_t_19)) __PYX_ERR(0, 100, __pyx_L18_except_error)
+            __pyx_t_19 = __Pyx_PyObject_CallOneArg(__pyx_t_21, __pyx_t_1); if (unlikely(!__pyx_t_19)) __PYX_ERR(0, 102, __pyx_L18_except_error)
             __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
             __Pyx_GOTREF(__pyx_t_19);
           } else {
             #if CYTHON_FAST_PYCALL
             if (PyFunction_Check(__pyx_t_21)) {
               PyObject *__pyx_temp[2] = {__pyx_t_20, __pyx_t_1};
-              __pyx_t_19 = __Pyx_PyFunction_FastCall(__pyx_t_21, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_19)) __PYX_ERR(0, 100, __pyx_L18_except_error)
+              __pyx_t_19 = __Pyx_PyFunction_FastCall(__pyx_t_21, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_19)) __PYX_ERR(0, 102, __pyx_L18_except_error)
               __Pyx_XDECREF(__pyx_t_20); __pyx_t_20 = 0;
               __Pyx_GOTREF(__pyx_t_19);
               __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -4017,20 +4019,20 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
             #if CYTHON_FAST_PYCCALL
             if (__Pyx_PyFastCFunction_Check(__pyx_t_21)) {
               PyObject *__pyx_temp[2] = {__pyx_t_20, __pyx_t_1};
-              __pyx_t_19 = __Pyx_PyCFunction_FastCall(__pyx_t_21, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_19)) __PYX_ERR(0, 100, __pyx_L18_except_error)
+              __pyx_t_19 = __Pyx_PyCFunction_FastCall(__pyx_t_21, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_19)) __PYX_ERR(0, 102, __pyx_L18_except_error)
               __Pyx_XDECREF(__pyx_t_20); __pyx_t_20 = 0;
               __Pyx_GOTREF(__pyx_t_19);
               __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
             } else
             #endif
             {
-              __pyx_t_22 = PyTuple_New(1+1); if (unlikely(!__pyx_t_22)) __PYX_ERR(0, 100, __pyx_L18_except_error)
+              __pyx_t_22 = PyTuple_New(1+1); if (unlikely(!__pyx_t_22)) __PYX_ERR(0, 102, __pyx_L18_except_error)
               __Pyx_GOTREF(__pyx_t_22);
               __Pyx_GIVEREF(__pyx_t_20); PyTuple_SET_ITEM(__pyx_t_22, 0, __pyx_t_20); __pyx_t_20 = NULL;
               __Pyx_GIVEREF(__pyx_t_1);
               PyTuple_SET_ITEM(__pyx_t_22, 0+1, __pyx_t_1);
               __pyx_t_1 = 0;
-              __pyx_t_19 = __Pyx_PyObject_Call(__pyx_t_21, __pyx_t_22, NULL); if (unlikely(!__pyx_t_19)) __PYX_ERR(0, 100, __pyx_L18_except_error)
+              __pyx_t_19 = __Pyx_PyObject_Call(__pyx_t_21, __pyx_t_22, NULL); if (unlikely(!__pyx_t_19)) __PYX_ERR(0, 102, __pyx_L18_except_error)
               __Pyx_GOTREF(__pyx_t_19);
               __Pyx_DECREF(__pyx_t_22); __pyx_t_22 = 0;
             }
@@ -4045,7 +4047,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
         goto __pyx_L18_except_error;
         __pyx_L18_except_error:;
 
-        /* "astrid/io.pyx":89
+        /* "astrid/io.pyx":91
  *     while True:
  *         for player, onsets in players:
  *             try:             # <<<<<<<<<<<<<<
@@ -4065,7 +4067,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
         __pyx_L23_try_end:;
       }
 
-      /* "astrid/io.pyx":88
+      /* "astrid/io.pyx":90
  * 
  *     while True:
  *         for player, onsets in players:             # <<<<<<<<<<<<<<
@@ -4075,7 +4077,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
     }
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "astrid/io.pyx":102
+    /* "astrid/io.pyx":104
  *                 logger.error('error calling play_sequence: %s' % e)
  * 
  *         count += 1             # <<<<<<<<<<<<<<
@@ -4084,21 +4086,21 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
  */
     __pyx_v_count = (__pyx_v_count + 1);
 
-    /* "astrid/io.pyx":104
+    /* "astrid/io.pyx":106
  *         count += 1
  * 
  *         if not loop or ctx.stop_all.is_set():             # <<<<<<<<<<<<<<
  *             break
  * 
  */
-    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_v_loop); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 104, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_v_loop); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 106, __pyx_L1_error)
     __pyx_t_5 = ((!__pyx_t_6) != 0);
     if (!__pyx_t_5) {
     } else {
       __pyx_t_8 = __pyx_t_5;
       goto __pyx_L38_bool_binop_done;
     }
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_ctx->stop_all, __pyx_n_s_is_set); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 104, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_ctx->stop_all, __pyx_n_s_is_set); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 106, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_3 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -4111,20 +4113,20 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
       }
     }
     if (__pyx_t_3) {
-      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 104, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 106, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     } else {
-      __pyx_t_4 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 104, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 106, __pyx_L1_error)
     }
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 104, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely(__pyx_t_5 < 0)) __PYX_ERR(0, 106, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __pyx_t_8 = __pyx_t_5;
     __pyx_L38_bool_binop_done:;
     if (__pyx_t_8) {
 
-      /* "astrid/io.pyx":105
+      /* "astrid/io.pyx":107
  * 
  *         if not loop or ctx.stop_all.is_set():
  *             break             # <<<<<<<<<<<<<<
@@ -4133,7 +4135,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
  */
       goto __pyx_L11_break;
 
-      /* "astrid/io.pyx":104
+      /* "astrid/io.pyx":106
  *         count += 1
  * 
  *         if not loop or ctx.stop_all.is_set():             # <<<<<<<<<<<<<<
@@ -4144,14 +4146,14 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
   }
   __pyx_L11_break:;
 
-  /* "astrid/io.pyx":107
+  /* "astrid/io.pyx":109
  *             break
  * 
  *     ctx.running.clear()             # <<<<<<<<<<<<<<
  * 
  *     if hasattr(instrument.renderer, 'done'):
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_ctx->running, __pyx_n_s_clear); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 107, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_ctx->running, __pyx_n_s_clear); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 109, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_3 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -4164,38 +4166,38 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
     }
   }
   if (__pyx_t_3) {
-    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 107, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 109, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   } else {
-    __pyx_t_4 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 107, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 109, __pyx_L1_error)
   }
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "astrid/io.pyx":109
+  /* "astrid/io.pyx":111
  *     ctx.running.clear()
  * 
  *     if hasattr(instrument.renderer, 'done'):             # <<<<<<<<<<<<<<
  *         # When the loop has completed or playback has stopped,
  *         # execute the done callback
  */
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 109, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 111, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_8 = __Pyx_HasAttr(__pyx_t_4, __pyx_n_s_done); if (unlikely(__pyx_t_8 == ((int)-1))) __PYX_ERR(0, 109, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_HasAttr(__pyx_t_4, __pyx_n_s_done); if (unlikely(__pyx_t_8 == ((int)-1))) __PYX_ERR(0, 111, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_t_5 = (__pyx_t_8 != 0);
   if (__pyx_t_5) {
 
-    /* "astrid/io.pyx":112
+    /* "astrid/io.pyx":114
  *         # When the loop has completed or playback has stopped,
  *         # execute the done callback
  *         instrument.renderer.done(ctx)             # <<<<<<<<<<<<<<
  * 
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 112, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_renderer); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 114, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_done); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 112, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_done); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 114, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_t_2 = NULL;
@@ -4209,13 +4211,13 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
       }
     }
     if (!__pyx_t_2) {
-      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, ((PyObject *)__pyx_v_ctx)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 112, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, ((PyObject *)__pyx_v_ctx)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 114, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[2] = {__pyx_t_2, ((PyObject *)__pyx_v_ctx)};
-        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 112, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 114, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_GOTREF(__pyx_t_4);
       } else
@@ -4223,19 +4225,19 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[2] = {__pyx_t_2, ((PyObject *)__pyx_v_ctx)};
-        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 112, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 114, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_GOTREF(__pyx_t_4);
       } else
       #endif
       {
-        __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 112, __pyx_L1_error)
+        __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 114, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_7);
         __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_2); __pyx_t_2 = NULL;
         __Pyx_INCREF(((PyObject *)__pyx_v_ctx));
         __Pyx_GIVEREF(((PyObject *)__pyx_v_ctx));
         PyTuple_SET_ITEM(__pyx_t_7, 0+1, ((PyObject *)__pyx_v_ctx));
-        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 112, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 114, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       }
@@ -4243,7 +4245,7 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "astrid/io.pyx":109
+    /* "astrid/io.pyx":111
  *     ctx.running.clear()
  * 
  *     if hasattr(instrument.renderer, 'done'):             # <<<<<<<<<<<<<<
@@ -4252,10 +4254,10 @@ static void __pyx_f_6astrid_2io_init_voice(PyObject *__pyx_v_instrument, PyObjec
  */
   }
 
-  /* "astrid/io.pyx":53
+  /* "astrid/io.pyx":55
  *         #elapsed = time.clock_gettime(time.CLOCK_MONOTONIC_RAW) - start_time
  * 
- * cdef void init_voice(object instrument, object params, q.BufQ* buf_q, object event_q):             # <<<<<<<<<<<<<<
+ * cdef void init_voice(object instrument, object params, q.Q* buf_q):             # <<<<<<<<<<<<<<
  *     cdef EventContext ctx = instrument.create_ctx(params)
  *     ctx.running.set()
  */
@@ -17971,8 +17973,10 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_s_itemsize_0_for_cython_array, __pyx_k_itemsize_0_for_cython_array, sizeof(__pyx_k_itemsize_0_for_cython_array), 0, 0, 1, 0},
   {&__pyx_n_s_logger, __pyx_k_logger, sizeof(__pyx_k_logger), 0, 0, 1, 1},
   {&__pyx_n_s_loop, __pyx_k_loop, sizeof(__pyx_k_loop), 0, 0, 1, 1},
+  {&__pyx_n_s_m, __pyx_k_m, sizeof(__pyx_k_m), 0, 0, 1, 1},
   {&__pyx_n_s_main, __pyx_k_main, sizeof(__pyx_k_main), 0, 0, 1, 1},
   {&__pyx_n_s_memview, __pyx_k_memview, sizeof(__pyx_k_memview), 0, 0, 1, 1},
+  {&__pyx_n_s_mixer, __pyx_k_mixer, sizeof(__pyx_k_mixer), 0, 0, 1, 1},
   {&__pyx_n_s_mode, __pyx_k_mode, sizeof(__pyx_k_mode), 0, 0, 1, 1},
   {&__pyx_n_s_name, __pyx_k_name, sizeof(__pyx_k_name), 0, 0, 1, 1},
   {&__pyx_n_s_name_2, __pyx_k_name_2, sizeof(__pyx_k_name_2), 0, 0, 1, 1},
@@ -18027,7 +18031,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(0, 94, __pyx_L1_error)
+  __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(0, 96, __pyx_L1_error)
   __pyx_builtin_ValueError = __Pyx_GetBuiltinName(__pyx_n_s_ValueError); if (!__pyx_builtin_ValueError) __PYX_ERR(1, 132, __pyx_L1_error)
   __pyx_builtin_MemoryError = __Pyx_GetBuiltinName(__pyx_n_s_MemoryError); if (!__pyx_builtin_MemoryError) __PYX_ERR(1, 147, __pyx_L1_error)
   __pyx_builtin_enumerate = __Pyx_GetBuiltinName(__pyx_n_s_enumerate); if (!__pyx_builtin_enumerate) __PYX_ERR(1, 150, __pyx_L1_error)
@@ -18044,36 +18048,36 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "astrid/io.pyx":69
+  /* "astrid/io.pyx":71
  *     players = set()
  * 
  *     cdef tuple onset_list = (0,)             # <<<<<<<<<<<<<<
  * 
  *     # The simplest case is a single play method
  */
-  __pyx_tuple_ = PyTuple_Pack(1, __pyx_int_0); if (unlikely(!__pyx_tuple_)) __PYX_ERR(0, 69, __pyx_L1_error)
+  __pyx_tuple_ = PyTuple_Pack(1, __pyx_int_0); if (unlikely(!__pyx_tuple_)) __PYX_ERR(0, 71, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple_);
   __Pyx_GIVEREF(__pyx_tuple_);
 
-  /* "astrid/io.pyx":74
+  /* "astrid/io.pyx":76
  *     # with an optional onset list or callback
  *     if hasattr(instrument.renderer, 'play'):
  *         onsets = getattr(instrument.renderer, 'onsets', (0,))             # <<<<<<<<<<<<<<
  *         players.add((instrument.renderer.play, onsets))
  * 
  */
-  __pyx_tuple__2 = PyTuple_Pack(1, __pyx_int_0); if (unlikely(!__pyx_tuple__2)) __PYX_ERR(0, 74, __pyx_L1_error)
+  __pyx_tuple__2 = PyTuple_Pack(1, __pyx_int_0); if (unlikely(!__pyx_tuple__2)) __PYX_ERR(0, 76, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__2);
   __Pyx_GIVEREF(__pyx_tuple__2);
 
-  /* "astrid/io.pyx":91
+  /* "astrid/io.pyx":93
  *             try:
  *                 ctx.count = count
  *                 onset_list = (0,)             # <<<<<<<<<<<<<<
  *                 try:
  *                     onset_list = tuple(onsets)
  */
-  __pyx_tuple__3 = PyTuple_Pack(1, __pyx_int_0); if (unlikely(!__pyx_tuple__3)) __PYX_ERR(0, 91, __pyx_L1_error)
+  __pyx_tuple__3 = PyTuple_Pack(1, __pyx_int_0); if (unlikely(!__pyx_tuple__3)) __PYX_ERR(0, 93, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__3);
   __Pyx_GIVEREF(__pyx_tuple__3);
 
@@ -18424,7 +18428,7 @@ static int __Pyx_modinit_function_export_code(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_modinit_function_export_code", 0);
   /*--- Function export code ---*/
-  if (__Pyx_ExportFunction("init_voice", (void (*)(void))__pyx_f_6astrid_2io_init_voice, "void (PyObject *, PyObject *, struct __pyx_t_6astrid_1q_BufQ *, PyObject *)") < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  if (__Pyx_ExportFunction("init_voice", (void (*)(void))__pyx_f_6astrid_2io_init_voice, "void (PyObject *, PyObject *, struct __pyx_t_6astrid_1q_Q *)") < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -18490,17 +18494,17 @@ static int __Pyx_modinit_type_import_code(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_modinit_type_import_code", 0);
   /*--- Type import code ---*/
-  __pyx_ptype_5pippi_10wavetables_Wavetable = __Pyx_ImportType("pippi.wavetables", "Wavetable", sizeof(struct __pyx_obj_5pippi_10wavetables_Wavetable), 1); if (unlikely(!__pyx_ptype_5pippi_10wavetables_Wavetable)) __PYX_ERR(2, 5, __pyx_L1_error)
-  __pyx_ptype_5pippi_6grains_GrainCloud = __Pyx_ImportType("pippi.grains", "GrainCloud", sizeof(struct __pyx_obj_5pippi_6grains_GrainCloud), 1); if (unlikely(!__pyx_ptype_5pippi_6grains_GrainCloud)) __PYX_ERR(3, 6, __pyx_L1_error)
-  __pyx_vtabptr_5pippi_6grains_GrainCloud = (struct __pyx_vtabstruct_5pippi_6grains_GrainCloud*)__Pyx_GetVtable(__pyx_ptype_5pippi_6grains_GrainCloud->tp_dict); if (unlikely(!__pyx_vtabptr_5pippi_6grains_GrainCloud)) __PYX_ERR(3, 6, __pyx_L1_error)
-  __pyx_ptype_5pippi_11soundbuffer_SoundBuffer = __Pyx_ImportType("pippi.soundbuffer", "SoundBuffer", sizeof(struct __pyx_obj_5pippi_11soundbuffer_SoundBuffer), 1); if (unlikely(!__pyx_ptype_5pippi_11soundbuffer_SoundBuffer)) __PYX_ERR(4, 10, __pyx_L1_error)
-  __pyx_vtabptr_5pippi_11soundbuffer_SoundBuffer = (struct __pyx_vtabstruct_5pippi_11soundbuffer_SoundBuffer*)__Pyx_GetVtable(__pyx_ptype_5pippi_11soundbuffer_SoundBuffer->tp_dict); if (unlikely(!__pyx_vtabptr_5pippi_11soundbuffer_SoundBuffer)) __PYX_ERR(4, 10, __pyx_L1_error)
-  __pyx_ptype_5pippi_11soundbuffer_RingBuffer = __Pyx_ImportType("pippi.soundbuffer", "RingBuffer", sizeof(struct __pyx_obj_5pippi_11soundbuffer_RingBuffer), 1); if (unlikely(!__pyx_ptype_5pippi_11soundbuffer_RingBuffer)) __PYX_ERR(4, 20, __pyx_L1_error)
-  __pyx_vtabptr_5pippi_11soundbuffer_RingBuffer = (struct __pyx_vtabstruct_5pippi_11soundbuffer_RingBuffer*)__Pyx_GetVtable(__pyx_ptype_5pippi_11soundbuffer_RingBuffer->tp_dict); if (unlikely(!__pyx_vtabptr_5pippi_11soundbuffer_RingBuffer)) __PYX_ERR(4, 20, __pyx_L1_error)
-  __pyx_ptype_6astrid_4midi_MidiBucket = __Pyx_ImportType("astrid.midi", "MidiBucket", sizeof(struct __pyx_obj_6astrid_4midi_MidiBucket), 1); if (unlikely(!__pyx_ptype_6astrid_4midi_MidiBucket)) __PYX_ERR(5, 1, __pyx_L1_error)
-  __pyx_ptype_6astrid_3orc_ParamBucket = __Pyx_ImportType("astrid.orc", "ParamBucket", sizeof(struct __pyx_obj_6astrid_3orc_ParamBucket), 1); if (unlikely(!__pyx_ptype_6astrid_3orc_ParamBucket)) __PYX_ERR(6, 3, __pyx_L1_error)
-  __pyx_ptype_6astrid_3orc_EventContext = __Pyx_ImportType("astrid.orc", "EventContext", sizeof(struct __pyx_obj_6astrid_3orc_EventContext), 1); if (unlikely(!__pyx_ptype_6astrid_3orc_EventContext)) __PYX_ERR(6, 6, __pyx_L1_error)
-  __pyx_ptype_6astrid_3orc_Instrument = __Pyx_ImportType("astrid.orc", "Instrument", sizeof(struct __pyx_obj_6astrid_3orc_Instrument), 1); if (unlikely(!__pyx_ptype_6astrid_3orc_Instrument)) __PYX_ERR(6, 19, __pyx_L1_error)
+  __pyx_ptype_6astrid_4midi_MidiBucket = __Pyx_ImportType("astrid.midi", "MidiBucket", sizeof(struct __pyx_obj_6astrid_4midi_MidiBucket), 1); if (unlikely(!__pyx_ptype_6astrid_4midi_MidiBucket)) __PYX_ERR(2, 1, __pyx_L1_error)
+  __pyx_ptype_6astrid_3orc_ParamBucket = __Pyx_ImportType("astrid.orc", "ParamBucket", sizeof(struct __pyx_obj_6astrid_3orc_ParamBucket), 1); if (unlikely(!__pyx_ptype_6astrid_3orc_ParamBucket)) __PYX_ERR(3, 3, __pyx_L1_error)
+  __pyx_ptype_6astrid_3orc_EventContext = __Pyx_ImportType("astrid.orc", "EventContext", sizeof(struct __pyx_obj_6astrid_3orc_EventContext), 1); if (unlikely(!__pyx_ptype_6astrid_3orc_EventContext)) __PYX_ERR(3, 6, __pyx_L1_error)
+  __pyx_ptype_6astrid_3orc_Instrument = __Pyx_ImportType("astrid.orc", "Instrument", sizeof(struct __pyx_obj_6astrid_3orc_Instrument), 1); if (unlikely(!__pyx_ptype_6astrid_3orc_Instrument)) __PYX_ERR(3, 19, __pyx_L1_error)
+  __pyx_ptype_5pippi_10wavetables_Wavetable = __Pyx_ImportType("pippi.wavetables", "Wavetable", sizeof(struct __pyx_obj_5pippi_10wavetables_Wavetable), 1); if (unlikely(!__pyx_ptype_5pippi_10wavetables_Wavetable)) __PYX_ERR(4, 5, __pyx_L1_error)
+  __pyx_ptype_5pippi_6grains_GrainCloud = __Pyx_ImportType("pippi.grains", "GrainCloud", sizeof(struct __pyx_obj_5pippi_6grains_GrainCloud), 1); if (unlikely(!__pyx_ptype_5pippi_6grains_GrainCloud)) __PYX_ERR(5, 6, __pyx_L1_error)
+  __pyx_vtabptr_5pippi_6grains_GrainCloud = (struct __pyx_vtabstruct_5pippi_6grains_GrainCloud*)__Pyx_GetVtable(__pyx_ptype_5pippi_6grains_GrainCloud->tp_dict); if (unlikely(!__pyx_vtabptr_5pippi_6grains_GrainCloud)) __PYX_ERR(5, 6, __pyx_L1_error)
+  __pyx_ptype_5pippi_11soundbuffer_SoundBuffer = __Pyx_ImportType("pippi.soundbuffer", "SoundBuffer", sizeof(struct __pyx_obj_5pippi_11soundbuffer_SoundBuffer), 1); if (unlikely(!__pyx_ptype_5pippi_11soundbuffer_SoundBuffer)) __PYX_ERR(6, 10, __pyx_L1_error)
+  __pyx_vtabptr_5pippi_11soundbuffer_SoundBuffer = (struct __pyx_vtabstruct_5pippi_11soundbuffer_SoundBuffer*)__Pyx_GetVtable(__pyx_ptype_5pippi_11soundbuffer_SoundBuffer->tp_dict); if (unlikely(!__pyx_vtabptr_5pippi_11soundbuffer_SoundBuffer)) __PYX_ERR(6, 10, __pyx_L1_error)
+  __pyx_ptype_5pippi_11soundbuffer_RingBuffer = __Pyx_ImportType("pippi.soundbuffer", "RingBuffer", sizeof(struct __pyx_obj_5pippi_11soundbuffer_RingBuffer), 1); if (unlikely(!__pyx_ptype_5pippi_11soundbuffer_RingBuffer)) __PYX_ERR(6, 20, __pyx_L1_error)
+  __pyx_vtabptr_5pippi_11soundbuffer_RingBuffer = (struct __pyx_vtabstruct_5pippi_11soundbuffer_RingBuffer*)__Pyx_GetVtable(__pyx_ptype_5pippi_11soundbuffer_RingBuffer->tp_dict); if (unlikely(!__pyx_vtabptr_5pippi_11soundbuffer_RingBuffer)) __PYX_ERR(6, 20, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -18550,16 +18554,20 @@ static int __Pyx_modinit_variable_import_code(void) {
 static int __Pyx_modinit_function_import_code(void) {
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
   __Pyx_RefNannySetupContext("__Pyx_modinit_function_import_code", 0);
   /*--- Function import code ---*/
   __pyx_t_1 = __Pyx_ImportModule("astrid.q"); if (!__pyx_t_1) __PYX_ERR(0, 1, __pyx_L1_error)
-  if (__Pyx_ImportFunction(__pyx_t_1, "bufq_push", (void (**)(void))&__pyx_f_6astrid_1q_bufq_push, "void (struct __pyx_t_6astrid_1q_BufQ *, struct __pyx_t_6astrid_1q_N *)") < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  if (__Pyx_ImportFunction(__pyx_t_1, "bufnode_init", (void (**)(void))&__pyx_f_6astrid_1q_bufnode_init, "struct __pyx_t_6astrid_1q_N *(struct __pyx_obj_5pippi_11soundbuffer_SoundBuffer *, double)") < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  if (__Pyx_ImportFunction(__pyx_t_1, "q_push", (void (**)(void))&__pyx_f_6astrid_1q_q_push, "void (struct __pyx_t_6astrid_1q_Q *, struct __pyx_t_6astrid_1q_N *)") < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   Py_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_2 = __Pyx_ImportModule("astrid.mixer"); if (!__pyx_t_2) __PYX_ERR(0, 1, __pyx_L1_error)
+  if (__Pyx_ImportFunction(__pyx_t_2, "bufnode_init", (void (**)(void))&__pyx_f_6astrid_5mixer_bufnode_init, "struct __pyx_t_6astrid_1q_N *(struct __pyx_obj_5pippi_11soundbuffer_SoundBuffer *, double)") < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  Py_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
   __Pyx_RefNannyFinishContext();
   return -1;
 }
@@ -18844,8 +18852,8 @@ if (!__Pyx_RefNanny) {
  * from .orc cimport EventContext, Instrument
  * from . cimport q
  * from . import q             # <<<<<<<<<<<<<<
- * from pippi.soundbuffer cimport SoundBuffer
- * 
+ * from . cimport mixer as m
+ * from . import mixer as m
  */
   __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 12, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -18861,15 +18869,36 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
+  /* "astrid/io.pyx":14
+ * from . import q
+ * from . cimport mixer as m
+ * from . import mixer as m             # <<<<<<<<<<<<<<
+ * from pippi.soundbuffer cimport SoundBuffer
+ * 
+ */
+  __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_INCREF(__pyx_n_s_mixer);
+  __Pyx_GIVEREF(__pyx_n_s_mixer);
+  PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_mixer);
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s__25, __pyx_t_2, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_1, __pyx_n_s_mixer); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 14, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_m, __pyx_t_2) < 0) __PYX_ERR(0, 14, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
   /* "astrid/io.pyx":1
  * from __future__ import absolute_import             # <<<<<<<<<<<<<<
  * import collections
  * import threading
  */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_2) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_1) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "View.MemoryView":208
  *         info.obj = self
@@ -18878,10 +18907,10 @@ if (!__Pyx_RefNanny) {
  * 
  *     def __dealloc__(array self):
  */
-  __pyx_t_2 = __pyx_capsule_create(((void *)(&__pyx_array_getbuffer)), ((char *)"getbuffer(obj, view, flags)")); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 208, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem((PyObject *)__pyx_array_type->tp_dict, __pyx_n_s_pyx_getbuffer, __pyx_t_2) < 0) __PYX_ERR(1, 208, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_1 = __pyx_capsule_create(((void *)(&__pyx_array_getbuffer)), ((char *)"getbuffer(obj, view, flags)")); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 208, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem((PyObject *)__pyx_array_type->tp_dict, __pyx_n_s_pyx_getbuffer, __pyx_t_1) < 0) __PYX_ERR(1, 208, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   PyType_Modified(__pyx_array_type);
 
   /* "View.MemoryView":285
@@ -18891,12 +18920,12 @@ if (!__Pyx_RefNanny) {
  * cdef strided = Enum("<strided and direct>") # default
  * cdef indirect = Enum("<strided and indirect>")
  */
-  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__26, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 285, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__26, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 285, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
   __Pyx_XGOTREF(generic);
-  __Pyx_DECREF_SET(generic, __pyx_t_2);
-  __Pyx_GIVEREF(__pyx_t_2);
-  __pyx_t_2 = 0;
+  __Pyx_DECREF_SET(generic, __pyx_t_1);
+  __Pyx_GIVEREF(__pyx_t_1);
+  __pyx_t_1 = 0;
 
   /* "View.MemoryView":286
  * 
@@ -18905,12 +18934,12 @@ if (!__Pyx_RefNanny) {
  * cdef indirect = Enum("<strided and indirect>")
  * 
  */
-  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__27, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 286, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__27, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 286, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
   __Pyx_XGOTREF(strided);
-  __Pyx_DECREF_SET(strided, __pyx_t_2);
-  __Pyx_GIVEREF(__pyx_t_2);
-  __pyx_t_2 = 0;
+  __Pyx_DECREF_SET(strided, __pyx_t_1);
+  __Pyx_GIVEREF(__pyx_t_1);
+  __pyx_t_1 = 0;
 
   /* "View.MemoryView":287
  * cdef generic = Enum("<strided and direct or indirect>")
@@ -18919,12 +18948,12 @@ if (!__Pyx_RefNanny) {
  * 
  * 
  */
-  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__28, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 287, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__28, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 287, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
   __Pyx_XGOTREF(indirect);
-  __Pyx_DECREF_SET(indirect, __pyx_t_2);
-  __Pyx_GIVEREF(__pyx_t_2);
-  __pyx_t_2 = 0;
+  __Pyx_DECREF_SET(indirect, __pyx_t_1);
+  __Pyx_GIVEREF(__pyx_t_1);
+  __pyx_t_1 = 0;
 
   /* "View.MemoryView":290
  * 
@@ -18933,12 +18962,12 @@ if (!__Pyx_RefNanny) {
  * cdef indirect_contiguous = Enum("<contiguous and indirect>")
  * 
  */
-  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__29, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 290, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__29, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 290, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
   __Pyx_XGOTREF(contiguous);
-  __Pyx_DECREF_SET(contiguous, __pyx_t_2);
-  __Pyx_GIVEREF(__pyx_t_2);
-  __pyx_t_2 = 0;
+  __Pyx_DECREF_SET(contiguous, __pyx_t_1);
+  __Pyx_GIVEREF(__pyx_t_1);
+  __pyx_t_1 = 0;
 
   /* "View.MemoryView":291
  * 
@@ -18947,12 +18976,12 @@ if (!__Pyx_RefNanny) {
  * 
  * 
  */
-  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__30, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 291, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_1 = __Pyx_PyObject_Call(((PyObject *)__pyx_MemviewEnum_type), __pyx_tuple__30, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 291, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
   __Pyx_XGOTREF(indirect_contiguous);
-  __Pyx_DECREF_SET(indirect_contiguous, __pyx_t_2);
-  __Pyx_GIVEREF(__pyx_t_2);
-  __pyx_t_2 = 0;
+  __Pyx_DECREF_SET(indirect_contiguous, __pyx_t_1);
+  __Pyx_GIVEREF(__pyx_t_1);
+  __pyx_t_1 = 0;
 
   /* "View.MemoryView":315
  * 
@@ -18987,10 +19016,10 @@ if (!__Pyx_RefNanny) {
  * 
  * 
  */
-  __pyx_t_2 = __pyx_capsule_create(((void *)(&__pyx_memoryview_getbuffer)), ((char *)"getbuffer(obj, view, flags)")); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 544, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem((PyObject *)__pyx_memoryview_type->tp_dict, __pyx_n_s_pyx_getbuffer, __pyx_t_2) < 0) __PYX_ERR(1, 544, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_1 = __pyx_capsule_create(((void *)(&__pyx_memoryview_getbuffer)), ((char *)"getbuffer(obj, view, flags)")); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 544, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem((PyObject *)__pyx_memoryview_type->tp_dict, __pyx_n_s_pyx_getbuffer, __pyx_t_1) < 0) __PYX_ERR(1, 544, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   PyType_Modified(__pyx_memoryview_type);
 
   /* "View.MemoryView":990
@@ -19000,10 +19029,10 @@ if (!__Pyx_RefNanny) {
  * 
  * 
  */
-  __pyx_t_2 = __pyx_capsule_create(((void *)(&__pyx_memoryview_getbuffer)), ((char *)"getbuffer(obj, view, flags)")); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 990, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem((PyObject *)__pyx_memoryviewslice_type->tp_dict, __pyx_n_s_pyx_getbuffer, __pyx_t_2) < 0) __PYX_ERR(1, 990, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_1 = __pyx_capsule_create(((void *)(&__pyx_memoryview_getbuffer)), ((char *)"getbuffer(obj, view, flags)")); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 990, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem((PyObject *)__pyx_memoryviewslice_type->tp_dict, __pyx_n_s_pyx_getbuffer, __pyx_t_1) < 0) __PYX_ERR(1, 990, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   PyType_Modified(__pyx_memoryviewslice_type);
 
   /* "(tree fragment)":1
@@ -19011,10 +19040,10 @@ if (!__Pyx_RefNanny) {
  *     if __pyx_checksum != 0xb068931:
  *         from pickle import PickleError as __pyx_PickleError
  */
-  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_15View_dot_MemoryView_1__pyx_unpickle_Enum, NULL, __pyx_n_s_View_MemoryView); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_Enum, __pyx_t_2) < 0) __PYX_ERR(1, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_15View_dot_MemoryView_1__pyx_unpickle_Enum, NULL, __pyx_n_s_View_MemoryView); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_pyx_unpickle_Enum, __pyx_t_1) < 0) __PYX_ERR(1, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "(tree fragment)":9
  *         __pyx_unpickle_Enum__set_state(<Enum> __pyx_result, __pyx_state)

@@ -1,17 +1,4 @@
-from pippi.soundbuffer cimport SoundBuffer
 from .pthread cimport *
-from .mqueue cimport *
-
-cdef struct BufNode:
-    # Stack of currently playing buffers, 
-    # looped over in the main jack callback 
-    # and mixed into the output stream.
-    double* snd
-    int channels
-    int samplerate
-    int length
-    double onset
-    int pos
 
 cdef struct MSGNode:
     # Messages translated from zmq: play, load, etc
@@ -19,27 +6,23 @@ cdef struct MSGNode:
     int msgtype
     void* params
 
-cdef struct BufQ:
+cdef struct Q:
     N* head
     N* tail
     N* current
-    pthread_mutex_t* lock
+    pthread_mutex_t* pop_lock
+    pthread_mutex_t* push_lock
+    pthread_cond_t* empty_cond
 
 cdef struct N:
     N* prev
     N* next
     void* data
 
-
-cdef BufQ* bufq_init() nogil
-cdef N* bufq_pop(BufQ* q) nogil
-cdef void bufq_push(BufQ* q, N* node) nogil
-cdef void bufq_destroy(BufQ* q) nogil
+cdef Q* q_init() nogil
+cdef N* q_pop(Q* q) nogil
+cdef void q_push(Q* q, N* node) nogil
+cdef void q_destroy(Q* q) nogil
 
 cdef N* msgnode_init(int msgtype, void* params) nogil
-cdef N* bufnode_init(SoundBuffer snd, double onset)
 
-cdef void mix_block(BufNode* node, double* out, int blocksize) nogil
-cdef void mix_bufnodes(BufQ* q, double* out, int blocksize) nogil
-cdef double[:,:] to_array(double* snd, int channels, int samplerate, int blocksize)
-cdef double[:,:] mixed(BufQ* q, int channels, int samplerate, int blocksize)
