@@ -6,8 +6,9 @@ def init(onsets=None):
         onset list or callback
     """
     def decorate(func):
-        if func not in players:
-            players.add((func, onsets))
+        p = (func, onsets)
+        if p not in players:
+            players.add(p)
         return func
 
     return decorate

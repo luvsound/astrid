@@ -69,7 +69,7 @@ class AstridServer:
 
     def start_instrument_listeners(self, instrument_name, instrument_path):
         if instrument_name not in self.listeners:
-            instrument = orc.load_instrument(instrument_name, instrument_path, None)
+            instrument = orc.load_instrument(instrument_name, instrument_path, self.shutdown)
             self.listeners[instrument_name] = midi.start_listener(instrument)
 
     def load_instrument(self, instrument_name):

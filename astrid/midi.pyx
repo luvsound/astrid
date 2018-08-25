@@ -1,9 +1,11 @@
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor
 import threading
-import mido
 import math
 import time
+
+import mido
+import redis
 
 from pippi import tune
 from . import client
@@ -46,7 +48,10 @@ class MidiDeviceBucket:
         and key in self._mapping:
             key = self.__mapping[key]
 
-        return getattr(self._bus, MIDI_MSG_CC_TEMPLATE.format(device=self._device, cc=key[2:]), default)
+        val = self._bus.get(MIDI_MSG_CC_TEMPLATE.format(device=self._device, cc=key[2:]))
+        if val is None:
+            return default
+        return val
 
     def getnote(self, key, default=None):
         if not self._device:
@@ -56,7 +61,10 @@ class MidiDeviceBucket:
         and key in self._mapping:
             key = self.__mapping[key]
 
-        return getattr(self._bus, MIDI_MSG_NOTE_TEMPLATE.format(device=self._device, note=key), default)
+        val = self._bus.get(MIDI_MSG_NOTE_TEMPLATE.format(device=self._device, note=key))
+        if val is None:
+            return default
+        return val
 
 
 cdef class MidiBucket:
@@ -121,12 +129,13 @@ class MidiOutput(mp.Process):
             #self.event_loop.run_in_executor(self.pool, self._play, freq, amp, length)
 
 class MidiListener(mp.Process):
-    def __init__(self, instrument_name, device, triggers, bus):
+    def __init__(self, instrument_name, device, triggers, shutdown):
         super(MidiListener, self).__init__()
         self.client = client.AstridClient()
+        self.shutdown = shutdown
         self.instrument_name = instrument_name
         self.device = device
-        self.bus = bus
+        self.bus = redis.StrictRedis(host='localhost', port=6379, db=0)
         self.triggers = triggers
         self.name = 'astrid-%s-midi-listener' % instrument_name
 
@@ -134,13 +143,13 @@ class MidiListener(mp.Process):
         with mido.open_input(self.device) as events:
             for msg in events:
                 #logger.info('midi: %s %s' % (self.device, msg))
-                if self.bus.stop_listening.is_set():
+                if self.shutdown.is_set():
                     break
 
                 if msg.type == 'note_on':
                     freq = tune.mtof(msg.note)
                     amp = msg.velocity / 127
-                    setattr(self.bus, MIDI_MSG_NOTE_TEMPLATE.format(device=self.device, note=msg.note), amp)
+                    self.bus.set(MIDI_MSG_NOTE_TEMPLATE.format(device=self.device, note=msg.note), amp)
 
                     if self.triggers is not None \
                     and (self.triggers == -1 or msg.note in self.triggers):
@@ -148,7 +157,7 @@ class MidiListener(mp.Process):
  
                 elif msg.type == 'control_change':
                     value = msg.value / 127.0
-                    setattr(self.bus, MIDI_MSG_CC_TEMPLATE.format(device=self.device, cc=msg.control), value)
+                    self.bus.set(MIDI_MSG_CC_TEMPLATE.format(device=self.device, cc=msg.control), value)
 
 def start_listener(instrument):
     listener = None
@@ -172,7 +181,7 @@ def start_listener(instrument):
 
             device = find_device(device)
 
-            listener = MidiListener(instrument.name, device, triggers, None)
+            listener = MidiListener(instrument.name, device, triggers, instrument.shutdown)
             listener.start()
 
     return listener

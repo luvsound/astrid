@@ -5,6 +5,7 @@ import importlib.util
 import os
 import threading
 
+import redis
 import msgpack
 import numpy as np
 import sounddevice as sd
@@ -74,10 +75,10 @@ cdef class EventContext:
             before=None
         ):
 
+        self.bus = redis.StrictRedis(host='localhost', port=6379, db=0)
         self.before = before
-        self.m = midi.MidiBucket(midi_devices, midi_maps, None)
+        self.m = midi.MidiBucket(midi_devices, midi_maps, self.bus)
         self.p = ParamBucket(params)
-        #self.client = client.AstridClient()
         self.client = None
         self.instrument_name = instrument_name
         self.running = running
