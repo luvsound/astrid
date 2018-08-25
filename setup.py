@@ -11,7 +11,7 @@ try:
         'astrid/midi.pyx', 
         'astrid/names.pyx', 
         'astrid/server.pyx', 
-        'astrid/q.pyx', 
+        'astrid/voices.pyx', 
     ], include_path=[np.get_include()], annotate=True) 
 
 except ImportError:
@@ -27,12 +27,7 @@ except ImportError:
         Extension('astrid.midi', ['astrid/midi.c']), 
         Extension('astrid.names', ['astrid/names.c']), 
         Extension('astrid.server', ['astrid/server.c']), 
-        Extension('astrid.q', 
-                 ['astrid/q.c'], 
-                 extra_compile_args=['-fopenmp', '-pthreads'], 
-                 extra_link_args=['-fopenmp', '-pthreads']
-        ), 
-
+        Extension('astrid.voices', ['astrid/voices.c']), 
     ]
 
 

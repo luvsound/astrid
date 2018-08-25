@@ -6803,7 +6803,6 @@ static PyObject *__pyx_pf_6astrid_4midi_2start_listener(CYTHON_UNUSED PyObject *
   PyObject *__pyx_t_13 = NULL;
   PyObject *__pyx_t_14 = NULL;
   PyObject *__pyx_t_15 = NULL;
-  PyObject *__pyx_t_16 = NULL;
   __Pyx_RefNannySetupContext("start_listener", 0);
 
   /* "astrid/midi.pyx":154
@@ -7133,7 +7132,7 @@ static PyObject *__pyx_pf_6astrid_4midi_2start_listener(CYTHON_UNUSED PyObject *
  * 
  *             device = find_device(device)             # <<<<<<<<<<<<<<
  * 
- *             listener = MidiListener(instrument.name, device, triggers, instrument.bus)
+ *             listener = MidiListener(instrument.name, device, triggers, None)
  */
       __pyx_t_8 = __Pyx_GetModuleGlobalName(__pyx_n_s_find_device); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 173, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
@@ -7186,7 +7185,7 @@ static PyObject *__pyx_pf_6astrid_4midi_2start_listener(CYTHON_UNUSED PyObject *
       /* "astrid/midi.pyx":175
  *             device = find_device(device)
  * 
- *             listener = MidiListener(instrument.name, device, triggers, instrument.bus)             # <<<<<<<<<<<<<<
+ *             listener = MidiListener(instrument.name, device, triggers, None)             # <<<<<<<<<<<<<<
  *             listener.start()
  * 
  */
@@ -7194,15 +7193,13 @@ static PyObject *__pyx_pf_6astrid_4midi_2start_listener(CYTHON_UNUSED PyObject *
       __Pyx_GOTREF(__pyx_t_8);
       __pyx_t_14 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_name); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 175, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_14);
-      __pyx_t_13 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_bus); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 175, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_13);
-      __pyx_t_15 = NULL;
+      __pyx_t_13 = NULL;
       __pyx_t_12 = 0;
       if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_8))) {
-        __pyx_t_15 = PyMethod_GET_SELF(__pyx_t_8);
-        if (likely(__pyx_t_15)) {
+        __pyx_t_13 = PyMethod_GET_SELF(__pyx_t_8);
+        if (likely(__pyx_t_13)) {
           PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_8);
-          __Pyx_INCREF(__pyx_t_15);
+          __Pyx_INCREF(__pyx_t_13);
           __Pyx_INCREF(function);
           __Pyx_DECREF_SET(__pyx_t_8, function);
           __pyx_t_12 = 1;
@@ -7210,45 +7207,43 @@ static PyObject *__pyx_pf_6astrid_4midi_2start_listener(CYTHON_UNUSED PyObject *
       }
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_8)) {
-        PyObject *__pyx_temp[5] = {__pyx_t_15, __pyx_t_14, __pyx_v_device, __pyx_v_triggers, __pyx_t_13};
+        PyObject *__pyx_temp[5] = {__pyx_t_13, __pyx_t_14, __pyx_v_device, __pyx_v_triggers, Py_None};
         __pyx_t_7 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-__pyx_t_12, 4+__pyx_t_12); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 175, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_15); __pyx_t_15 = 0;
+        __Pyx_XDECREF(__pyx_t_13); __pyx_t_13 = 0;
         __Pyx_GOTREF(__pyx_t_7);
         __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
-        __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
       } else
       #endif
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_8)) {
-        PyObject *__pyx_temp[5] = {__pyx_t_15, __pyx_t_14, __pyx_v_device, __pyx_v_triggers, __pyx_t_13};
+        PyObject *__pyx_temp[5] = {__pyx_t_13, __pyx_t_14, __pyx_v_device, __pyx_v_triggers, Py_None};
         __pyx_t_7 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-__pyx_t_12, 4+__pyx_t_12); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 175, __pyx_L1_error)
-        __Pyx_XDECREF(__pyx_t_15); __pyx_t_15 = 0;
+        __Pyx_XDECREF(__pyx_t_13); __pyx_t_13 = 0;
         __Pyx_GOTREF(__pyx_t_7);
         __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
-        __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
       } else
       #endif
       {
-        __pyx_t_16 = PyTuple_New(4+__pyx_t_12); if (unlikely(!__pyx_t_16)) __PYX_ERR(0, 175, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_16);
-        if (__pyx_t_15) {
-          __Pyx_GIVEREF(__pyx_t_15); PyTuple_SET_ITEM(__pyx_t_16, 0, __pyx_t_15); __pyx_t_15 = NULL;
+        __pyx_t_15 = PyTuple_New(4+__pyx_t_12); if (unlikely(!__pyx_t_15)) __PYX_ERR(0, 175, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_15);
+        if (__pyx_t_13) {
+          __Pyx_GIVEREF(__pyx_t_13); PyTuple_SET_ITEM(__pyx_t_15, 0, __pyx_t_13); __pyx_t_13 = NULL;
         }
         __Pyx_GIVEREF(__pyx_t_14);
-        PyTuple_SET_ITEM(__pyx_t_16, 0+__pyx_t_12, __pyx_t_14);
+        PyTuple_SET_ITEM(__pyx_t_15, 0+__pyx_t_12, __pyx_t_14);
         __Pyx_INCREF(__pyx_v_device);
         __Pyx_GIVEREF(__pyx_v_device);
-        PyTuple_SET_ITEM(__pyx_t_16, 1+__pyx_t_12, __pyx_v_device);
+        PyTuple_SET_ITEM(__pyx_t_15, 1+__pyx_t_12, __pyx_v_device);
         __Pyx_INCREF(__pyx_v_triggers);
         __Pyx_GIVEREF(__pyx_v_triggers);
-        PyTuple_SET_ITEM(__pyx_t_16, 2+__pyx_t_12, __pyx_v_triggers);
-        __Pyx_GIVEREF(__pyx_t_13);
-        PyTuple_SET_ITEM(__pyx_t_16, 3+__pyx_t_12, __pyx_t_13);
+        PyTuple_SET_ITEM(__pyx_t_15, 2+__pyx_t_12, __pyx_v_triggers);
+        __Pyx_INCREF(Py_None);
+        __Pyx_GIVEREF(Py_None);
+        PyTuple_SET_ITEM(__pyx_t_15, 3+__pyx_t_12, Py_None);
         __pyx_t_14 = 0;
-        __pyx_t_13 = 0;
-        __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_16, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 175, __pyx_L1_error)
+        __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_15, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 175, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_7);
-        __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
+        __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
       }
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       __Pyx_DECREF_SET(__pyx_v_listener, __pyx_t_7);
@@ -7256,26 +7251,26 @@ static PyObject *__pyx_pf_6astrid_4midi_2start_listener(CYTHON_UNUSED PyObject *
 
       /* "astrid/midi.pyx":176
  * 
- *             listener = MidiListener(instrument.name, device, triggers, instrument.bus)
+ *             listener = MidiListener(instrument.name, device, triggers, None)
  *             listener.start()             # <<<<<<<<<<<<<<
  * 
  *     return listener
  */
       __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_listener, __pyx_n_s_start); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 176, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
-      __pyx_t_16 = NULL;
+      __pyx_t_15 = NULL;
       if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_8))) {
-        __pyx_t_16 = PyMethod_GET_SELF(__pyx_t_8);
-        if (likely(__pyx_t_16)) {
+        __pyx_t_15 = PyMethod_GET_SELF(__pyx_t_8);
+        if (likely(__pyx_t_15)) {
           PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_8);
-          __Pyx_INCREF(__pyx_t_16);
+          __Pyx_INCREF(__pyx_t_15);
           __Pyx_INCREF(function);
           __Pyx_DECREF_SET(__pyx_t_8, function);
         }
       }
-      if (__pyx_t_16) {
-        __pyx_t_7 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_16); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 176, __pyx_L1_error)
-        __Pyx_DECREF(__pyx_t_16); __pyx_t_16 = 0;
+      if (__pyx_t_15) {
+        __pyx_t_7 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_15); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 176, __pyx_L1_error)
+        __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
       } else {
         __pyx_t_7 = __Pyx_PyObject_CallNoArg(__pyx_t_8); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 176, __pyx_L1_error)
       }
@@ -7332,7 +7327,6 @@ static PyObject *__pyx_pf_6astrid_4midi_2start_listener(CYTHON_UNUSED PyObject *
   __Pyx_XDECREF(__pyx_t_13);
   __Pyx_XDECREF(__pyx_t_14);
   __Pyx_XDECREF(__pyx_t_15);
-  __Pyx_XDECREF(__pyx_t_16);
   __Pyx_AddTraceback("astrid.midi.start_listener", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;

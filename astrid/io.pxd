@@ -1,3 +1,11 @@
-from .q cimport Q
+from pippi.soundbuffer cimport SoundBuffer
 
-cdef void init_voice(object instrument, object params, Q* buf_q)
+cdef class BufferNode:
+    cdef public SoundBuffer snd
+    cdef public double start_time
+    cdef public double onset
+    cdef public int pos
+    cdef public int done_playing
+    cpdef double[:,:] next_block(BufferNode self, int block_size)
+
+cdef void init_voice(object instrument, object params, object buf_q)

@@ -10,7 +10,7 @@ cdef class EventContext:
     cdef public object client
     cdef public str instrument_name
     cdef public object running
-    cdef public object stop_all
+    cdef public object shutdown
     cdef public object stop_me
     cdef public object bus
     cdef public object sounds
@@ -19,5 +19,5 @@ cdef class EventContext:
 cdef class Instrument:
     cdef public str name
     cdef public object renderer
-    cdef public object bus
+    cdef public object shutdown
     cdef public object sounds 

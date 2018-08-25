@@ -172,7 +172,7 @@ def start_listener(instrument):
 
             device = find_device(device)
 
-            listener = MidiListener(instrument.name, device, triggers, instrument.bus)
+            listener = MidiListener(instrument.name, device, triggers, None)
             listener.start()
 
     return listener

@@ -20,7 +20,7 @@ from .logger import logger
 
 INSTRUMENT_RENDERER_KEY_TEMPLATE = '{}-renderer'
 
-def load_instrument(name, path, bus=None):
+def load_instrument(name, path, shutdown=None):
     """ Loads a renderer module from the script 
         at self.path 
 
@@ -37,7 +37,7 @@ def load_instrument(name, path, bus=None):
             except Exception as e:
                 logger.error(e)
 
-            return Instrument(name, renderer, bus)
+            return Instrument(name, renderer, shutdown)
         else:
             logger.error(path)
     except TypeError as e:
@@ -66,9 +66,8 @@ cdef class EventContext:
             params=None, 
             instrument_name=None, 
             running=None,
-            stop_all=None, 
+            shutdown=None, 
             stop_me=None, 
-            bus=None,
             sounds=None,
             midi_devices=None, 
             midi_maps=None, 
@@ -76,15 +75,14 @@ cdef class EventContext:
         ):
 
         self.before = before
-        self.m = midi.MidiBucket(midi_devices, midi_maps, bus)
+        self.m = midi.MidiBucket(midi_devices, midi_maps, None)
         self.p = ParamBucket(params)
         #self.client = client.AstridClient()
         self.client = None
         self.instrument_name = instrument_name
         self.running = running
-        self.stop_all = stop_all
+        self.shutdown = shutdown
         self.stop_me = stop_me
-        self.bus = bus
         self.sounds = sounds
 
     def msg(self, msg):
@@ -92,7 +90,7 @@ cdef class EventContext:
             self.client.send_cmd(msg)
 
     def adc(self, length):
-        framelength = int(self.bus.samplerate * length)
+        framelength = int(44100 * length)
         return self.stream_ctx.read(framelength, 0)
 
     def play(self, instrument_name, *params, **kwargs):
@@ -115,11 +113,11 @@ cdef class EventContext:
         return self.p._params
 
 cdef class Instrument:
-    def __init__(self, str name, object renderer, object bus):
+    def __init__(self, str name, object renderer, object shutdown):
         self.name = name
         self.renderer = renderer
-        self.bus = bus
         self.sounds = self.load_sounds()
+        self.shutdown = shutdown
 
     def load_sounds(self):
         if hasattr(self.renderer, 'SOUNDS') and isinstance(self.renderer.SOUNDS, list):
@@ -160,9 +158,8 @@ cdef class Instrument:
                     params=params, 
                     instrument_name=self.name, 
                     running=threading.Event(),
-                    stop_all=self.bus.stop_all, 
+                    shutdown=self.shutdown, 
                     stop_me=threading.Event(),
-                    bus=self.bus, 
                     sounds=self.sounds,
                     midi_devices=device_aliases, 
                     midi_maps=midi_maps, 

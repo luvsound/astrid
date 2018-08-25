@@ -40,8 +40,10 @@ def play(ctx):
     length = random.triangular(0.15, 3.5)
 
     for _ in range(numvoices):
-        freq = ctx.p.freq or random.choice(freqs)
-        amp = mpk.cc2 or ctx.p.amp or random.triangular(0.5, 0.85)
+        #freq = ctx.p.freq or random.choice(freqs)
+        freq = 330
+        #amp = mpk.cc2 or ctx.p.amp or random.triangular(0.5, 0.85)
+        amp = 0.2
 
         out = make_note(freq, amp, length)
         out = out.adsr(random.triangular(0.005, 0.5), 0.01, 0.35, random.triangular(0.1, 0.5))

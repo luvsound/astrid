@@ -8,16 +8,27 @@ import numpy as np
 from .logger import logger
 from . import names
 from .orc cimport EventContext, Instrument
-from . cimport q
-from . import q
-from . cimport mixer as m
-from . import mixer as m
 from pippi.soundbuffer cimport SoundBuffer
 
-from cython.parallel import parallel, prange
-from libc.stdlib cimport malloc, calloc, free
 
-cdef void play_sequence(q.Q* buf_q, object player, EventContext ctx, tuple onsets):
+cdef class BufferNode:
+    def __init__(self, snd, start_time, onset):
+        self.snd = snd
+        self.start_time = start_time
+        self.onset = onset
+        self.pos = 0
+        self.done_playing = -1
+
+    cpdef double[:,:] next_block(self, int block_size):
+        cdef int startpos = self.pos
+        cdef int endpos = startpos + block_size
+        self.pos += block_size
+        if endpos >= len(self.snd.frames):
+            endpos = len(self.snd.frames)
+            self.done_playing = 1
+        return self.snd.frames[startpos:endpos]
+
+cdef void play_sequence(buf_q, object player, EventContext ctx, tuple onsets):
     """ Play a sequence of overlapping oneshots
     """
     cdef double delay_time = 0
@@ -30,7 +41,6 @@ cdef void play_sequence(q.Q* buf_q, object player, EventContext ctx, tuple onset
     cdef Py_ssize_t k = 0
     cdef Py_ssize_t length = 0
     cdef double onset = 0
-    cdef q.N* playbuf
     cdef int channels = 2
     cdef int samplerate = 44100
     cdef double start_time = time.clock_gettime(time.CLOCK_MONOTONIC_RAW)
@@ -41,18 +51,18 @@ cdef void play_sequence(q.Q* buf_q, object player, EventContext ctx, tuple onset
         generator = player(ctx)
         onset = _onsets[i]
 
-        delay(onset)
+        delay.wait(timeout=onset)
         try:
             for snd in generator:
-                playbuf = m.bufnode_init(snd, start_time + onset)
-                q.q_push(buf_q, playbuf)
+                bufnode = BufferNode(snd, start_time, onset)
+                buf_q.put(bufnode)
 
         except Exception as e:
             logger.error('Error during %s generator render: %s' % (ctx.instrument_name, e))
 
         #elapsed = time.clock_gettime(time.CLOCK_MONOTONIC_RAW) - start_time
 
-cdef void init_voice(object instrument, object params, q.Q* buf_q):
+cdef void init_voice(object instrument, object params, object buf_q):
     cdef EventContext ctx = instrument.create_ctx(params)
     ctx.running.set()
 
@@ -103,7 +113,7 @@ cdef void init_voice(object instrument, object params, q.Q* buf_q):
            
         count += 1
 
-        if not loop or ctx.stop_all.is_set():
+        if not loop or ctx.shutdown.is_set():
             break
 
     ctx.running.clear()

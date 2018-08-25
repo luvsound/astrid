@@ -1,11 +1,9 @@
-import asyncio
 from contextlib import contextmanager
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 import collections
-import multiprocessing as mp
 import os
 import time
 import threading
+import multiprocessing as mp
 import random
 import queue
 import uuid
@@ -16,12 +14,11 @@ import numpy as np
 import zmq
 
 from . import midi
+from . cimport io
 from . import io
 from . import orc
 from . import names
-from . cimport q 
-from . cimport mixer as m
-from . import mixer as m
+from . import voices
 from .logger import logger
 from pippi import dsp
 from pippi.soundbuffer cimport SoundBuffer
@@ -65,11 +62,14 @@ class AstridServer:
         self.instrument_observer.stop()
         self.instrument_observer.join()
 
+        self.jack_client.deactivate()
+        self.jack_client.close()
+
         logger.info('all cleaned up!')
 
     def start_instrument_listeners(self, instrument_name, instrument_path):
         if instrument_name not in self.listeners:
-            instrument = orc.load_instrument(instrument_name, instrument_path, self.bus)
+            instrument = orc.load_instrument(instrument_name, instrument_path, None)
             self.listeners[instrument_name] = midi.start_listener(instrument)
 
     def load_instrument(self, instrument_name):
@@ -85,11 +85,35 @@ class AstridServer:
 
         return names.MSG_OK
 
+    def wait_for_buffers(self, buffers, buf_q, buflock):
+        while True:
+            msg = buf_q.get()
+            if msg == names.SHUTDOWN:
+                break
+
+            with buflock:
+                buffers += [ msg ]
+
     def run(self):
         logger.info(BANNER)
-        self.jack_client = jack.Client('astrid')
 
-        cdef q.Q* buf_q = q.q_init()
+        self.jack_client = jack.Client('astrid')
+        self.load_q = mp.Queue()
+        self.play_q = mp.Queue()
+        self.buf_q = mp.Queue()
+        self.buflock = mp.Lock()
+        self.shutdown = mp.Event()
+        self.numrenderers = 8
+        self.renderers = []
+        self.buffers = []
+
+        self.buffer_listener = threading.Thread(target=self.wait_for_buffers, args=(self.buffers, self.buf_q, self.buflock))
+        self.buffer_listener.start()
+
+        for i in range(self.numrenderers):
+            r = voices.VoiceHandler(self.play_q, self.load_q, self.buf_q, self.shutdown, self.cwd)
+            r.start()
+            self.renderers += [ r ]
 
         # FIXME get number of hardware channels
         for channel in range(CHANNELS):
@@ -99,18 +123,36 @@ class AstridServer:
         self.block_size = self.jack_client.blocksize
         self.channels = len(self.jack_client.outports)
         self.samplerate = self.jack_client.samplerate
-        RUNNING = True
+        self.RUNNING = True
 
         def jack_callback(frames):
-            if RUNNING:
+            if not self.RUNNING:
                 for channel, port in enumerate(self.jack_client.outports):
                     port.get_array().fill(0)
                 raise jack.CallbackExit
 
-            out = m.mixed(buf_q, self.channels, self.samplerate, self.block_size)
+            cdef double[:,:] outbuf = np.zeros((self.jack_client.blocksize, CHANNELS), dtype='d')
+            cdef double[:,:] next_block
+            cdef int blocklen
+
+            with self.buflock:
+                to_remove = []
+                for b in self.buffers:
+                    if b.done_playing > 0:
+                        to_remove += [ b ]
+                        continue
+                    next_block = b.next_block(self.block_size)
+                    blocklen = <int>len(next_block)
+                    for i in range(blocklen):
+                        for c in range(self.channels):
+                            outbuf[i, c] += next_block[i, c]
+
+                for b in to_remove:
+                    i = self.buffers.index(b)
+                    del self.buffers[i]
 
             for channel, port in enumerate(self.jack_client.outports):
-                port.get_array()[:] = out[:,channel % out.channels]
+                port.get_array()[:] = np.array(outbuf[:,channel % self.channels]).astype('f')
 
         self.jack_client.set_process_callback(jack_callback)
 
@@ -121,7 +163,8 @@ class AstridServer:
         self.instrument_observer.schedule(self.instrument_handler, path=orc_fullpath, recursive=True)
         self.instrument_observer.start()
 
-        with self.msg_context(), self.jack_client:
+        with self.msg_context():
+            self.jack_client.activate()
             capture = self.jack_client.get_ports(is_physical=True, is_output=True)
             if not capture:
                 raise RuntimeError('No physical capture ports')
@@ -177,6 +220,8 @@ class AstridServer:
                         self.load_q.put(names.SHUTDOWN)
                         self.play_q.put(names.SHUTDOWN)
 
+                    self.RUNNING = False
+                    self.shutdown.set()
                     self.msgsock.send(msgpack.packb(names.MSG_OK))
                     break
 
@@ -193,10 +238,13 @@ class AstridServer:
 
                 self.msgsock.send(msgpack.packb(reply or names.MSG_OK))
 
+        for r in self.renderers:
+            r.join()
+
+        self.buffer_listener.join()
+
         self.cleanup()
         logger.info('Astrid cleanup finished')
-
-        q.q_destroy(buf_q)
 
         self.stop()
         logger.info('Astrid stopped')
