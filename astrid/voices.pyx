@@ -84,7 +84,9 @@ class VoiceHandler(mp.Process):
                     instrument_name = cmd[0]
                     params = None
                     if len(cmd) > 1:
-                        params = cmd[1]
+                        params = dict([ tuple(c.split(':')) for c in cmd[1:] ])
+
+                    print('PARAMS', params)
 
                     instrument = self.get_instrument(instrument_name, self.shutdown)
                     if instrument is None:

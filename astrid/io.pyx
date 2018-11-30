@@ -63,6 +63,7 @@ cdef void play_sequence(buf_q, object player, EventContext ctx, tuple onsets):
         #elapsed = time.clock_gettime(time.CLOCK_MONOTONIC_RAW) - start_time
 
 cdef void init_voice(object instrument, object params, object buf_q):
+    print(params)
     cdef EventContext ctx = instrument.create_ctx(params)
     ctx.running.set()
 
