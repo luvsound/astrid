@@ -4,6 +4,8 @@ import queue
 import os
 import time
 
+import redis
+
 from .io cimport init_voice
 from .logger import logger
 from . import names
@@ -38,18 +40,23 @@ class VoiceHandler(mp.Process):
         logger.debug('render process put shutdown')
 
     def wait_for_loads(self, q, load_q):
-        while True:
-            msg = load_q.get()
+        r = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
+        pubsub = r.pubsub(ignore_subscribe_messages=True)
+        pubsub.subscribe(names.LOAD_INSTRUMENT, names.SHUTDOWN)
+        for msg in pubsub.listen():
+            c = int(msg['channel'] or 0)
+            if not msg['type'] == 'message':
+                continue
 
-            if msg == names.SHUTDOWN:
+            instrument_name = msg['data']
+            logger.info('LOAD MSG %s' % instrument_name)
+
+            if c == names.LOAD_INSTRUMENT:
+                q.put((names.LOAD_INSTRUMENT, (instrument_name, None)))
+
+            elif c == names.SHUTDOWN:
                 logger.debug('render process shutdown load queue')
                 break
-
-            q.put((names.LOAD_INSTRUMENT, msg))
-
-            # dumb way to try to keep it to one load per process
-            # FIXME this probably doesn't always work
-            time.sleep(1)
 
     def wait_for_plays(self, q, play_q):
         while True:
@@ -84,9 +91,14 @@ class VoiceHandler(mp.Process):
                     instrument_name = cmd[0]
                     params = None
                     if len(cmd) > 1:
-                        params = dict([ tuple(c.split(':')) for c in cmd[1:] ])
-
-                    print('PARAMS', params)
+                        logger.info('CMD params: %s' % cmd)
+                        params = {}
+                        for c in cmd[1:]:
+                            if isinstance(c, dict):
+                                params.update(c)
+                            else:
+                                k, v = tuple(c.split(':'))
+                                params[k] = v
 
                     instrument = self.get_instrument(instrument_name, self.shutdown)
                     if instrument is None:

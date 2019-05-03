@@ -4,6 +4,8 @@ import threading
 import queue
 import time
 import numpy as np
+import redis
+import sys
 
 from .logger import logger
 from . import names
@@ -46,7 +48,8 @@ cdef void play_sequence(buf_q, object player, EventContext ctx, tuple onsets):
     cdef double start_time = time.clock_gettime(time.CLOCK_MONOTONIC_RAW)
     cdef double[:] _onsets = np.array(onsets, 'd')
 
-    # FIXME onsets should be a python generator too
+    #logger.info('begin play_sequence %s' % ctx.instrument_name)
+
     for onset in onsets:
         generator = player(ctx)
         onset = _onsets[i]
@@ -60,21 +63,32 @@ cdef void play_sequence(buf_q, object player, EventContext ctx, tuple onsets):
         except Exception as e:
             logger.error('Error during %s generator render: %s' % (ctx.instrument_name, e))
 
-        #elapsed = time.clock_gettime(time.CLOCK_MONOTONIC_RAW) - start_time
+    #logger.info('play_sequence complete %s' % ctx.instrument_name)
+    #elapsed = time.clock_gettime(time.CLOCK_MONOTONIC_RAW) - start_time
 
-cdef void init_voice(object instrument, object params, object buf_q):
-    print(params)
-    cdef EventContext ctx = instrument.create_ctx(params)
-    ctx.running.set()
+def wait_for_messages(stop_me, instrument_name):
+    r = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
+    pubsub = r.pubsub(ignore_subscribe_messages=True)
+    pubsub.subscribe(names.STOP_ALL_VOICES, names.STOP_INSTRUMENT)
+    for msg in pubsub.listen():
+        c = int(msg['channel'] or 0)
+        if not msg['type'] == 'message':
+            continue
 
+        data = msg['data']
+        logger.info('MSG DATA %s - %s' % (data, instrument_name))
+
+        if c == names.STOP_ALL_VOICES or (c == names.STOP_INSTRUMENT and msg['data'] == instrument_name):
+            stop_me.set()
+            break
+
+cdef tuple collect_players(object instrument):
+    logger.info('COLLECT_PLAYERS %s' % instrument)
     loop = False
     if hasattr(instrument.renderer, 'loop'):
         loop = instrument.renderer.loop
 
-    if hasattr(instrument.renderer, 'before'):
-        # blocking before callback makes
-        # its results available to voices
-        ctx.before = instrument.renderer.before(ctx)
+    logger.info('COLLECT_PLAYERS loop: %s' % loop)
 
     # find all play methods
     players = set()
@@ -94,6 +108,25 @@ cdef void init_voice(object instrument, object params, object buf_q):
         and hasattr(instrument.renderer.player, 'players') \
         and isinstance(instrument.renderer.player.players, set):
         players |= instrument.renderer.player.players
+    
+    logger.info('COLLECT_PLAYERS players: %s' % players)
+    logger.info('COLLECT_PLAYERS onsets: %s' % onsets)
+    return players, onsets, loop
+
+cdef void init_voice(object instrument, object params, object buf_q):
+    cdef object stop_me = threading.Event()
+    cdef EventContext ctx = instrument.create_ctx(params)
+    ctx.running.set()
+
+    message_listener = threading.Thread(target=wait_for_messages, args=(stop_me, ctx.instrument_name))
+    message_listener.start()
+
+    if hasattr(instrument.renderer, 'before'):
+        # blocking before callback makes
+        # its results available to voices
+        ctx.before = instrument.renderer.before(ctx)
+
+    players, onsets, loop = collect_players(instrument)
 
     cdef int count = 0
 
@@ -114,8 +147,11 @@ cdef void init_voice(object instrument, object params, object buf_q):
            
         count += 1
 
-        if not loop or ctx.shutdown.is_set():
+        if not loop or ctx.shutdown.is_set() or stop_me.is_set():
             break
+
+        instrument.reload()
+        players, onsets, loop = collect_players(instrument)
 
     ctx.running.clear()
 

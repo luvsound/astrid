@@ -51,7 +51,7 @@ class MidiDeviceBucket:
         val = self._bus.get(MIDI_MSG_CC_TEMPLATE.format(device=self._device, cc=key[2:]))
         if val is None:
             return default
-        return val
+        return float(val or 0)
 
     def getnote(self, key, default=None):
         if not self._device:
@@ -68,8 +68,8 @@ class MidiDeviceBucket:
 
 
 cdef class MidiBucket:
-    def __init__(self, devices, mappings, bus):
-        self.bus = bus
+    def __init__(self, devices, mappings):
+        self.bus = redis.StrictRedis(host='localhost', port=6379, db=0)
         self.devices = self.map_device_buckets(devices, mappings)
         self.dummy = MidiDeviceBucket() # empty fallback
 
@@ -138,6 +138,7 @@ class MidiListener(mp.Process):
         self.bus = redis.StrictRedis(host='localhost', port=6379, db=0)
         self.triggers = triggers
         self.name = 'astrid-%s-midi-listener' % instrument_name
+        logger.info('MidiListener %s %s %s' % (instrument_name, device, triggers))
 
     def run(self):
         with mido.open_input(self.device) as events:
@@ -151,8 +152,7 @@ class MidiListener(mp.Process):
                     amp = msg.velocity / 127
                     self.bus.set(MIDI_MSG_NOTE_TEMPLATE.format(device=self.device, note=msg.note), amp)
 
-                    if self.triggers is not None \
-                    and (self.triggers == -1 or msg.note in self.triggers):
+                    if self.triggers is not None and (self.triggers == -1 or msg.note in self.triggers):
                         self.client.send_cmd(['play', self.instrument_name, {'freq': freq, 'amp': amp}])
  
                 elif msg.type == 'control_change':

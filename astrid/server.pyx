@@ -12,6 +12,7 @@ from libc.stdlib cimport malloc, calloc, free
 import msgpack
 import numpy as np
 import zmq
+import redis
 
 from . import midi
 from . cimport io
@@ -80,8 +81,9 @@ class AstridServer:
 
         self.start_instrument_listeners(instrument_name, instrument_path)
 
-        for _ in range(self.numrenderers):
-            self.load_q.put((instrument_name, instrument_path))
+        #for _ in range(self.numrenderers):
+        #    self.load_q.put((instrument_name, instrument_path))
+        self.redis.publish(names.LOAD_INSTRUMENT, instrument_name)
 
         return names.MSG_OK
 
@@ -94,21 +96,43 @@ class AstridServer:
             with buflock:
                 buffers += [ msg ]
 
+    def wait_for_params(self, param_q):
+        bus = redis.StrictRedis(host='localhost', port=6379, db=0)
+
+        while True:
+            msg = param_q.get()
+            if msg == names.SHUTDOWN:
+                break
+
+            logger.info('GOT PARAM UPDATE %s' % msg)
+            for m in msg:
+                try:
+                    k, v = tuple(m.split(':'))
+                    bus.set(k, v)
+                except ValueError as e:
+                    logger.error('Bad param: %s' % m)
+
     def run(self):
         logger.info(BANNER)
 
         self.jack_client = jack.Client('astrid')
         self.load_q = mp.Queue()
         self.play_q = mp.Queue()
+        self.param_q = mp.Queue()
         self.buf_q = mp.Queue()
         self.buflock = mp.Lock()
         self.shutdown = mp.Event()
         self.numrenderers = 8
         self.renderers = []
         self.buffers = []
+        self.redis = redis.StrictRedis(host='localhost', port=6379, db=0)
+        self.redis.pubsub()
 
         self.buffer_listener = threading.Thread(target=self.wait_for_buffers, args=(self.buffers, self.buf_q, self.buflock))
         self.buffer_listener.start()
+
+        self.param_listener = threading.Thread(target=self.wait_for_params, args=(self.param_q,))
+        self.param_listener.start()
 
         for i in range(self.numrenderers):
             r = voices.VoiceHandler(self.play_q, self.load_q, self.buf_q, self.shutdown, self.cwd)
@@ -223,11 +247,16 @@ class AstridServer:
                     self.RUNNING = False
                     self.shutdown.set()
                     self.msgsock.send(msgpack.packb(names.MSG_OK))
+                    self.redis.publish(names.SHUTDOWN, names.SHUTDOWN)
                     break
 
                 elif names.ntoc(action) == names.STOP_ALL_VOICES:
                     logger.info('STOP_ALL_VOICES %s' % cmd)
-                    #self.bus.stop_all.set()
+                    self.redis.publish(names.STOP_ALL_VOICES, names.STOP_ALL_VOICES)
+
+                elif names.ntoc(action) == names.STOP_INSTRUMENT:
+                    logger.info('STOP_INSTRUMENT %s' % cmd)
+                    self.redis.publish(names.STOP_INSTRUMENT, cmd[0])
 
                 elif names.ntoc(action) == names.LIST_INSTRUMENTS:
                     logger.info('LIST_INSTRUMENTS %s' % cmd)
@@ -235,6 +264,10 @@ class AstridServer:
 
                 elif names.ntoc(action) == names.PLAY_INSTRUMENT:
                     self.play_q.put(cmd)
+
+                elif names.ntoc(action) == names.SET_VALUE:
+                    logger.info('SET_VALUE %s' % cmd)
+                    self.param_q.put(cmd)
 
                 self.msgsock.send(msgpack.packb(reply or names.MSG_OK))
 

@@ -20,6 +20,9 @@ class AstridConsole(cmd.Cmd):
     def do_p(self, cmd):
         self.client.send_cmd(['play'] + cmd.split(' '))
 
+    def do_v(self, cmd):
+        self.client.send_cmd(['set_value'] + cmd.split(' '))
+
     def do_track(self, cmd):
         self.client.send_cmd(['analysis'] + cmd.split(' '))
 
@@ -38,9 +41,11 @@ class AstridConsole(cmd.Cmd):
         except TypeError:
             pass
 
-    def do_s(self, voice_id):
-        print('Stopping all voices')
-        self.client.send_cmd(['stopall'])
+    def do_s(self, instrument):
+        if instrument == '':
+            self.client.send_cmd(['stopall'])
+        else:
+            self.client.send_cmd(['stopinstrument', instrument])
 
     def do_quit(self, cmd):
         self.quit()

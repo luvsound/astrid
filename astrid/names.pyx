@@ -15,6 +15,8 @@ ADD_BUFFER = 11
 READ_INPUT = 12
 MSG_BAD_PARAMS = 16
 REGISTER_PORT = 17
+SET_VALUE = 18
+STOP_INSTRUMENT = 19
 
 ENVELOPE_FOLLOWER = 14
 PITCH_TRACKER = 15
@@ -27,6 +29,7 @@ ORC_DIR = 'orc'
 _cmdToName = {
     LOAD_INSTRUMENT: 'add', 
     RELOAD_INSTRUMENT: 'reload', 
+    STOP_INSTRUMENT: 'stopinstrument', 
     STOP_ALL_VOICES: 'stopall', 
     LIST_INSTRUMENTS: 'list', 
     PLAY_INSTRUMENT: 'play', 
@@ -38,12 +41,14 @@ _cmdToName = {
     MSG_INVALID_INSTRUMENT: 'invalid_instrument', 
     ADD_BUFFER: 'add_buffer',
     READ_INPUT: 'read_input',
+    SET_VALUE: 'set_value',
 }
 
 _nameToCmd = {
     'add': LOAD_INSTRUMENT, 
     'load': LOAD_INSTRUMENT, 
     'reload': RELOAD_INSTRUMENT, 
+    'stopinstrument': STOP_INSTRUMENT, 
     'stopall': STOP_ALL_VOICES,
     'list': LIST_INSTRUMENTS, 
     'play': PLAY_INSTRUMENT, 
@@ -55,6 +60,7 @@ _nameToCmd = {
     'invalid_instrument': MSG_INVALID_INSTRUMENT,
     'add_buffer': ADD_BUFFER,
     'read_input': READ_INPUT,
+    'set_value': SET_VALUE,
 }
 
 def ntoc(name):

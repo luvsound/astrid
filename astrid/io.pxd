@@ -9,3 +9,4 @@ cdef class BufferNode:
     cpdef double[:,:] next_block(BufferNode self, int block_size)
 
 cdef void init_voice(object instrument, object params, object buf_q)
+cdef tuple collect_players(object instrument)

@@ -36,16 +36,26 @@ def load_instrument(name, path, shutdown=None):
             try:
                 spec.loader.exec_module(renderer)
             except Exception as e:
-                logger.error(e)
+                logger.error('Error loading instrument module: %s' % str(e))
 
-            return Instrument(name, renderer, shutdown)
+            return Instrument(name, path, renderer, shutdown)
         else:
             logger.error(path)
     except TypeError as e:
-        logger.error(e)
+        logger.error('TypeError loading instrument module: %s' % str(e))
         raise InstrumentNotFoundError(name) from e
 
+cdef class SessionParamBucket:
+    """ params[key] to params.key
+    """
+    def __init__(self):
+        self._bus = redis.StrictRedis(host='localhost', port=6379, db=0)
 
+    def __getattr__(self, key):
+        return self.get(key)
+
+    def get(self, key, default=None):
+        return self._bus.get(key) or default
 
 cdef class ParamBucket:
     """ params[key] to params.key
@@ -75,10 +85,10 @@ cdef class EventContext:
             before=None
         ):
 
-        self.bus = redis.StrictRedis(host='localhost', port=6379, db=0)
         self.before = before
-        self.m = midi.MidiBucket(midi_devices, midi_maps, self.bus)
+        self.m = midi.MidiBucket(midi_devices, midi_maps)
         self.p = ParamBucket(params)
+        self.s = SessionParamBucket() 
         self.client = None
         self.instrument_name = instrument_name
         self.running = running
@@ -114,11 +124,26 @@ cdef class EventContext:
         return self.p._params
 
 cdef class Instrument:
-    def __init__(self, str name, object renderer, object shutdown):
+    def __init__(self, str name, str path, object renderer, object shutdown):
         self.name = name
+        self.path = path
         self.renderer = renderer
         self.sounds = self.load_sounds()
         self.shutdown = shutdown
+
+    def reload(self):
+        logger.info('Reloading instrument %s from %s' % (self.name, self.path))
+        spec = importlib.util.spec_from_file_location(self.name, self.path)
+        if spec is not None:
+            renderer = importlib.util.module_from_spec(spec)
+            try:
+                spec.loader.exec_module(renderer)
+            except Exception as e:
+                logger.error('Error loading instrument module: %s' % str(e))
+
+            self.renderer = renderer
+        else:
+            logger.error(self.path)
 
     def load_sounds(self):
         if hasattr(self.renderer, 'SOUNDS') and isinstance(self.renderer.SOUNDS, list):
