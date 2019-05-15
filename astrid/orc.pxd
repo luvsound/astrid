@@ -19,6 +19,7 @@ cdef class EventContext:
     cdef public object bus
     cdef public object sounds
     cdef public int count
+    cdef public int tick
 
 cdef class Instrument:
     cdef public str name

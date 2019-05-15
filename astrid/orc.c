@@ -881,11 +881,12 @@ struct __pyx_obj_6astrid_3orc_EventContext {
   PyObject *bus;
   PyObject *sounds;
   int count;
+  int tick;
 };
 
 
-/* "astrid/orc.pxd":23
- *     cdef public int count
+/* "astrid/orc.pxd":24
+ *     cdef public int tick
  * 
  * cdef class Instrument:             # <<<<<<<<<<<<<<
  *     cdef public str name
@@ -1619,8 +1620,8 @@ static const char __pyx_k_InstrumentNotFoundError___init[] = "InstrumentNotFound
 static const char __pyx_k_pyx_unpickle_SessionParamBucke[] = "__pyx_unpickle_SessionParamBucket";
 static const char __pyx_k_Error_loading_instrument_module[] = "Error loading instrument module: %s";
 static const char __pyx_k_INSTRUMENT_RENDERER_KEY_TEMPLATE[] = "INSTRUMENT_RENDERER_KEY_TEMPLATE";
-static const char __pyx_k_Incompatible_checksums_s_vs_0x17[] = "Incompatible checksums (%s vs 0x1717b59 = (before, bus, client, count, instrument_name, m, p, running, s, shutdown, sounds, stop_me))";
 static const char __pyx_k_Incompatible_checksums_s_vs_0x73[] = "Incompatible checksums (%s vs 0x7321d86 = (_bus))";
+static const char __pyx_k_Incompatible_checksums_s_vs_0xa1[] = "Incompatible checksums (%s vs 0xa186482 = (before, bus, client, count, instrument_name, m, p, running, s, shutdown, sounds, stop_me, tick))";
 static const char __pyx_k_Incompatible_checksums_s_vs_0xc3[] = "Incompatible checksums (%s vs 0xc3af93c = (name, path, renderer, shutdown, sounds))";
 static const char __pyx_k_Incompatible_checksums_s_vs_0xd5[] = "Incompatible checksums (%s vs 0xd567b7e = (_params))";
 static const char __pyx_k_TypeError_loading_instrument_mod[] = "TypeError loading instrument module: %s";
@@ -1629,8 +1630,8 @@ static PyObject *__pyx_n_s_Event;
 static PyObject *__pyx_n_s_EventContext;
 static PyObject *__pyx_n_s_FileSystemEventHandler;
 static PyObject *__pyx_n_s_INSTRUMENT_RENDERER_KEY_TEMPLATE;
-static PyObject *__pyx_kp_s_Incompatible_checksums_s_vs_0x17;
 static PyObject *__pyx_kp_s_Incompatible_checksums_s_vs_0x73;
+static PyObject *__pyx_kp_s_Incompatible_checksums_s_vs_0xa1;
 static PyObject *__pyx_kp_s_Incompatible_checksums_s_vs_0xc3;
 static PyObject *__pyx_kp_s_Incompatible_checksums_s_vs_0xd5;
 static PyObject *__pyx_n_s_IndexError;
@@ -1822,6 +1823,8 @@ static int __pyx_pf_6astrid_3orc_12EventContext_6sounds_2__set__(struct __pyx_ob
 static int __pyx_pf_6astrid_3orc_12EventContext_6sounds_4__del__(struct __pyx_obj_6astrid_3orc_EventContext *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_6astrid_3orc_12EventContext_5count___get__(struct __pyx_obj_6astrid_3orc_EventContext *__pyx_v_self); /* proto */
 static int __pyx_pf_6astrid_3orc_12EventContext_5count_2__set__(struct __pyx_obj_6astrid_3orc_EventContext *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
+static PyObject *__pyx_pf_6astrid_3orc_12EventContext_4tick___get__(struct __pyx_obj_6astrid_3orc_EventContext *__pyx_v_self); /* proto */
+static int __pyx_pf_6astrid_3orc_12EventContext_4tick_2__set__(struct __pyx_obj_6astrid_3orc_EventContext *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
 static PyObject *__pyx_pf_6astrid_3orc_12EventContext_12__reduce_cython__(struct __pyx_obj_6astrid_3orc_EventContext *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_6astrid_3orc_12EventContext_14__setstate_cython__(struct __pyx_obj_6astrid_3orc_EventContext *__pyx_v_self, PyObject *__pyx_v___pyx_state); /* proto */
 static int __pyx_pf_6astrid_3orc_10Instrument___init__(struct __pyx_obj_6astrid_3orc_Instrument *__pyx_v_self, PyObject *__pyx_v_name, PyObject *__pyx_v_path, PyObject *__pyx_v_renderer, PyObject *__pyx_v_shutdown); /* proto */
@@ -1861,8 +1864,8 @@ static PyObject *__pyx_int_0;
 static PyObject *__pyx_int_1;
 static PyObject *__pyx_int_6379;
 static PyObject *__pyx_int_44100;
-static PyObject *__pyx_int_24214361;
 static PyObject *__pyx_int_120724870;
+static PyObject *__pyx_int_169370754;
 static PyObject *__pyx_int_205191484;
 static PyObject *__pyx_int_223771518;
 static PyObject *__pyx_int_neg_3;
@@ -5891,7 +5894,7 @@ static int __pyx_pf_6astrid_3orc_12EventContext_3bus_4__del__(struct __pyx_obj_6
  *     cdef public object bus
  *     cdef public object sounds             # <<<<<<<<<<<<<<
  *     cdef public int count
- * 
+ *     cdef public int tick
  */
 
 /* Python wrapper */
@@ -5985,8 +5988,8 @@ static int __pyx_pf_6astrid_3orc_12EventContext_6sounds_4__del__(struct __pyx_ob
  *     cdef public object bus
  *     cdef public object sounds
  *     cdef public int count             # <<<<<<<<<<<<<<
+ *     cdef public int tick
  * 
- * cdef class Instrument:
  */
 
 /* Python wrapper */
@@ -6057,6 +6060,82 @@ static int __pyx_pf_6astrid_3orc_12EventContext_5count_2__set__(struct __pyx_obj
   return __pyx_r;
 }
 
+/* "astrid/orc.pxd":22
+ *     cdef public object sounds
+ *     cdef public int count
+ *     cdef public int tick             # <<<<<<<<<<<<<<
+ * 
+ * cdef class Instrument:
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_6astrid_3orc_12EventContext_4tick_1__get__(PyObject *__pyx_v_self); /*proto*/
+static PyObject *__pyx_pw_6astrid_3orc_12EventContext_4tick_1__get__(PyObject *__pyx_v_self) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__get__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_6astrid_3orc_12EventContext_4tick___get__(((struct __pyx_obj_6astrid_3orc_EventContext *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_6astrid_3orc_12EventContext_4tick___get__(struct __pyx_obj_6astrid_3orc_EventContext *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  __Pyx_RefNannySetupContext("__get__", 0);
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->tick); if (unlikely(!__pyx_t_1)) __PYX_ERR(2, 22, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("astrid.orc.EventContext.tick.__get__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* Python wrapper */
+static int __pyx_pw_6astrid_3orc_12EventContext_4tick_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value); /*proto*/
+static int __pyx_pw_6astrid_3orc_12EventContext_4tick_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("__set__ (wrapper)", 0);
+  __pyx_r = __pyx_pf_6astrid_3orc_12EventContext_4tick_2__set__(((struct __pyx_obj_6astrid_3orc_EventContext *)__pyx_v_self), ((PyObject *)__pyx_v_value));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static int __pyx_pf_6astrid_3orc_12EventContext_4tick_2__set__(struct __pyx_obj_6astrid_3orc_EventContext *__pyx_v_self, PyObject *__pyx_v_value) {
+  int __pyx_r;
+  __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  __Pyx_RefNannySetupContext("__set__", 0);
+  __pyx_t_1 = __Pyx_PyInt_As_int(__pyx_v_value); if (unlikely((__pyx_t_1 == (int)-1) && PyErr_Occurred())) __PYX_ERR(2, 22, __pyx_L1_error)
+  __pyx_v_self->tick = __pyx_t_1;
+
+  /* function exit code */
+  __pyx_r = 0;
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_AddTraceback("astrid.orc.EventContext.tick.__set__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = -1;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
 /* "(tree fragment)":1
  * def __reduce_cython__(self):             # <<<<<<<<<<<<<<
  *     cdef tuple state
@@ -6084,84 +6163,89 @@ static PyObject *__pyx_pf_6astrid_3orc_12EventContext_12__reduce_cython__(struct
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   PyObject *__pyx_t_2 = NULL;
-  int __pyx_t_3;
+  PyObject *__pyx_t_3 = NULL;
   int __pyx_t_4;
   int __pyx_t_5;
-  PyObject *__pyx_t_6 = NULL;
+  int __pyx_t_6;
   __Pyx_RefNannySetupContext("__reduce_cython__", 0);
 
   /* "(tree fragment)":5
  *     cdef object _dict
  *     cdef bint use_setstate
- *     state = (self.before, self.bus, self.client, self.count, self.instrument_name, self.m, self.p, self.running, self.s, self.shutdown, self.sounds, self.stop_me)             # <<<<<<<<<<<<<<
+ *     state = (self.before, self.bus, self.client, self.count, self.instrument_name, self.m, self.p, self.running, self.s, self.shutdown, self.sounds, self.stop_me, self.tick)             # <<<<<<<<<<<<<<
  *     _dict = getattr(self, '__dict__', None)
  *     if _dict is not None:
  */
   __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->count); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 5, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyTuple_New(12); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 5, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_self->tick); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 5, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = PyTuple_New(13); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 5, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
   __Pyx_INCREF(__pyx_v_self->before);
   __Pyx_GIVEREF(__pyx_v_self->before);
-  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_v_self->before);
+  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_v_self->before);
   __Pyx_INCREF(__pyx_v_self->bus);
   __Pyx_GIVEREF(__pyx_v_self->bus);
-  PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_v_self->bus);
+  PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_self->bus);
   __Pyx_INCREF(__pyx_v_self->client);
   __Pyx_GIVEREF(__pyx_v_self->client);
-  PyTuple_SET_ITEM(__pyx_t_2, 2, __pyx_v_self->client);
+  PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_v_self->client);
   __Pyx_GIVEREF(__pyx_t_1);
-  PyTuple_SET_ITEM(__pyx_t_2, 3, __pyx_t_1);
+  PyTuple_SET_ITEM(__pyx_t_3, 3, __pyx_t_1);
   __Pyx_INCREF(__pyx_v_self->instrument_name);
   __Pyx_GIVEREF(__pyx_v_self->instrument_name);
-  PyTuple_SET_ITEM(__pyx_t_2, 4, __pyx_v_self->instrument_name);
+  PyTuple_SET_ITEM(__pyx_t_3, 4, __pyx_v_self->instrument_name);
   __Pyx_INCREF(((PyObject *)__pyx_v_self->m));
   __Pyx_GIVEREF(((PyObject *)__pyx_v_self->m));
-  PyTuple_SET_ITEM(__pyx_t_2, 5, ((PyObject *)__pyx_v_self->m));
+  PyTuple_SET_ITEM(__pyx_t_3, 5, ((PyObject *)__pyx_v_self->m));
   __Pyx_INCREF(((PyObject *)__pyx_v_self->p));
   __Pyx_GIVEREF(((PyObject *)__pyx_v_self->p));
-  PyTuple_SET_ITEM(__pyx_t_2, 6, ((PyObject *)__pyx_v_self->p));
+  PyTuple_SET_ITEM(__pyx_t_3, 6, ((PyObject *)__pyx_v_self->p));
   __Pyx_INCREF(__pyx_v_self->running);
   __Pyx_GIVEREF(__pyx_v_self->running);
-  PyTuple_SET_ITEM(__pyx_t_2, 7, __pyx_v_self->running);
+  PyTuple_SET_ITEM(__pyx_t_3, 7, __pyx_v_self->running);
   __Pyx_INCREF(((PyObject *)__pyx_v_self->s));
   __Pyx_GIVEREF(((PyObject *)__pyx_v_self->s));
-  PyTuple_SET_ITEM(__pyx_t_2, 8, ((PyObject *)__pyx_v_self->s));
+  PyTuple_SET_ITEM(__pyx_t_3, 8, ((PyObject *)__pyx_v_self->s));
   __Pyx_INCREF(__pyx_v_self->shutdown);
   __Pyx_GIVEREF(__pyx_v_self->shutdown);
-  PyTuple_SET_ITEM(__pyx_t_2, 9, __pyx_v_self->shutdown);
+  PyTuple_SET_ITEM(__pyx_t_3, 9, __pyx_v_self->shutdown);
   __Pyx_INCREF(__pyx_v_self->sounds);
   __Pyx_GIVEREF(__pyx_v_self->sounds);
-  PyTuple_SET_ITEM(__pyx_t_2, 10, __pyx_v_self->sounds);
+  PyTuple_SET_ITEM(__pyx_t_3, 10, __pyx_v_self->sounds);
   __Pyx_INCREF(__pyx_v_self->stop_me);
   __Pyx_GIVEREF(__pyx_v_self->stop_me);
-  PyTuple_SET_ITEM(__pyx_t_2, 11, __pyx_v_self->stop_me);
+  PyTuple_SET_ITEM(__pyx_t_3, 11, __pyx_v_self->stop_me);
+  __Pyx_GIVEREF(__pyx_t_2);
+  PyTuple_SET_ITEM(__pyx_t_3, 12, __pyx_t_2);
   __pyx_t_1 = 0;
-  __pyx_v_state = ((PyObject*)__pyx_t_2);
   __pyx_t_2 = 0;
+  __pyx_v_state = ((PyObject*)__pyx_t_3);
+  __pyx_t_3 = 0;
 
   /* "(tree fragment)":6
  *     cdef bint use_setstate
- *     state = (self.before, self.bus, self.client, self.count, self.instrument_name, self.m, self.p, self.running, self.s, self.shutdown, self.sounds, self.stop_me)
+ *     state = (self.before, self.bus, self.client, self.count, self.instrument_name, self.m, self.p, self.running, self.s, self.shutdown, self.sounds, self.stop_me, self.tick)
  *     _dict = getattr(self, '__dict__', None)             # <<<<<<<<<<<<<<
  *     if _dict is not None:
  *         state += (_dict,)
  */
-  __pyx_t_2 = __Pyx_GetAttr3(((PyObject *)__pyx_v_self), __pyx_n_s_dict, Py_None); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 6, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_v__dict = __pyx_t_2;
-  __pyx_t_2 = 0;
+  __pyx_t_3 = __Pyx_GetAttr3(((PyObject *)__pyx_v_self), __pyx_n_s_dict, Py_None); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 6, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_v__dict = __pyx_t_3;
+  __pyx_t_3 = 0;
 
   /* "(tree fragment)":7
- *     state = (self.before, self.bus, self.client, self.count, self.instrument_name, self.m, self.p, self.running, self.s, self.shutdown, self.sounds, self.stop_me)
+ *     state = (self.before, self.bus, self.client, self.count, self.instrument_name, self.m, self.p, self.running, self.s, self.shutdown, self.sounds, self.stop_me, self.tick)
  *     _dict = getattr(self, '__dict__', None)
  *     if _dict is not None:             # <<<<<<<<<<<<<<
  *         state += (_dict,)
  *         use_setstate = True
  */
-  __pyx_t_3 = (__pyx_v__dict != Py_None);
-  __pyx_t_4 = (__pyx_t_3 != 0);
-  if (__pyx_t_4) {
+  __pyx_t_4 = (__pyx_v__dict != Py_None);
+  __pyx_t_5 = (__pyx_t_4 != 0);
+  if (__pyx_t_5) {
 
     /* "(tree fragment)":8
  *     _dict = getattr(self, '__dict__', None)
@@ -6170,16 +6254,16 @@ static PyObject *__pyx_pf_6astrid_3orc_12EventContext_12__reduce_cython__(struct
  *         use_setstate = True
  *     else:
  */
-    __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 8, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 8, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
     __Pyx_INCREF(__pyx_v__dict);
     __Pyx_GIVEREF(__pyx_v__dict);
-    PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_v__dict);
-    __pyx_t_1 = PyNumber_InPlaceAdd(__pyx_v_state, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 8, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __Pyx_DECREF_SET(__pyx_v_state, ((PyObject*)__pyx_t_1));
-    __pyx_t_1 = 0;
+    PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_v__dict);
+    __pyx_t_2 = PyNumber_InPlaceAdd(__pyx_v_state, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 8, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_DECREF_SET(__pyx_v_state, ((PyObject*)__pyx_t_2));
+    __pyx_t_2 = 0;
 
     /* "(tree fragment)":9
  *     if _dict is not None:
@@ -6191,7 +6275,7 @@ static PyObject *__pyx_pf_6astrid_3orc_12EventContext_12__reduce_cython__(struct
     __pyx_v_use_setstate = 1;
 
     /* "(tree fragment)":7
- *     state = (self.before, self.bus, self.client, self.count, self.instrument_name, self.m, self.p, self.running, self.s, self.shutdown, self.sounds, self.stop_me)
+ *     state = (self.before, self.bus, self.client, self.count, self.instrument_name, self.m, self.p, self.running, self.s, self.shutdown, self.sounds, self.stop_me, self.tick)
  *     _dict = getattr(self, '__dict__', None)
  *     if _dict is not None:             # <<<<<<<<<<<<<<
  *         state += (_dict,)
@@ -6205,84 +6289,84 @@ static PyObject *__pyx_pf_6astrid_3orc_12EventContext_12__reduce_cython__(struct
  *     else:
  *         use_setstate = self.before is not None or self.bus is not None or self.client is not None or self.instrument_name is not None or self.m is not None or self.p is not None or self.running is not None or self.s is not None or self.shutdown is not None or self.sounds is not None or self.stop_me is not None             # <<<<<<<<<<<<<<
  *     if use_setstate:
- *         return __pyx_unpickle_EventContext, (type(self), 0x1717b59, None), state
+ *         return __pyx_unpickle_EventContext, (type(self), 0xa186482, None), state
  */
   /*else*/ {
-    __pyx_t_3 = (__pyx_v_self->before != Py_None);
-    __pyx_t_5 = (__pyx_t_3 != 0);
-    if (!__pyx_t_5) {
+    __pyx_t_4 = (__pyx_v_self->before != Py_None);
+    __pyx_t_6 = (__pyx_t_4 != 0);
+    if (!__pyx_t_6) {
     } else {
-      __pyx_t_4 = __pyx_t_5;
+      __pyx_t_5 = __pyx_t_6;
       goto __pyx_L4_bool_binop_done;
     }
-    __pyx_t_5 = (__pyx_v_self->bus != Py_None);
-    __pyx_t_3 = (__pyx_t_5 != 0);
-    if (!__pyx_t_3) {
+    __pyx_t_6 = (__pyx_v_self->bus != Py_None);
+    __pyx_t_4 = (__pyx_t_6 != 0);
+    if (!__pyx_t_4) {
     } else {
-      __pyx_t_4 = __pyx_t_3;
+      __pyx_t_5 = __pyx_t_4;
       goto __pyx_L4_bool_binop_done;
     }
-    __pyx_t_3 = (__pyx_v_self->client != Py_None);
-    __pyx_t_5 = (__pyx_t_3 != 0);
-    if (!__pyx_t_5) {
+    __pyx_t_4 = (__pyx_v_self->client != Py_None);
+    __pyx_t_6 = (__pyx_t_4 != 0);
+    if (!__pyx_t_6) {
     } else {
-      __pyx_t_4 = __pyx_t_5;
+      __pyx_t_5 = __pyx_t_6;
       goto __pyx_L4_bool_binop_done;
     }
-    __pyx_t_5 = (__pyx_v_self->instrument_name != ((PyObject*)Py_None));
-    __pyx_t_3 = (__pyx_t_5 != 0);
-    if (!__pyx_t_3) {
+    __pyx_t_6 = (__pyx_v_self->instrument_name != ((PyObject*)Py_None));
+    __pyx_t_4 = (__pyx_t_6 != 0);
+    if (!__pyx_t_4) {
     } else {
-      __pyx_t_4 = __pyx_t_3;
+      __pyx_t_5 = __pyx_t_4;
       goto __pyx_L4_bool_binop_done;
     }
-    __pyx_t_3 = (((PyObject *)__pyx_v_self->m) != Py_None);
-    __pyx_t_5 = (__pyx_t_3 != 0);
-    if (!__pyx_t_5) {
+    __pyx_t_4 = (((PyObject *)__pyx_v_self->m) != Py_None);
+    __pyx_t_6 = (__pyx_t_4 != 0);
+    if (!__pyx_t_6) {
     } else {
-      __pyx_t_4 = __pyx_t_5;
+      __pyx_t_5 = __pyx_t_6;
       goto __pyx_L4_bool_binop_done;
     }
-    __pyx_t_5 = (((PyObject *)__pyx_v_self->p) != Py_None);
-    __pyx_t_3 = (__pyx_t_5 != 0);
-    if (!__pyx_t_3) {
+    __pyx_t_6 = (((PyObject *)__pyx_v_self->p) != Py_None);
+    __pyx_t_4 = (__pyx_t_6 != 0);
+    if (!__pyx_t_4) {
     } else {
-      __pyx_t_4 = __pyx_t_3;
+      __pyx_t_5 = __pyx_t_4;
       goto __pyx_L4_bool_binop_done;
     }
-    __pyx_t_3 = (__pyx_v_self->running != Py_None);
-    __pyx_t_5 = (__pyx_t_3 != 0);
-    if (!__pyx_t_5) {
+    __pyx_t_4 = (__pyx_v_self->running != Py_None);
+    __pyx_t_6 = (__pyx_t_4 != 0);
+    if (!__pyx_t_6) {
     } else {
-      __pyx_t_4 = __pyx_t_5;
+      __pyx_t_5 = __pyx_t_6;
       goto __pyx_L4_bool_binop_done;
     }
-    __pyx_t_5 = (((PyObject *)__pyx_v_self->s) != Py_None);
-    __pyx_t_3 = (__pyx_t_5 != 0);
-    if (!__pyx_t_3) {
+    __pyx_t_6 = (((PyObject *)__pyx_v_self->s) != Py_None);
+    __pyx_t_4 = (__pyx_t_6 != 0);
+    if (!__pyx_t_4) {
     } else {
-      __pyx_t_4 = __pyx_t_3;
+      __pyx_t_5 = __pyx_t_4;
       goto __pyx_L4_bool_binop_done;
     }
-    __pyx_t_3 = (__pyx_v_self->shutdown != Py_None);
-    __pyx_t_5 = (__pyx_t_3 != 0);
-    if (!__pyx_t_5) {
+    __pyx_t_4 = (__pyx_v_self->shutdown != Py_None);
+    __pyx_t_6 = (__pyx_t_4 != 0);
+    if (!__pyx_t_6) {
     } else {
-      __pyx_t_4 = __pyx_t_5;
+      __pyx_t_5 = __pyx_t_6;
       goto __pyx_L4_bool_binop_done;
     }
-    __pyx_t_5 = (__pyx_v_self->sounds != Py_None);
-    __pyx_t_3 = (__pyx_t_5 != 0);
-    if (!__pyx_t_3) {
+    __pyx_t_6 = (__pyx_v_self->sounds != Py_None);
+    __pyx_t_4 = (__pyx_t_6 != 0);
+    if (!__pyx_t_4) {
     } else {
-      __pyx_t_4 = __pyx_t_3;
+      __pyx_t_5 = __pyx_t_4;
       goto __pyx_L4_bool_binop_done;
     }
-    __pyx_t_3 = (__pyx_v_self->stop_me != Py_None);
-    __pyx_t_5 = (__pyx_t_3 != 0);
-    __pyx_t_4 = __pyx_t_5;
+    __pyx_t_4 = (__pyx_v_self->stop_me != Py_None);
+    __pyx_t_6 = (__pyx_t_4 != 0);
+    __pyx_t_5 = __pyx_t_6;
     __pyx_L4_bool_binop_done:;
-    __pyx_v_use_setstate = __pyx_t_4;
+    __pyx_v_use_setstate = __pyx_t_5;
   }
   __pyx_L3:;
 
@@ -6290,89 +6374,89 @@ static PyObject *__pyx_pf_6astrid_3orc_12EventContext_12__reduce_cython__(struct
  *     else:
  *         use_setstate = self.before is not None or self.bus is not None or self.client is not None or self.instrument_name is not None or self.m is not None or self.p is not None or self.running is not None or self.s is not None or self.shutdown is not None or self.sounds is not None or self.stop_me is not None
  *     if use_setstate:             # <<<<<<<<<<<<<<
- *         return __pyx_unpickle_EventContext, (type(self), 0x1717b59, None), state
+ *         return __pyx_unpickle_EventContext, (type(self), 0xa186482, None), state
  *     else:
  */
-  __pyx_t_4 = (__pyx_v_use_setstate != 0);
-  if (__pyx_t_4) {
+  __pyx_t_5 = (__pyx_v_use_setstate != 0);
+  if (__pyx_t_5) {
 
     /* "(tree fragment)":13
  *         use_setstate = self.before is not None or self.bus is not None or self.client is not None or self.instrument_name is not None or self.m is not None or self.p is not None or self.running is not None or self.s is not None or self.shutdown is not None or self.sounds is not None or self.stop_me is not None
  *     if use_setstate:
- *         return __pyx_unpickle_EventContext, (type(self), 0x1717b59, None), state             # <<<<<<<<<<<<<<
+ *         return __pyx_unpickle_EventContext, (type(self), 0xa186482, None), state             # <<<<<<<<<<<<<<
  *     else:
- *         return __pyx_unpickle_EventContext, (type(self), 0x1717b59, state)
+ *         return __pyx_unpickle_EventContext, (type(self), 0xa186482, state)
  */
     __Pyx_XDECREF(__pyx_r);
-    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_pyx_unpickle_EventContext); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 13, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = PyTuple_New(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 13, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_pyx_unpickle_EventContext); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 13, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 13, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
     __Pyx_INCREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
     __Pyx_GIVEREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
-    PyTuple_SET_ITEM(__pyx_t_2, 0, ((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
-    __Pyx_INCREF(__pyx_int_24214361);
-    __Pyx_GIVEREF(__pyx_int_24214361);
-    PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_int_24214361);
+    PyTuple_SET_ITEM(__pyx_t_3, 0, ((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
+    __Pyx_INCREF(__pyx_int_169370754);
+    __Pyx_GIVEREF(__pyx_int_169370754);
+    PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_int_169370754);
     __Pyx_INCREF(Py_None);
     __Pyx_GIVEREF(Py_None);
-    PyTuple_SET_ITEM(__pyx_t_2, 2, Py_None);
-    __pyx_t_6 = PyTuple_New(3); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 13, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
-    __Pyx_GIVEREF(__pyx_t_1);
-    PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_1);
+    PyTuple_SET_ITEM(__pyx_t_3, 2, Py_None);
+    __pyx_t_1 = PyTuple_New(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 13, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
     __Pyx_GIVEREF(__pyx_t_2);
-    PyTuple_SET_ITEM(__pyx_t_6, 1, __pyx_t_2);
+    PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_2);
+    __Pyx_GIVEREF(__pyx_t_3);
+    PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_t_3);
     __Pyx_INCREF(__pyx_v_state);
     __Pyx_GIVEREF(__pyx_v_state);
-    PyTuple_SET_ITEM(__pyx_t_6, 2, __pyx_v_state);
-    __pyx_t_1 = 0;
+    PyTuple_SET_ITEM(__pyx_t_1, 2, __pyx_v_state);
     __pyx_t_2 = 0;
-    __pyx_r = __pyx_t_6;
-    __pyx_t_6 = 0;
+    __pyx_t_3 = 0;
+    __pyx_r = __pyx_t_1;
+    __pyx_t_1 = 0;
     goto __pyx_L0;
 
     /* "(tree fragment)":12
  *     else:
  *         use_setstate = self.before is not None or self.bus is not None or self.client is not None or self.instrument_name is not None or self.m is not None or self.p is not None or self.running is not None or self.s is not None or self.shutdown is not None or self.sounds is not None or self.stop_me is not None
  *     if use_setstate:             # <<<<<<<<<<<<<<
- *         return __pyx_unpickle_EventContext, (type(self), 0x1717b59, None), state
+ *         return __pyx_unpickle_EventContext, (type(self), 0xa186482, None), state
  *     else:
  */
   }
 
   /* "(tree fragment)":15
- *         return __pyx_unpickle_EventContext, (type(self), 0x1717b59, None), state
+ *         return __pyx_unpickle_EventContext, (type(self), 0xa186482, None), state
  *     else:
- *         return __pyx_unpickle_EventContext, (type(self), 0x1717b59, state)             # <<<<<<<<<<<<<<
+ *         return __pyx_unpickle_EventContext, (type(self), 0xa186482, state)             # <<<<<<<<<<<<<<
  * def __setstate_cython__(self, __pyx_state):
  *     __pyx_unpickle_EventContext__set_state(self, __pyx_state)
  */
   /*else*/ {
     __Pyx_XDECREF(__pyx_r);
-    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_pyx_unpickle_EventContext); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 15, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_2 = PyTuple_New(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 15, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_pyx_unpickle_EventContext); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 15, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 15, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
     __Pyx_INCREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
     __Pyx_GIVEREF(((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
-    PyTuple_SET_ITEM(__pyx_t_2, 0, ((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
-    __Pyx_INCREF(__pyx_int_24214361);
-    __Pyx_GIVEREF(__pyx_int_24214361);
-    PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_int_24214361);
+    PyTuple_SET_ITEM(__pyx_t_3, 0, ((PyObject *)Py_TYPE(((PyObject *)__pyx_v_self))));
+    __Pyx_INCREF(__pyx_int_169370754);
+    __Pyx_GIVEREF(__pyx_int_169370754);
+    PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_int_169370754);
     __Pyx_INCREF(__pyx_v_state);
     __Pyx_GIVEREF(__pyx_v_state);
-    PyTuple_SET_ITEM(__pyx_t_2, 2, __pyx_v_state);
-    __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 15, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_GIVEREF(__pyx_t_6);
-    PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_6);
-    __Pyx_GIVEREF(__pyx_t_2);
-    PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_t_2);
-    __pyx_t_6 = 0;
-    __pyx_t_2 = 0;
-    __pyx_r = __pyx_t_1;
+    PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_v_state);
+    __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 15, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_GIVEREF(__pyx_t_1);
+    PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1);
+    __Pyx_GIVEREF(__pyx_t_3);
+    PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_t_3);
     __pyx_t_1 = 0;
+    __pyx_t_3 = 0;
+    __pyx_r = __pyx_t_2;
+    __pyx_t_2 = 0;
     goto __pyx_L0;
   }
 
@@ -6386,7 +6470,7 @@ static PyObject *__pyx_pf_6astrid_3orc_12EventContext_12__reduce_cython__(struct
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_XDECREF(__pyx_t_3);
   __Pyx_AddTraceback("astrid.orc.EventContext.__reduce_cython__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
@@ -6399,7 +6483,7 @@ static PyObject *__pyx_pf_6astrid_3orc_12EventContext_12__reduce_cython__(struct
 
 /* "(tree fragment)":16
  *     else:
- *         return __pyx_unpickle_EventContext, (type(self), 0x1717b59, state)
+ *         return __pyx_unpickle_EventContext, (type(self), 0xa186482, state)
  * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
  *     __pyx_unpickle_EventContext__set_state(self, __pyx_state)
  */
@@ -6424,7 +6508,7 @@ static PyObject *__pyx_pf_6astrid_3orc_12EventContext_14__setstate_cython__(stru
   __Pyx_RefNannySetupContext("__setstate_cython__", 0);
 
   /* "(tree fragment)":17
- *         return __pyx_unpickle_EventContext, (type(self), 0x1717b59, state)
+ *         return __pyx_unpickle_EventContext, (type(self), 0xa186482, state)
  * def __setstate_cython__(self, __pyx_state):
  *     __pyx_unpickle_EventContext__set_state(self, __pyx_state)             # <<<<<<<<<<<<<<
  */
@@ -6435,7 +6519,7 @@ static PyObject *__pyx_pf_6astrid_3orc_12EventContext_14__setstate_cython__(stru
 
   /* "(tree fragment)":16
  *     else:
- *         return __pyx_unpickle_EventContext, (type(self), 0x1717b59, state)
+ *         return __pyx_unpickle_EventContext, (type(self), 0xa186482, state)
  * def __setstate_cython__(self, __pyx_state):             # <<<<<<<<<<<<<<
  *     __pyx_unpickle_EventContext__set_state(self, __pyx_state)
  */
@@ -8164,7 +8248,7 @@ static PyObject *__pyx_pf_6astrid_3orc_10Instrument_8create_ctx(struct __pyx_obj
   return __pyx_r;
 }
 
-/* "astrid/orc.pxd":24
+/* "astrid/orc.pxd":25
  * 
  * cdef class Instrument:
  *     cdef public str name             # <<<<<<<<<<<<<<
@@ -8219,7 +8303,7 @@ static int __pyx_pf_6astrid_3orc_10Instrument_4name_2__set__(struct __pyx_obj_6a
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("__set__", 0);
-  if (!(likely(PyString_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(2, 24, __pyx_L1_error)
+  if (!(likely(PyString_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(2, 25, __pyx_L1_error)
   __pyx_t_1 = __pyx_v_value;
   __Pyx_INCREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
@@ -8269,7 +8353,7 @@ static int __pyx_pf_6astrid_3orc_10Instrument_4name_4__del__(struct __pyx_obj_6a
   return __pyx_r;
 }
 
-/* "astrid/orc.pxd":25
+/* "astrid/orc.pxd":26
  * cdef class Instrument:
  *     cdef public str name
  *     cdef public str path             # <<<<<<<<<<<<<<
@@ -8324,7 +8408,7 @@ static int __pyx_pf_6astrid_3orc_10Instrument_4path_2__set__(struct __pyx_obj_6a
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("__set__", 0);
-  if (!(likely(PyString_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(2, 25, __pyx_L1_error)
+  if (!(likely(PyString_CheckExact(__pyx_v_value))||((__pyx_v_value) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_v_value)->tp_name), 0))) __PYX_ERR(2, 26, __pyx_L1_error)
   __pyx_t_1 = __pyx_v_value;
   __Pyx_INCREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
@@ -8374,7 +8458,7 @@ static int __pyx_pf_6astrid_3orc_10Instrument_4path_4__del__(struct __pyx_obj_6a
   return __pyx_r;
 }
 
-/* "astrid/orc.pxd":26
+/* "astrid/orc.pxd":27
  *     cdef public str name
  *     cdef public str path
  *     cdef public object renderer             # <<<<<<<<<<<<<<
@@ -8469,7 +8553,7 @@ static int __pyx_pf_6astrid_3orc_10Instrument_8renderer_4__del__(struct __pyx_ob
   return __pyx_r;
 }
 
-/* "astrid/orc.pxd":27
+/* "astrid/orc.pxd":28
  *     cdef public str path
  *     cdef public object renderer
  *     cdef public object shutdown             # <<<<<<<<<<<<<<
@@ -8563,7 +8647,7 @@ static int __pyx_pf_6astrid_3orc_10Instrument_8shutdown_4__del__(struct __pyx_ob
   return __pyx_r;
 }
 
-/* "astrid/orc.pxd":28
+/* "astrid/orc.pxd":29
  *     cdef public object renderer
  *     cdef public object shutdown
  *     cdef public object sounds             # <<<<<<<<<<<<<<
@@ -10492,18 +10576,18 @@ static PyObject *__pyx_pf_6astrid_3orc_6__pyx_unpickle_EventContext(CYTHON_UNUSE
   /* "(tree fragment)":4
  *     cdef object __pyx_PickleError
  *     cdef object __pyx_result
- *     if __pyx_checksum != 0x1717b59:             # <<<<<<<<<<<<<<
+ *     if __pyx_checksum != 0xa186482:             # <<<<<<<<<<<<<<
  *         from pickle import PickleError as __pyx_PickleError
- *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x1717b59 = (before, bus, client, count, instrument_name, m, p, running, s, shutdown, sounds, stop_me))" % __pyx_checksum)
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0xa186482 = (before, bus, client, count, instrument_name, m, p, running, s, shutdown, sounds, stop_me, tick))" % __pyx_checksum)
  */
-  __pyx_t_1 = ((__pyx_v___pyx_checksum != 0x1717b59) != 0);
+  __pyx_t_1 = ((__pyx_v___pyx_checksum != 0xa186482) != 0);
   if (__pyx_t_1) {
 
     /* "(tree fragment)":5
  *     cdef object __pyx_result
- *     if __pyx_checksum != 0x1717b59:
+ *     if __pyx_checksum != 0xa186482:
  *         from pickle import PickleError as __pyx_PickleError             # <<<<<<<<<<<<<<
- *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x1717b59 = (before, bus, client, count, instrument_name, m, p, running, s, shutdown, sounds, stop_me))" % __pyx_checksum)
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0xa186482 = (before, bus, client, count, instrument_name, m, p, running, s, shutdown, sounds, stop_me, tick))" % __pyx_checksum)
  *     __pyx_result = EventContext.__new__(__pyx_type)
  */
     __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 5, __pyx_L1_error)
@@ -10522,15 +10606,15 @@ static PyObject *__pyx_pf_6astrid_3orc_6__pyx_unpickle_EventContext(CYTHON_UNUSE
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
     /* "(tree fragment)":6
- *     if __pyx_checksum != 0x1717b59:
+ *     if __pyx_checksum != 0xa186482:
  *         from pickle import PickleError as __pyx_PickleError
- *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x1717b59 = (before, bus, client, count, instrument_name, m, p, running, s, shutdown, sounds, stop_me))" % __pyx_checksum)             # <<<<<<<<<<<<<<
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0xa186482 = (before, bus, client, count, instrument_name, m, p, running, s, shutdown, sounds, stop_me, tick))" % __pyx_checksum)             # <<<<<<<<<<<<<<
  *     __pyx_result = EventContext.__new__(__pyx_type)
  *     if __pyx_state is not None:
  */
     __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v___pyx_checksum); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 6, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_4 = __Pyx_PyString_Format(__pyx_kp_s_Incompatible_checksums_s_vs_0x17, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 6, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyString_Format(__pyx_kp_s_Incompatible_checksums_s_vs_0xa1, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 6, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_INCREF(__pyx_v___pyx_PickleError);
@@ -10557,15 +10641,15 @@ static PyObject *__pyx_pf_6astrid_3orc_6__pyx_unpickle_EventContext(CYTHON_UNUSE
     /* "(tree fragment)":4
  *     cdef object __pyx_PickleError
  *     cdef object __pyx_result
- *     if __pyx_checksum != 0x1717b59:             # <<<<<<<<<<<<<<
+ *     if __pyx_checksum != 0xa186482:             # <<<<<<<<<<<<<<
  *         from pickle import PickleError as __pyx_PickleError
- *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x1717b59 = (before, bus, client, count, instrument_name, m, p, running, s, shutdown, sounds, stop_me))" % __pyx_checksum)
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0xa186482 = (before, bus, client, count, instrument_name, m, p, running, s, shutdown, sounds, stop_me, tick))" % __pyx_checksum)
  */
   }
 
   /* "(tree fragment)":7
  *         from pickle import PickleError as __pyx_PickleError
- *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x1717b59 = (before, bus, client, count, instrument_name, m, p, running, s, shutdown, sounds, stop_me))" % __pyx_checksum)
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0xa186482 = (before, bus, client, count, instrument_name, m, p, running, s, shutdown, sounds, stop_me, tick))" % __pyx_checksum)
  *     __pyx_result = EventContext.__new__(__pyx_type)             # <<<<<<<<<<<<<<
  *     if __pyx_state is not None:
  *         __pyx_unpickle_EventContext__set_state(<EventContext> __pyx_result, __pyx_state)
@@ -10591,7 +10675,7 @@ static PyObject *__pyx_pf_6astrid_3orc_6__pyx_unpickle_EventContext(CYTHON_UNUSE
   __pyx_t_3 = 0;
 
   /* "(tree fragment)":8
- *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x1717b59 = (before, bus, client, count, instrument_name, m, p, running, s, shutdown, sounds, stop_me))" % __pyx_checksum)
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0xa186482 = (before, bus, client, count, instrument_name, m, p, running, s, shutdown, sounds, stop_me, tick))" % __pyx_checksum)
  *     __pyx_result = EventContext.__new__(__pyx_type)
  *     if __pyx_state is not None:             # <<<<<<<<<<<<<<
  *         __pyx_unpickle_EventContext__set_state(<EventContext> __pyx_result, __pyx_state)
@@ -10614,7 +10698,7 @@ static PyObject *__pyx_pf_6astrid_3orc_6__pyx_unpickle_EventContext(CYTHON_UNUSE
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
     /* "(tree fragment)":8
- *         raise __pyx_PickleError("Incompatible checksums (%s vs 0x1717b59 = (before, bus, client, count, instrument_name, m, p, running, s, shutdown, sounds, stop_me))" % __pyx_checksum)
+ *         raise __pyx_PickleError("Incompatible checksums (%s vs 0xa186482 = (before, bus, client, count, instrument_name, m, p, running, s, shutdown, sounds, stop_me, tick))" % __pyx_checksum)
  *     __pyx_result = EventContext.__new__(__pyx_type)
  *     if __pyx_state is not None:             # <<<<<<<<<<<<<<
  *         __pyx_unpickle_EventContext__set_state(<EventContext> __pyx_result, __pyx_state)
@@ -10627,7 +10711,7 @@ static PyObject *__pyx_pf_6astrid_3orc_6__pyx_unpickle_EventContext(CYTHON_UNUSE
  *         __pyx_unpickle_EventContext__set_state(<EventContext> __pyx_result, __pyx_state)
  *     return __pyx_result             # <<<<<<<<<<<<<<
  * cdef __pyx_unpickle_EventContext__set_state(EventContext __pyx_result, tuple __pyx_state):
- *     __pyx_result.before = __pyx_state[0]; __pyx_result.bus = __pyx_state[1]; __pyx_result.client = __pyx_state[2]; __pyx_result.count = __pyx_state[3]; __pyx_result.instrument_name = __pyx_state[4]; __pyx_result.m = __pyx_state[5]; __pyx_result.p = __pyx_state[6]; __pyx_result.running = __pyx_state[7]; __pyx_result.s = __pyx_state[8]; __pyx_result.shutdown = __pyx_state[9]; __pyx_result.sounds = __pyx_state[10]; __pyx_result.stop_me = __pyx_state[11]
+ *     __pyx_result.before = __pyx_state[0]; __pyx_result.bus = __pyx_state[1]; __pyx_result.client = __pyx_state[2]; __pyx_result.count = __pyx_state[3]; __pyx_result.instrument_name = __pyx_state[4]; __pyx_result.m = __pyx_state[5]; __pyx_result.p = __pyx_state[6]; __pyx_result.running = __pyx_state[7]; __pyx_result.s = __pyx_state[8]; __pyx_result.shutdown = __pyx_state[9]; __pyx_result.sounds = __pyx_state[10]; __pyx_result.stop_me = __pyx_state[11]; __pyx_result.tick = __pyx_state[12]
  */
   __Pyx_XDECREF(__pyx_r);
   __Pyx_INCREF(__pyx_v___pyx_result);
@@ -10660,8 +10744,8 @@ static PyObject *__pyx_pf_6astrid_3orc_6__pyx_unpickle_EventContext(CYTHON_UNUSE
  *         __pyx_unpickle_EventContext__set_state(<EventContext> __pyx_result, __pyx_state)
  *     return __pyx_result
  * cdef __pyx_unpickle_EventContext__set_state(EventContext __pyx_result, tuple __pyx_state):             # <<<<<<<<<<<<<<
- *     __pyx_result.before = __pyx_state[0]; __pyx_result.bus = __pyx_state[1]; __pyx_result.client = __pyx_state[2]; __pyx_result.count = __pyx_state[3]; __pyx_result.instrument_name = __pyx_state[4]; __pyx_result.m = __pyx_state[5]; __pyx_result.p = __pyx_state[6]; __pyx_result.running = __pyx_state[7]; __pyx_result.s = __pyx_state[8]; __pyx_result.shutdown = __pyx_state[9]; __pyx_result.sounds = __pyx_state[10]; __pyx_result.stop_me = __pyx_state[11]
- *     if len(__pyx_state) > 12 and hasattr(__pyx_result, '__dict__'):
+ *     __pyx_result.before = __pyx_state[0]; __pyx_result.bus = __pyx_state[1]; __pyx_result.client = __pyx_state[2]; __pyx_result.count = __pyx_state[3]; __pyx_result.instrument_name = __pyx_state[4]; __pyx_result.m = __pyx_state[5]; __pyx_result.p = __pyx_state[6]; __pyx_result.running = __pyx_state[7]; __pyx_result.s = __pyx_state[8]; __pyx_result.shutdown = __pyx_state[9]; __pyx_result.sounds = __pyx_state[10]; __pyx_result.stop_me = __pyx_state[11]; __pyx_result.tick = __pyx_state[12]
+ *     if len(__pyx_state) > 13 and hasattr(__pyx_result, '__dict__'):
  */
 
 static PyObject *__pyx_f_6astrid_3orc___pyx_unpickle_EventContext__set_state(struct __pyx_obj_6astrid_3orc_EventContext *__pyx_v___pyx_result, PyObject *__pyx_v___pyx_state) {
@@ -10681,9 +10765,9 @@ static PyObject *__pyx_f_6astrid_3orc___pyx_unpickle_EventContext__set_state(str
   /* "(tree fragment)":12
  *     return __pyx_result
  * cdef __pyx_unpickle_EventContext__set_state(EventContext __pyx_result, tuple __pyx_state):
- *     __pyx_result.before = __pyx_state[0]; __pyx_result.bus = __pyx_state[1]; __pyx_result.client = __pyx_state[2]; __pyx_result.count = __pyx_state[3]; __pyx_result.instrument_name = __pyx_state[4]; __pyx_result.m = __pyx_state[5]; __pyx_result.p = __pyx_state[6]; __pyx_result.running = __pyx_state[7]; __pyx_result.s = __pyx_state[8]; __pyx_result.shutdown = __pyx_state[9]; __pyx_result.sounds = __pyx_state[10]; __pyx_result.stop_me = __pyx_state[11]             # <<<<<<<<<<<<<<
- *     if len(__pyx_state) > 12 and hasattr(__pyx_result, '__dict__'):
- *         __pyx_result.__dict__.update(__pyx_state[12])
+ *     __pyx_result.before = __pyx_state[0]; __pyx_result.bus = __pyx_state[1]; __pyx_result.client = __pyx_state[2]; __pyx_result.count = __pyx_state[3]; __pyx_result.instrument_name = __pyx_state[4]; __pyx_result.m = __pyx_state[5]; __pyx_result.p = __pyx_state[6]; __pyx_result.running = __pyx_state[7]; __pyx_result.s = __pyx_state[8]; __pyx_result.shutdown = __pyx_state[9]; __pyx_result.sounds = __pyx_state[10]; __pyx_result.stop_me = __pyx_state[11]; __pyx_result.tick = __pyx_state[12]             # <<<<<<<<<<<<<<
+ *     if len(__pyx_state) > 13 and hasattr(__pyx_result, '__dict__'):
+ *         __pyx_result.__dict__.update(__pyx_state[13])
  */
   if (unlikely(__pyx_v___pyx_state == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
@@ -10819,19 +10903,28 @@ static PyObject *__pyx_f_6astrid_3orc___pyx_unpickle_EventContext__set_state(str
   __Pyx_DECREF(__pyx_v___pyx_result->stop_me);
   __pyx_v___pyx_result->stop_me = __pyx_t_1;
   __pyx_t_1 = 0;
+  if (unlikely(__pyx_v___pyx_state == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
+    __PYX_ERR(1, 12, __pyx_L1_error)
+  }
+  __pyx_t_1 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 12, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 12, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyInt_As_int(__pyx_t_1); if (unlikely((__pyx_t_2 == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 12, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_v___pyx_result->tick = __pyx_t_2;
 
   /* "(tree fragment)":13
  * cdef __pyx_unpickle_EventContext__set_state(EventContext __pyx_result, tuple __pyx_state):
- *     __pyx_result.before = __pyx_state[0]; __pyx_result.bus = __pyx_state[1]; __pyx_result.client = __pyx_state[2]; __pyx_result.count = __pyx_state[3]; __pyx_result.instrument_name = __pyx_state[4]; __pyx_result.m = __pyx_state[5]; __pyx_result.p = __pyx_state[6]; __pyx_result.running = __pyx_state[7]; __pyx_result.s = __pyx_state[8]; __pyx_result.shutdown = __pyx_state[9]; __pyx_result.sounds = __pyx_state[10]; __pyx_result.stop_me = __pyx_state[11]
- *     if len(__pyx_state) > 12 and hasattr(__pyx_result, '__dict__'):             # <<<<<<<<<<<<<<
- *         __pyx_result.__dict__.update(__pyx_state[12])
+ *     __pyx_result.before = __pyx_state[0]; __pyx_result.bus = __pyx_state[1]; __pyx_result.client = __pyx_state[2]; __pyx_result.count = __pyx_state[3]; __pyx_result.instrument_name = __pyx_state[4]; __pyx_result.m = __pyx_state[5]; __pyx_result.p = __pyx_state[6]; __pyx_result.running = __pyx_state[7]; __pyx_result.s = __pyx_state[8]; __pyx_result.shutdown = __pyx_state[9]; __pyx_result.sounds = __pyx_state[10]; __pyx_result.stop_me = __pyx_state[11]; __pyx_result.tick = __pyx_state[12]
+ *     if len(__pyx_state) > 13 and hasattr(__pyx_result, '__dict__'):             # <<<<<<<<<<<<<<
+ *         __pyx_result.__dict__.update(__pyx_state[13])
  */
   if (unlikely(__pyx_v___pyx_state == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
     __PYX_ERR(1, 13, __pyx_L1_error)
   }
   __pyx_t_4 = PyTuple_GET_SIZE(__pyx_v___pyx_state); if (unlikely(__pyx_t_4 == ((Py_ssize_t)-1))) __PYX_ERR(1, 13, __pyx_L1_error)
-  __pyx_t_5 = ((__pyx_t_4 > 12) != 0);
+  __pyx_t_5 = ((__pyx_t_4 > 13) != 0);
   if (__pyx_t_5) {
   } else {
     __pyx_t_3 = __pyx_t_5;
@@ -10844,9 +10937,9 @@ static PyObject *__pyx_f_6astrid_3orc___pyx_unpickle_EventContext__set_state(str
   if (__pyx_t_3) {
 
     /* "(tree fragment)":14
- *     __pyx_result.before = __pyx_state[0]; __pyx_result.bus = __pyx_state[1]; __pyx_result.client = __pyx_state[2]; __pyx_result.count = __pyx_state[3]; __pyx_result.instrument_name = __pyx_state[4]; __pyx_result.m = __pyx_state[5]; __pyx_result.p = __pyx_state[6]; __pyx_result.running = __pyx_state[7]; __pyx_result.s = __pyx_state[8]; __pyx_result.shutdown = __pyx_state[9]; __pyx_result.sounds = __pyx_state[10]; __pyx_result.stop_me = __pyx_state[11]
- *     if len(__pyx_state) > 12 and hasattr(__pyx_result, '__dict__'):
- *         __pyx_result.__dict__.update(__pyx_state[12])             # <<<<<<<<<<<<<<
+ *     __pyx_result.before = __pyx_state[0]; __pyx_result.bus = __pyx_state[1]; __pyx_result.client = __pyx_state[2]; __pyx_result.count = __pyx_state[3]; __pyx_result.instrument_name = __pyx_state[4]; __pyx_result.m = __pyx_state[5]; __pyx_result.p = __pyx_state[6]; __pyx_result.running = __pyx_state[7]; __pyx_result.s = __pyx_state[8]; __pyx_result.shutdown = __pyx_state[9]; __pyx_result.sounds = __pyx_state[10]; __pyx_result.stop_me = __pyx_state[11]; __pyx_result.tick = __pyx_state[12]
+ *     if len(__pyx_state) > 13 and hasattr(__pyx_result, '__dict__'):
+ *         __pyx_result.__dict__.update(__pyx_state[13])             # <<<<<<<<<<<<<<
  */
     __pyx_t_7 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v___pyx_result), __pyx_n_s_dict); if (unlikely(!__pyx_t_7)) __PYX_ERR(1, 14, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
@@ -10857,7 +10950,7 @@ static PyObject *__pyx_f_6astrid_3orc___pyx_unpickle_EventContext__set_state(str
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
       __PYX_ERR(1, 14, __pyx_L1_error)
     }
-    __pyx_t_7 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 12, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_7)) __PYX_ERR(1, 14, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_GetItemInt_Tuple(__pyx_v___pyx_state, 13, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_7)) __PYX_ERR(1, 14, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __pyx_t_9 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_8))) {
@@ -10879,9 +10972,9 @@ static PyObject *__pyx_f_6astrid_3orc___pyx_unpickle_EventContext__set_state(str
 
     /* "(tree fragment)":13
  * cdef __pyx_unpickle_EventContext__set_state(EventContext __pyx_result, tuple __pyx_state):
- *     __pyx_result.before = __pyx_state[0]; __pyx_result.bus = __pyx_state[1]; __pyx_result.client = __pyx_state[2]; __pyx_result.count = __pyx_state[3]; __pyx_result.instrument_name = __pyx_state[4]; __pyx_result.m = __pyx_state[5]; __pyx_result.p = __pyx_state[6]; __pyx_result.running = __pyx_state[7]; __pyx_result.s = __pyx_state[8]; __pyx_result.shutdown = __pyx_state[9]; __pyx_result.sounds = __pyx_state[10]; __pyx_result.stop_me = __pyx_state[11]
- *     if len(__pyx_state) > 12 and hasattr(__pyx_result, '__dict__'):             # <<<<<<<<<<<<<<
- *         __pyx_result.__dict__.update(__pyx_state[12])
+ *     __pyx_result.before = __pyx_state[0]; __pyx_result.bus = __pyx_state[1]; __pyx_result.client = __pyx_state[2]; __pyx_result.count = __pyx_state[3]; __pyx_result.instrument_name = __pyx_state[4]; __pyx_result.m = __pyx_state[5]; __pyx_result.p = __pyx_state[6]; __pyx_result.running = __pyx_state[7]; __pyx_result.s = __pyx_state[8]; __pyx_result.shutdown = __pyx_state[9]; __pyx_result.sounds = __pyx_state[10]; __pyx_result.stop_me = __pyx_state[11]; __pyx_result.tick = __pyx_state[12]
+ *     if len(__pyx_state) > 13 and hasattr(__pyx_result, '__dict__'):             # <<<<<<<<<<<<<<
+ *         __pyx_result.__dict__.update(__pyx_state[13])
  */
   }
 
@@ -10889,8 +10982,8 @@ static PyObject *__pyx_f_6astrid_3orc___pyx_unpickle_EventContext__set_state(str
  *         __pyx_unpickle_EventContext__set_state(<EventContext> __pyx_result, __pyx_state)
  *     return __pyx_result
  * cdef __pyx_unpickle_EventContext__set_state(EventContext __pyx_result, tuple __pyx_state):             # <<<<<<<<<<<<<<
- *     __pyx_result.before = __pyx_state[0]; __pyx_result.bus = __pyx_state[1]; __pyx_result.client = __pyx_state[2]; __pyx_result.count = __pyx_state[3]; __pyx_result.instrument_name = __pyx_state[4]; __pyx_result.m = __pyx_state[5]; __pyx_result.p = __pyx_state[6]; __pyx_result.running = __pyx_state[7]; __pyx_result.s = __pyx_state[8]; __pyx_result.shutdown = __pyx_state[9]; __pyx_result.sounds = __pyx_state[10]; __pyx_result.stop_me = __pyx_state[11]
- *     if len(__pyx_state) > 12 and hasattr(__pyx_result, '__dict__'):
+ *     __pyx_result.before = __pyx_state[0]; __pyx_result.bus = __pyx_state[1]; __pyx_result.client = __pyx_state[2]; __pyx_result.count = __pyx_state[3]; __pyx_result.instrument_name = __pyx_state[4]; __pyx_result.m = __pyx_state[5]; __pyx_result.p = __pyx_state[6]; __pyx_result.running = __pyx_state[7]; __pyx_result.s = __pyx_state[8]; __pyx_result.shutdown = __pyx_state[9]; __pyx_result.sounds = __pyx_state[10]; __pyx_result.stop_me = __pyx_state[11]; __pyx_result.tick = __pyx_state[12]
+ *     if len(__pyx_state) > 13 and hasattr(__pyx_result, '__dict__'):
  */
 
   /* function exit code */
@@ -11856,6 +11949,20 @@ static int __pyx_setprop_6astrid_3orc_12EventContext_count(PyObject *o, PyObject
   }
 }
 
+static PyObject *__pyx_getprop_6astrid_3orc_12EventContext_tick(PyObject *o, CYTHON_UNUSED void *x) {
+  return __pyx_pw_6astrid_3orc_12EventContext_4tick_1__get__(o);
+}
+
+static int __pyx_setprop_6astrid_3orc_12EventContext_tick(PyObject *o, PyObject *v, CYTHON_UNUSED void *x) {
+  if (v) {
+    return __pyx_pw_6astrid_3orc_12EventContext_4tick_3__set__(o, v);
+  }
+  else {
+    PyErr_SetString(PyExc_NotImplementedError, "__del__");
+    return -1;
+  }
+}
+
 static PyMethodDef __pyx_methods_6astrid_3orc_EventContext[] = {
   {"msg", (PyCFunction)__pyx_pw_6astrid_3orc_12EventContext_3msg, METH_O, 0},
   {"adc", (PyCFunction)__pyx_pw_6astrid_3orc_12EventContext_5adc, METH_O, 0},
@@ -11880,6 +11987,7 @@ static struct PyGetSetDef __pyx_getsets_6astrid_3orc_EventContext[] = {
   {(char *)"bus", __pyx_getprop_6astrid_3orc_12EventContext_bus, __pyx_setprop_6astrid_3orc_12EventContext_bus, (char *)0, 0},
   {(char *)"sounds", __pyx_getprop_6astrid_3orc_12EventContext_sounds, __pyx_setprop_6astrid_3orc_12EventContext_sounds, (char *)0, 0},
   {(char *)"count", __pyx_getprop_6astrid_3orc_12EventContext_count, __pyx_setprop_6astrid_3orc_12EventContext_count, (char *)0, 0},
+  {(char *)"tick", __pyx_getprop_6astrid_3orc_12EventContext_tick, __pyx_setprop_6astrid_3orc_12EventContext_tick, (char *)0, 0},
   {0, 0, 0, 0, 0}
 };
 
@@ -12198,8 +12306,8 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_EventContext, __pyx_k_EventContext, sizeof(__pyx_k_EventContext), 0, 0, 1, 1},
   {&__pyx_n_s_FileSystemEventHandler, __pyx_k_FileSystemEventHandler, sizeof(__pyx_k_FileSystemEventHandler), 0, 0, 1, 1},
   {&__pyx_n_s_INSTRUMENT_RENDERER_KEY_TEMPLATE, __pyx_k_INSTRUMENT_RENDERER_KEY_TEMPLATE, sizeof(__pyx_k_INSTRUMENT_RENDERER_KEY_TEMPLATE), 0, 0, 1, 1},
-  {&__pyx_kp_s_Incompatible_checksums_s_vs_0x17, __pyx_k_Incompatible_checksums_s_vs_0x17, sizeof(__pyx_k_Incompatible_checksums_s_vs_0x17), 0, 0, 1, 0},
   {&__pyx_kp_s_Incompatible_checksums_s_vs_0x73, __pyx_k_Incompatible_checksums_s_vs_0x73, sizeof(__pyx_k_Incompatible_checksums_s_vs_0x73), 0, 0, 1, 0},
+  {&__pyx_kp_s_Incompatible_checksums_s_vs_0xa1, __pyx_k_Incompatible_checksums_s_vs_0xa1, sizeof(__pyx_k_Incompatible_checksums_s_vs_0xa1), 0, 0, 1, 0},
   {&__pyx_kp_s_Incompatible_checksums_s_vs_0xc3, __pyx_k_Incompatible_checksums_s_vs_0xc3, sizeof(__pyx_k_Incompatible_checksums_s_vs_0xc3), 0, 0, 1, 0},
   {&__pyx_kp_s_Incompatible_checksums_s_vs_0xd5, __pyx_k_Incompatible_checksums_s_vs_0xd5, sizeof(__pyx_k_Incompatible_checksums_s_vs_0xd5), 0, 0, 1, 0},
   {&__pyx_n_s_IndexError, __pyx_k_IndexError, sizeof(__pyx_k_IndexError), 0, 0, 1, 1},
@@ -12460,8 +12568,8 @@ static CYTHON_SMALL_CODE int __Pyx_InitGlobals(void) {
   __pyx_int_1 = PyInt_FromLong(1); if (unlikely(!__pyx_int_1)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_6379 = PyInt_FromLong(6379); if (unlikely(!__pyx_int_6379)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_44100 = PyInt_FromLong(44100L); if (unlikely(!__pyx_int_44100)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_int_24214361 = PyInt_FromLong(24214361L); if (unlikely(!__pyx_int_24214361)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_120724870 = PyInt_FromLong(120724870L); if (unlikely(!__pyx_int_120724870)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_int_169370754 = PyInt_FromLong(169370754L); if (unlikely(!__pyx_int_169370754)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_205191484 = PyInt_FromLong(205191484L); if (unlikely(!__pyx_int_205191484)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_223771518 = PyInt_FromLong(223771518L); if (unlikely(!__pyx_int_223771518)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_neg_3 = PyInt_FromLong(-3); if (unlikely(!__pyx_int_neg_3)) __PYX_ERR(0, 1, __pyx_L1_error)
@@ -13218,8 +13326,8 @@ if (!__Pyx_RefNanny) {
  *         __pyx_unpickle_EventContext__set_state(<EventContext> __pyx_result, __pyx_state)
  *     return __pyx_result
  * cdef __pyx_unpickle_EventContext__set_state(EventContext __pyx_result, tuple __pyx_state):             # <<<<<<<<<<<<<<
- *     __pyx_result.before = __pyx_state[0]; __pyx_result.bus = __pyx_state[1]; __pyx_result.client = __pyx_state[2]; __pyx_result.count = __pyx_state[3]; __pyx_result.instrument_name = __pyx_state[4]; __pyx_result.m = __pyx_state[5]; __pyx_result.p = __pyx_state[6]; __pyx_result.running = __pyx_state[7]; __pyx_result.s = __pyx_state[8]; __pyx_result.shutdown = __pyx_state[9]; __pyx_result.sounds = __pyx_state[10]; __pyx_result.stop_me = __pyx_state[11]
- *     if len(__pyx_state) > 12 and hasattr(__pyx_result, '__dict__'):
+ *     __pyx_result.before = __pyx_state[0]; __pyx_result.bus = __pyx_state[1]; __pyx_result.client = __pyx_state[2]; __pyx_result.count = __pyx_state[3]; __pyx_result.instrument_name = __pyx_state[4]; __pyx_result.m = __pyx_state[5]; __pyx_result.p = __pyx_state[6]; __pyx_result.running = __pyx_state[7]; __pyx_result.s = __pyx_state[8]; __pyx_result.shutdown = __pyx_state[9]; __pyx_result.sounds = __pyx_state[10]; __pyx_result.stop_me = __pyx_state[11]; __pyx_result.tick = __pyx_state[12]
+ *     if len(__pyx_state) > 13 and hasattr(__pyx_result, '__dict__'):
  */
   __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_6astrid_3orc_9__pyx_unpickle_Instrument, NULL, __pyx_n_s_astrid_orc); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);

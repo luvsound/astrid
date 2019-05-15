@@ -30,7 +30,7 @@ cdef class BufferNode:
             self.done_playing = 1
         return self.snd.frames[startpos:endpos]
 
-cdef void play_sequence(buf_q, object player, EventContext ctx, tuple onsets):
+cdef void play_sequence(buf_q, object player, EventContext ctx, tuple onsets, bint loop, double overlap):
     """ Play a sequence of overlapping oneshots
     """
     cdef double delay_time = 0
@@ -63,6 +63,11 @@ cdef void play_sequence(buf_q, object player, EventContext ctx, tuple onsets):
         except Exception as e:
             logger.error('Error during %s generator render: %s' % (ctx.instrument_name, e))
 
+        ctx.tick += 1
+
+    if loop:
+        delay.wait(timeout=<double>(overlap * snd.dur))
+
     #logger.info('play_sequence complete %s' % ctx.instrument_name)
     #elapsed = time.clock_gettime(time.CLOCK_MONOTONIC_RAW) - start_time
 
@@ -83,12 +88,13 @@ def wait_for_messages(stop_me, instrument_name):
             break
 
 cdef tuple collect_players(object instrument):
-    logger.info('COLLECT_PLAYERS %s' % instrument)
     loop = False
-    if hasattr(instrument.renderer, 'loop'):
-        loop = instrument.renderer.loop
+    if hasattr(instrument.renderer, 'LOOP'):
+        loop = instrument.renderer.LOOP
 
-    logger.info('COLLECT_PLAYERS loop: %s' % loop)
+    overlap = 1
+    if hasattr(instrument.renderer, 'OVERLAP'):
+        overlap = instrument.renderer.OVERLAP
 
     # find all play methods
     players = set()
@@ -108,13 +114,20 @@ cdef tuple collect_players(object instrument):
         and hasattr(instrument.renderer.player, 'players') \
         and isinstance(instrument.renderer.player.players, set):
         players |= instrument.renderer.player.players
+
+    if hasattr(instrument.renderer, 'PLAYERS') \
+        and isinstance(instrument.renderer.PLAYERS, set):
+        players |= instrument.renderer.PLAYERS
     
     logger.info('COLLECT_PLAYERS players: %s' % players)
-    logger.info('COLLECT_PLAYERS onsets: %s' % onsets)
-    return players, onsets, loop
+    return players, loop, overlap
 
 cdef void init_voice(object instrument, object params, object buf_q):
     cdef object stop_me = threading.Event()
+    cdef set players
+    cdef tuple onset_list
+    cdef bint loop
+    cdef double overlap
     cdef EventContext ctx = instrument.create_ctx(params)
     ctx.running.set()
 
@@ -126,14 +139,16 @@ cdef void init_voice(object instrument, object params, object buf_q):
         # its results available to voices
         ctx.before = instrument.renderer.before(ctx)
 
-    players, onsets, loop = collect_players(instrument)
+    players, loop, overlap = collect_players(instrument)
 
     cdef int count = 0
+    cdef object delay = threading.Event()
 
     while True:
         for player, onsets in players:
             try:
                 ctx.count = count
+                ctx.tick = 0
                 onset_list = (0,)
                 try:
                     onset_list = tuple(onsets)
@@ -141,7 +156,7 @@ cdef void init_voice(object instrument, object params, object buf_q):
                     if callable(onsets):
                         onset_list = tuple(onsets(ctx))
                 
-                play_sequence(buf_q, player, ctx, onset_list)
+                play_sequence(buf_q, player, ctx, onset_list, loop, overlap)
             except Exception as e:
                 logger.error('error calling play_sequence: %s' % e)
            
@@ -151,7 +166,11 @@ cdef void init_voice(object instrument, object params, object buf_q):
             break
 
         instrument.reload()
-        players, onsets, loop = collect_players(instrument)
+        players, loop, overlap = collect_players(instrument)
+        if hasattr(instrument.renderer, 'before'):
+            # blocking before callback makes
+            # its results available to voices
+            ctx.before = instrument.renderer.before(ctx)
 
     ctx.running.clear()
 
