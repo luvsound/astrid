@@ -26,7 +26,7 @@ def find_device(substr, input_device=True):
             if substr in device_name:
                 return device_name
     except RuntimeError as e:
-        logger.error('Could not query for devices: %s' % e)
+        logger.exception('Could not query for devices: %s' % e)
 
     return None
 
@@ -157,9 +157,11 @@ class MidiListener(mp.Process):
  
                 elif msg.type == 'control_change':
                     value = msg.value / 127.0
+                    #logger.info('CC: %s %s %s' % (self.device, msg.control, value))
                     self.bus.set(MIDI_MSG_CC_TEMPLATE.format(device=self.device, cc=msg.control), value)
 
 def start_listener(instrument):
+    # FIXME
     listener = None
     if hasattr(instrument.renderer, 'MIDI'):
         devices = []
@@ -186,6 +188,14 @@ def start_listener(instrument):
 
     return listener
 
+def start_listeners(shutdown):
+    listeners = {}
+    for device in mido.get_input_names():
+        listener = MidiListener(None, device, None, shutdown)
+        listener.start()
+        listeners[device] = listener
+
+    return listeners
 
 if __name__ == '__main__':
     outputs = mido.get_output_names()

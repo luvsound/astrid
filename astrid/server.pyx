@@ -1,3 +1,5 @@
+#cython: language_level=3
+
 from contextlib import contextmanager
 import collections
 import os
@@ -21,6 +23,7 @@ from . import orc
 from . import names
 from . import voices
 from .logger import logger
+from .circle import Circle
 from pippi import dsp
 from pippi.soundbuffer cimport SoundBuffer
 import jack
@@ -34,7 +37,7 @@ BANNER = """
 ╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═════╝ 
 """                         
 
-CHANNELS = 2
+CHANNELS = 6
 
 class AstridServer:
     def __init__(self):
@@ -68,18 +71,11 @@ class AstridServer:
 
         logger.info('all cleaned up!')
 
-    def start_instrument_listeners(self, instrument_name, instrument_path):
-        if instrument_name not in self.listeners:
-            instrument = orc.load_instrument(instrument_name, instrument_path, self.shutdown)
-            self.listeners[instrument_name] = midi.start_listener(instrument)
-
     def load_instrument(self, instrument_name):
         instrument_path = os.path.join(self.cwd, names.ORC_DIR, '%s.py' % instrument_name)
         if not os.path.exists(instrument_path):
             logger.error('Could not find an instrument file at location %s' % instrument_path)
             return names.MSG_INVALID_INSTRUMENT
-
-        self.start_instrument_listeners(instrument_name, instrument_path)
 
         #for _ in range(self.numrenderers):
         #    self.load_q.put((instrument_name, instrument_path))
@@ -110,7 +106,7 @@ class AstridServer:
                     k, v = tuple(m.split(':'))
                     bus.set(k, v)
                 except ValueError as e:
-                    logger.error('Bad param: %s' % m)
+                    logger.exception('Bad param: %s' % m)
 
     def run(self):
         logger.info(BANNER)
@@ -128,11 +124,14 @@ class AstridServer:
         self.redis = redis.StrictRedis(host='localhost', port=6379, db=0)
         self.redis.pubsub()
 
+
         self.buffer_listener = threading.Thread(target=self.wait_for_buffers, args=(self.buffers, self.buf_q, self.buflock))
         self.buffer_listener.start()
 
         self.param_listener = threading.Thread(target=self.wait_for_params, args=(self.param_q,))
         self.param_listener.start()
+
+        self.listeners = midi.start_listeners(self.shutdown)
 
         for i in range(self.numrenderers):
             r = voices.VoiceHandler(self.play_q, self.load_q, self.buf_q, self.shutdown, self.cwd)
@@ -149,12 +148,19 @@ class AstridServer:
         self.samplerate = self.jack_client.samplerate
         self.RUNNING = True
 
+        self.redis.set('SAMPLERATE', self.samplerate)
+        self.redis.set('CHANNELS', self.channels)
+        self.redis.set('BLOCKSIZE', self.block_size)
+
+        self.circle = Circle()
+
         def jack_callback(frames):
             if not self.RUNNING:
                 for channel, port in enumerate(self.jack_client.outports):
                     port.get_array().fill(0)
                 raise jack.CallbackExit
 
+            cdef double[:,:] inbuf = np.zeros((self.jack_client.blocksize, CHANNELS), dtype='d')
             cdef double[:,:] outbuf = np.zeros((self.jack_client.blocksize, CHANNELS), dtype='d')
             cdef double[:,:] next_block
             cdef int blocklen
@@ -177,6 +183,13 @@ class AstridServer:
 
             for channel, port in enumerate(self.jack_client.outports):
                 port.get_array()[:] = np.array(outbuf[:,channel % self.channels]).astype('f')
+
+            for channel, port in enumerate(self.jack_client.inports):
+                inblock = port.get_array().astype('d')
+                for i in range(self.block_size):
+                    inbuf[i,channel] = inblock[i]
+
+            self.circle.add(inbuf)
 
         self.jack_client.set_process_callback(jack_callback)
 

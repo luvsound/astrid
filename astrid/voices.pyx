@@ -1,3 +1,5 @@
+#cython: language_level=3
+
 import multiprocessing as mp
 import threading
 import queue
@@ -116,7 +118,7 @@ class VoiceHandler(mp.Process):
                     break
 
         except Exception as e:
-            logger.error(e)
+            logger.exception(e)
 
         load_listener.join()
         play_listener.join()

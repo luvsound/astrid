@@ -1,3 +1,5 @@
+#cython: language_level=3
+
 from pippi.soundbuffer cimport SoundBuffer
 
 cdef class BufferNode:

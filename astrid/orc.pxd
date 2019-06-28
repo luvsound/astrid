@@ -1,3 +1,5 @@
+#cython: language_level=3
+
 from .midi cimport MidiBucket
 
 cdef class ParamBucket:
@@ -20,6 +22,7 @@ cdef class EventContext:
     cdef public object sounds
     cdef public int count
     cdef public int tick
+    cdef public object adc
 
 cdef class Instrument:
     cdef public str name

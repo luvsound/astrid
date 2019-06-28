@@ -1,3 +1,5 @@
+#cython: language_level=3
+
 from __future__ import absolute_import
 import collections
 import threading
@@ -30,30 +32,22 @@ cdef class BufferNode:
             self.done_playing = 1
         return self.snd.frames[startpos:endpos]
 
-cdef void play_sequence(buf_q, object player, EventContext ctx, tuple onsets, bint loop, double overlap):
+def default_onsets(ctx):
+    yield 0
+
+cdef void play_sequence(buf_q, object player, EventContext ctx, object onsets, bint loop, double overlap):
     """ Play a sequence of overlapping oneshots
     """
-    cdef double delay_time = 0
     cdef object snd 
     cdef long elapsed = 0
     cdef object delay = threading.Event()
-    cdef Py_ssize_t numonsets = len(onsets)
-    cdef Py_ssize_t i = 0
-    cdef Py_ssize_t j = 0
-    cdef Py_ssize_t k = 0
-    cdef Py_ssize_t length = 0
     cdef double onset = 0
-    cdef int channels = 2
-    cdef int samplerate = 44100
     cdef double start_time = time.clock_gettime(time.CLOCK_MONOTONIC_RAW)
-    cdef double[:] _onsets = np.array(onsets, 'd')
 
     #logger.info('begin play_sequence %s' % ctx.instrument_name)
 
     for onset in onsets:
         generator = player(ctx)
-        onset = _onsets[i]
-
         delay.wait(timeout=onset)
         try:
             for snd in generator:
@@ -61,7 +55,7 @@ cdef void play_sequence(buf_q, object player, EventContext ctx, tuple onsets, bi
                 buf_q.put(bufnode)
 
         except Exception as e:
-            logger.error('Error during %s generator render: %s' % (ctx.instrument_name, e))
+            logger.exception('Error during %s generator render: %s' % (ctx.instrument_name, e))
 
         ctx.tick += 1
 
@@ -119,13 +113,13 @@ cdef tuple collect_players(object instrument):
         and isinstance(instrument.renderer.PLAYERS, set):
         players |= instrument.renderer.PLAYERS
     
-    logger.info('COLLECT_PLAYERS players: %s' % players)
+    #logger.info('COLLECT_PLAYERS players: %s' % players)
     return players, loop, overlap
 
 cdef void init_voice(object instrument, object params, object buf_q):
     cdef object stop_me = threading.Event()
     cdef set players
-    cdef tuple onset_list
+    cdef object onset_generator
     cdef bint loop
     cdef double overlap
     cdef EventContext ctx = instrument.create_ctx(params)
@@ -149,16 +143,15 @@ cdef void init_voice(object instrument, object params, object buf_q):
             try:
                 ctx.count = count
                 ctx.tick = 0
-                onset_list = (0,)
-                try:
-                    onset_list = tuple(onsets)
-                except TypeError:
-                    if callable(onsets):
-                        onset_list = tuple(onsets(ctx))
+
+                if onsets is None:
+                    onset_generator = default_onsets(ctx)
+                else:
+                    onset_generator = onsets(ctx)
                 
-                play_sequence(buf_q, player, ctx, onset_list, loop, overlap)
+                play_sequence(buf_q, player, ctx, onset_generator, loop, overlap)
             except Exception as e:
-                logger.error('error calling play_sequence: %s' % e)
+                logger.exception('error calling play_sequence: %s' % e)
            
         count += 1
 

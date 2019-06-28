@@ -1,3 +1,5 @@
+#cython: language_level=3
+
 """ Config values, flags, and message translations
 """
 

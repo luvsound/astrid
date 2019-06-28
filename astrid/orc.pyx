@@ -1,3 +1,5 @@
+#cython: language_level=3
+
 import asyncio
 from contextlib import contextmanager
 import importlib
@@ -18,6 +20,7 @@ from . import client
 from . import midi
 from . import names
 from .logger import logger
+from .circle cimport Circle
 
 INSTRUMENT_RENDERER_KEY_TEMPLATE = '{}-renderer'
 
@@ -36,14 +39,19 @@ def load_instrument(name, path, shutdown=None):
             try:
                 spec.loader.exec_module(renderer)
             except Exception as e:
-                logger.error('Error loading instrument module: %s' % str(e))
+                logger.exception('Error loading instrument module: %s' % str(e))
 
-            return Instrument(name, path, renderer, shutdown)
+            instrument = Instrument(name, path, renderer, shutdown)
+
         else:
-            logger.error(path)
+            logger.error('Could not load instrument - spec is None: %s %s' % (path, name))
+            raise InstrumentNotFoundError(name)
     except TypeError as e:
-        logger.error('TypeError loading instrument module: %s' % str(e))
+        logger.exception('TypeError loading instrument module: %s' % str(e))
         raise InstrumentNotFoundError(name) from e
+
+    midi.start_listener(instrument)
+    return instrument
 
 cdef class SessionParamBucket:
     """ params[key] to params.key
@@ -55,7 +63,10 @@ cdef class SessionParamBucket:
         return self.get(key)
 
     def get(self, key, default=None):
-        return self._bus.get(key) or default
+        v = self._bus.get(key) 
+        if v is None:
+            return default
+        return v.decode('utf-8')
 
 cdef class ParamBucket:
     """ params[key] to params.key
@@ -82,7 +93,7 @@ cdef class EventContext:
             sounds=None,
             midi_devices=None, 
             midi_maps=None, 
-            before=None
+            before=None,
         ):
 
         self.before = before
@@ -95,14 +106,11 @@ cdef class EventContext:
         self.shutdown = shutdown
         self.stop_me = stop_me
         self.sounds = sounds
+        self.adc = Circle()
 
     def msg(self, msg):
         if self.client is not None:
             self.client.send_cmd(msg)
-
-    def adc(self, length):
-        framelength = int(44100 * length)
-        return self.stream_ctx.read(framelength, 0)
 
     def play(self, instrument_name, *params, **kwargs):
         if params is not None:
@@ -132,14 +140,14 @@ cdef class Instrument:
         self.shutdown = shutdown
 
     def reload(self):
-        logger.info('Reloading instrument %s from %s' % (self.name, self.path))
+        #logger.info('Reloading instrument %s from %s' % (self.name, self.path))
         spec = importlib.util.spec_from_file_location(self.name, self.path)
         if spec is not None:
             renderer = importlib.util.module_from_spec(spec)
             try:
                 spec.loader.exec_module(renderer)
             except Exception as e:
-                logger.error('Error loading instrument module: %s' % str(e))
+                logger.exception('Error loading instrument module: %s' % str(e))
 
             self.renderer = renderer
         else:

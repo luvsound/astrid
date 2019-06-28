@@ -5,6 +5,7 @@ try:
     from Cython.Build import cythonize
     import numpy as np
     ext_modules = cythonize([
+        'astrid/circle.pyx', 
         'astrid/io.pyx', 
         'astrid/logger.pyx', 
         'astrid/orc.pyx', 
@@ -17,6 +18,7 @@ try:
 except ImportError:
     from setuptools.extension import Extension
     ext_modules = [
+        Extension('astrid.circle', ['astrid/circle.c']), 
         Extension('astrid.io', 
                  ['astrid/io.c'], 
                  extra_compile_args=['-fopenmp'], 
