@@ -37,7 +37,7 @@ BANNER = """
 ╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═════╝ 
 """                         
 
-CHANNELS = 6
+CHANNELS = 2
 
 class AstridServer:
     def __init__(self):
