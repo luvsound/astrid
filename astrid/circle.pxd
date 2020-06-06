@@ -11,4 +11,4 @@ cdef class Circle:
     cdef str name
 
     cpdef void add(Circle self, double[:,:] block)
-    cpdef SoundBuffer read(Circle self, double length, tuple channels=*)
+    cpdef SoundBuffer read(Circle self, double length, tuple channels=*, double offset=*)

@@ -18,15 +18,17 @@ cdef class Circle:
         self.redis.lpush(self.name, bytes(block))
         self.redis.ltrim(self.name, 0, self.maxblocks-1)
 
-    cpdef SoundBuffer read(Circle self, double length, tuple channels=None):
+    cpdef SoundBuffer read(Circle self, double length, tuple channels=None, double offset=0):
         if channels is None:
-            channels = (1,2)
+            channels = (0,)
         cdef int framelength = <int>(length * self.samplerate)
         cdef int numblocks = framelength // self.blocksize
         cdef double[:,:] out = np.zeros((framelength, len(channels)), dtype='d')  
         cdef double[:,:] block
+        cdef int o = <int>(offset * self.samplerate) // self.blocksize
+        o = min(o, (framelength - self.blocksize) // self.blocksize)
         cdef int i = (numblocks * self.blocksize) - self.blocksize
-        for b in self.redis.lrange(self.name, 0, numblocks-1):
+        for b in self.redis.lrange(self.name, o, o+numblocks-1):
             block = np.ndarray((self.blocksize, self.channels), dtype='d', buffer=bytearray(b))
             for j in range(self.blocksize):
                 for c in range(len(channels)):
@@ -34,4 +36,4 @@ cdef class Circle:
 
             i -= self.blocksize
 
-        return SoundBuffer(out, channels=len(channels), samplerate=self.samplerate)
+        return SoundBuffer(out, channels=len(channels), samplerate=self.samplerate).remix(1).remix(2) # FIXME channel outs

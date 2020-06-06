@@ -19,6 +19,9 @@ MSG_BAD_PARAMS = 16
 REGISTER_PORT = 17
 SET_VALUE = 18
 STOP_INSTRUMENT = 19
+CLEAR_BANK = 20
+REC_BANK = 21
+DUB_BANK = 22
 
 ENVELOPE_FOLLOWER = 14
 PITCH_TRACKER = 15
@@ -31,8 +34,8 @@ ORC_DIR = 'orc'
 _cmdToName = {
     LOAD_INSTRUMENT: 'add', 
     RELOAD_INSTRUMENT: 'reload', 
-    STOP_INSTRUMENT: 'stopinstrument', 
-    STOP_ALL_VOICES: 'stopall', 
+    STOP_INSTRUMENT: 'stop_instrument', 
+    STOP_ALL_VOICES: 'stop_all', 
     LIST_INSTRUMENTS: 'list', 
     PLAY_INSTRUMENT: 'play', 
     ANALYSIS: 'analysis', 
@@ -44,14 +47,17 @@ _cmdToName = {
     ADD_BUFFER: 'add_buffer',
     READ_INPUT: 'read_input',
     SET_VALUE: 'set_value',
+    CLEAR_BANK: 'clear_bank',
+    REC_BANK: 'rec_bank',
+    DUB_BANK: 'dub_bank',
 }
 
 _nameToCmd = {
     'add': LOAD_INSTRUMENT, 
     'load': LOAD_INSTRUMENT, 
     'reload': RELOAD_INSTRUMENT, 
-    'stopinstrument': STOP_INSTRUMENT, 
-    'stopall': STOP_ALL_VOICES,
+    'stop_instrument': STOP_INSTRUMENT, 
+    'stop_all': STOP_ALL_VOICES,
     'list': LIST_INSTRUMENTS, 
     'play': PLAY_INSTRUMENT, 
     'analysis': ANALYSIS,
@@ -63,6 +69,9 @@ _nameToCmd = {
     'add_buffer': ADD_BUFFER,
     'read_input': READ_INPUT,
     'set_value': SET_VALUE,
+    'clear_bank': CLEAR_BANK,
+    'rec_bank': REC_BANK,
+    'dub_bank': DUB_BANK,
 }
 
 def ntoc(name):

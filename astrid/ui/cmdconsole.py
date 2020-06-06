@@ -43,9 +43,18 @@ class AstridConsole(cmd.Cmd):
 
     def do_s(self, instrument):
         if instrument == '':
-            self.client.send_cmd(['stopall'])
+            self.client.send_cmd(['stop_all'])
         else:
-            self.client.send_cmd(['stopinstrument', instrument])
+            self.client.send_cmd(['stop_instrument', instrument])
+
+    def do_b(self, cmd):
+        action, *values = cmd.split(' ')
+        if action == 'c' or action == 'clear':
+            self.client.send_cmd(['clear_bank'] + values)
+        if action == 'r' or action == 'rec':
+            self.client.send_cmd(['rec_bank'] + values)
+        if action == 'd' or action == 'dub':
+            self.client.send_cmd(['dub_bank'] + values)
 
     def do_quit(self, cmd):
         self.quit()

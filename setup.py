@@ -11,6 +11,7 @@ try:
         'astrid/orc.pyx', 
         'astrid/midi.pyx', 
         'astrid/names.pyx', 
+        'astrid/sampler.pyx', 
         'astrid/server.pyx', 
         'astrid/voices.pyx', 
     ], include_path=[np.get_include()], annotate=True) 
@@ -28,6 +29,7 @@ except ImportError:
         Extension('astrid.orc', ['astrid/orc.c']), 
         Extension('astrid.midi', ['astrid/midi.c']), 
         Extension('astrid.names', ['astrid/names.c']), 
+        Extension('astrid.sampler', ['astrid/sampler.c']), 
         Extension('astrid.server', ['astrid/server.c']), 
         Extension('astrid.voices', ['astrid/voices.c']), 
     ]

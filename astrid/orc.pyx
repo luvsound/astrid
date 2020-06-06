@@ -21,6 +21,7 @@ from . import midi
 from . import names
 from .logger import logger
 from .circle cimport Circle
+from .sampler cimport Sampler
 
 INSTRUMENT_RENDERER_KEY_TEMPLATE = '{}-renderer'
 
@@ -107,6 +108,7 @@ cdef class EventContext:
         self.stop_me = stop_me
         self.sounds = sounds
         self.adc = Circle()
+        self.sampler = Sampler()
 
     def msg(self, msg):
         if self.client is not None:

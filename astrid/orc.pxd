@@ -23,6 +23,7 @@ cdef class EventContext:
     cdef public int count
     cdef public int tick
     cdef public object adc
+    cdef public object sampler
 
 cdef class Instrument:
     cdef public str name

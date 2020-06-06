@@ -93,12 +93,10 @@ cdef tuple collect_players(object instrument):
     # find all play methods
     players = set()
 
-    cdef tuple onset_list = (0,)
-
     # The simplest case is a single play method 
     # with an optional onset list or callback
     if hasattr(instrument.renderer, 'play'):
-        onsets = getattr(instrument.renderer, 'onsets', (0,))
+        onsets = getattr(instrument.renderer, 'onsets', default_onsets)
         players.add((instrument.renderer.play, onsets))
 
     # Play methods can also be registered via 

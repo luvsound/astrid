@@ -24,6 +24,7 @@ from . import names
 from . import voices
 from .logger import logger
 from .circle import Circle
+from .sampler import Sampler
 from pippi import dsp
 from pippi.soundbuffer cimport SoundBuffer
 import jack
@@ -153,6 +154,7 @@ class AstridServer:
         self.redis.set('BLOCKSIZE', self.block_size)
 
         self.circle = Circle()
+        self.sampler = Sampler()
 
         def jack_callback(frames):
             if not self.RUNNING:
@@ -281,6 +283,25 @@ class AstridServer:
                 elif names.ntoc(action) == names.SET_VALUE:
                     logger.info('SET_VALUE %s' % cmd)
                     self.param_q.put(cmd)
+
+                elif names.ntoc(action) == names.CLEAR_BANK:
+                    logger.info('CLEAR_BANK %s' % cmd)
+                    for b in cmd:
+                        self.redis.unlink(b)
+
+                elif names.ntoc(action) == names.REC_BANK:
+                    logger.info('REC_BANK %s' % cmd)
+                    b, *params = cmd
+                    if len(params) == 0:
+                        rtime = 1
+                    else:
+                        rtime = float(params[0])
+                    self.sampler.write(b, self.circle.read(rtime))
+
+                elif names.ntoc(action) == names.DUB_BANK:
+                    logger.info('DUB_BANK %s' % cmd)
+                    b, *params = cmd
+                    self.sampler.dub(b, self.circle.read(*params))
 
                 self.msgsock.send(msgpack.packb(reply or names.MSG_OK))
 
