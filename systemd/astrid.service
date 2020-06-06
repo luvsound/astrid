@@ -1,0 +1,17 @@
+[Unit]
+After=jackd.service
+Requires=jackd.service
+
+[Service]
+Type=simple
+User=hecanjog
+Group=hecanjog
+LimitRTPRIO=infinity
+LimitMEMLOCK=infinity
+WorkingDirectory=/home/hecanjog/live/
+ExecStart=/home/hecanjog/.pyenv/shims/astrid server
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target
