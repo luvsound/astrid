@@ -8,6 +8,7 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
 from kivy.uix.checkbox import CheckBox
+from kivy.uix.dropdown import DropDown
 from kivy.uix.label import Label
 from kivy.graphics import Color, Bezier, Line, Ellipse, Rectangle
 from kivy.lang import Builder
@@ -16,6 +17,7 @@ from kivy.properties import NumericProperty, StringProperty, ListProperty, Objec
 import random
 from pippi import dsp, tune
 from astrid import orc
+from astrid.ui import utils
 import multiprocessing as mp
 import yaml
 
@@ -24,188 +26,31 @@ NOTELANE_HEIGHT = 12
 NOTELANE_GUTTER = 1 
 NOTES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
 
-Builder.load_string('''
-#:import tune pippi.tune
-
-<HeaderBar>:
-    size_hint: (1, None)
-    height: '20dp'
-
-    canvas:
-        Color:
-            rgba: 0.1,0.1,0.1,1
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-    Label:
-        text: self.parent.statusline
-        color: 1, 1, 1, 1
-        size: self.parent.size
-        text_size: self.size
-        size_hint: (None, None)
-        font_size: '10sp'
-        bold: True
-        pos: ('2dp', self.parent.pos[1])
-        valign: 'middle'
-        halign: 'left'
-
-    BoxLayout:
-        width: '340dp'
-        size_hint: (None, 1)
-        pos: (root.width - self.width, self.parent.pos[1])
-        orientation: 'horizontal'
-
-        SnapCheckBox:
-            text: 'Snap  '
-            size_hint: (1.5, 1)
-            font_size: '10sp'
-            text_size: self.size
-            color: 1,1,1,1
-            valign: 'middle'
-            halign: 'left'
-
-        SelectAllButton:
-            font_size: '10sp'
-            size_hint: (2, 1)
-            text: 'Select (A)ll'
-
-        ClearButton:
-            font_size: '10sp'
-            size_hint: (2, 1)
-            text: '(C)lear Selections'
-
-        RenderButton:
-            font_size: '10sp'
-            size_hint: (2, 1)
-            text: '(R)ender & Play'
-
-<Note>:
-    height: '12dp'
-    minimum_width: '5dp'
-    canvas:
-        Color:
-            rgba: (0,0,0.5,0.5) if self.highlighted else (0.75,0,0.75,0.5)
-        Rectangle:
-            pos: self.pos
-            size: self.size
-        Color:
-            rgba: (0,0,0.5,0.25) if self.highlighted else (0.75,0,0.75,0.25)
-        Rectangle:
-            pos: (self.pos[0]+2, self.pos[1]-2)
-            size: self.size
-
-    Label:
-        text: ' ' + self.parent.freq
-        color: 1, 1, 1, 1
-        pos: self.parent.pos
-        size: self.parent.size
-        size_hint: (None, 1)
-        font_size: '8sp'
-        bold: True
-        valign: 'middle'
-        halign: 'left'
-
-<CommandOverlay>:
-    text_size: root.size
-    font_size: '18sp'
-    bold: True
-    valign: 'middle'
-    halign: 'center'
-    color: 1,1,1,1
-    canvas.before:
-        Color:
-            rgba: 0,0,0.75,0.75
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-<NoteLanes>:
-    pos: (0, self.scroll_offset)
-
-<NoteLane>:
-    width: root.width
-    height: '12dp'
-    size_hint: (1, None)
-    pos: (0, (self.index * 13))
-    freq: '%5.2f  ' % tune.ntf(self.note.lower(), self.octave)
-
-    canvas:
-        Color:
-            rgba: (0.85,0.85,0.85,0.75) if self.note.lower() == 'c' else (0.9,0.9,0.9,0.75)
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-    PianoKey:
-        pos: (0, self.parent.pos[1])
-        note: self.parent.note
-        octave: self.parent.octave
-        freq: self.parent.freq
-        width: '60dp'
-        height: '12dp'
-        size_hint: (None, None)
-
-        canvas:
-            Color:
-                rgba: (1,1,1,1) if len(self.note) == 1 else (0,0,0,1)
-            Rectangle:
-                pos: self.pos
-                size: self.size
-
-        Label:
-            text: self.parent.freq
-            color: 0.5, 0.5, 0.5, 1
-            pos: self.parent.pos
-            size: self.parent.size
-            text_size: self.size
-            size_hint: (None, 1)
-            font_size: '8sp'
-            bold: True
-            pos: (2, self.parent.pos[1])
-            valign: 'middle'
-            halign: 'right'
-
-        Label:
-            text: '' if self.parent.note.lower() != 'c' else '%s%s' % (self.parent.note, self.parent.octave)
-            color: (0,0,0,1) if len(self.parent.note) == 1 else (1,1,1,1)
-            pos: self.parent.pos
-            size: self.parent.size
-            text_size: self.size
-            size_hint: (None, 1)
-            font_size: '8sp'
-            bold: True
-            pos: (2, self.parent.pos[1])
-            valign: 'middle'
-            halign: 'left'
-
-''')
-
-def snap_to_grid(length=1, grid=1, roundup=False):
-    app = App.get_running_app()
-    grid /= app.grid_div
-    if roundup:
-        trunclength = (length // grid) * grid
-        length = grid + trunclength if length - trunclength > 0 else trunclength
-    else:
-        length = (length // grid) * grid
-    return length
-
-def length_to_pixels(length, snap=False, grid=1, roundup=False):
-    app = App.get_running_app()
-    if snap:
-        length = snap_to_grid(length, grid, roundup)
-    return metrics.dp(length * (60.0 * app.zoom))
-
-def pixels_to_length(pixels, snap=False, grid=1, roundup=False):
-    app = App.get_running_app()
-    length = pixels / (metrics.dp(60.0) * app.zoom)
-    if snap:
-        length = snap_to_grid(length, grid, roundup)
-    return length
-
+# FIXME -- I think these stubs can be hinted in the kv file
 class CommandOverlay(Label):
     pass
+
+class SelectAllButton(Button):
+    pass
+
+class ClearButton(Button):
+    pass
+
+class RenderButton(Button):
+    pass
+
+class TuningDropDown(Button):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dropdown = DropDown()
+        tunings = ['just', 'equal', 'terry', 'louis']
+        for t in tunings:
+            opt = Button(text=t, height='20dp', size_hint_y=None)
+            opt.bind(on_release=lambda opt: self.dropdown.select(opt.text))
+            self.dropdown.add_widget(opt)
+
+        self.bind(on_release=self.dropdown.open)
+        self.dropdown.bind(on_select=lambda i, l: setattr(self, 'text', l))
 
 class SnapCheckBox(CheckBox, Label):
     def __init__(self, *args, **kwargs):
@@ -217,21 +62,6 @@ class SnapCheckBox(CheckBox, Label):
     def on_checkbox_active(self, obj, value):
         app = App.get_running_app()
         app.snap = value
-
-class SelectAllButton(Button):
-    def on_press(self):
-        app = App.get_running_app()
-        app.select_all()
-
-class ClearButton(Button):
-    def on_press(self):
-        app = App.get_running_app()
-        app.clear_selections()
-
-class RenderButton(Button):
-    def on_press(self):
-        app = App.get_running_app()
-        app.offline_render()
 
 class NoteLanes(FloatLayout):
     new_note = ObjectProperty()
@@ -389,16 +219,18 @@ class Note(Widget):
         self.bind(length=self._redraw)
         self.bind(onset=self._redraw)
 
-        self.onset = pixels_to_length(pos[0] - metrics.dp(60), snap, grid)
+        self.onset = utils.pixels_to_length(app, pos[0] - metrics.dp(60), snap, grid)
         self.length = self.minlength
 
     def _redraw(self, obj, value):
-        self.width = max(length_to_pixels(self.length), metrics.dp(5))
-        self.pos = (length_to_pixels(self.onset) + metrics.dp(60), self.notelane.pos[1])
+        app = App.get_running_app()
+        self.width = max(utils.length_to_pixels(app, self.length), metrics.dp(5))
+        self.pos = (utils.length_to_pixels(app, self.onset) + metrics.dp(60), self.notelane.pos[1])
 
     def update(self, pos):
+        app = App.get_running_app()
         width = pos[0] - self.pos[0]
-        self.length = max(pixels_to_length(width, self.snap, self.grid, True), self.minlength)
+        self.length = max(utils.pixels_to_length(app, width, self.snap, self.grid, True), self.minlength)
 
     def toggle_highlight(self):
         self.highlighted = not self.highlighted
@@ -501,7 +333,7 @@ class PianoRollWrapper(BoxLayout):
     def update_grid(self, *args):
         app = App.get_running_app()
         app.update_meter()
-        self.gridwidth = length_to_pixels(app.grid)
+        self.gridwidth = utils.length_to_pixels(app, app.grid)
         print('UPDATE GRID')
 
         self.canvas.before.clear()
@@ -523,7 +355,7 @@ class PianoRollWrapper(BoxLayout):
 
     def update_playhead(self, *args):
         app = App.get_running_app()
-        playheadpos = length_to_pixels(app.playhead_pos) + metrics.dp(60)
+        playheadpos = utils.length_to_pixels(app, app.playhead_pos) + metrics.dp(60)
         self.canvas.after.clear()
         with self.canvas.after:
             Color(1,0,0,0.75)

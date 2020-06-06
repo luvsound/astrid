@@ -1,9 +1,9 @@
-Cython==0.29.6
-JACK-Client==0.4.6
+Cython==0.29.19
+JACK-Client==0.5.2
 mido==1.2.9
 msgpack-python==0.5.6
-numpy==1.16.2
+numpy==1.18.5
 python-rtmidi==1.2.1
-pyzmq==18.0.1
-service==0.5.1
-watchdog==0.9.0
+pyzmq==19.0.1
+service==0.6.0
+watchdog==0.10.2

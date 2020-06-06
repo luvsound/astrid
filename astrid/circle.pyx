@@ -4,13 +4,14 @@ import redis
 import numpy as np
 from pippi.soundbuffer cimport SoundBuffer
 from .logger import logger
+from .defaults import DEFAULT_CHANNELS, DEFAULT_BLOCKSIZE, DEFAULT_SAMPLERATE
 
 cdef class Circle:
     def __cinit__(self, str name='inputbuffer'):
         self.redis = redis.StrictRedis(host='localhost', port=6379, db=0)
-        self.blocksize = int(self.redis.get('BLOCKSIZE'))
-        self.samplerate = int(self.redis.get('SAMPLERATE'))
-        self.channels = int(self.redis.get('CHANNELS'))
+        self.blocksize = int(self.redis.get('BLOCKSIZE') or DEFAULT_BLOCKSIZE)
+        self.samplerate = int(self.redis.get('SAMPLERATE') or DEFAULT_SAMPLERATE)
+        self.channels = int(self.redis.get('CHANNELS') or DEFAULT_CHANNELS)
         self.maxblocks = <int>(self.samplerate * 30) // self.blocksize
         self.name = name
 

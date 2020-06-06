@@ -6,6 +6,7 @@ try:
     import numpy as np
     ext_modules = cythonize([
         'astrid/circle.pyx', 
+        'astrid/defaults.pyx', 
         'astrid/io.pyx', 
         'astrid/logger.pyx', 
         'astrid/orc.pyx', 
@@ -20,6 +21,7 @@ except ImportError:
     from setuptools.extension import Extension
     ext_modules = [
         Extension('astrid.circle', ['astrid/circle.c']), 
+        Extension('astrid.defaults', ['astrid/defaults.c']), 
         Extension('astrid.io', 
                  ['astrid/io.c'], 
                  extra_compile_args=['-fopenmp'], 
@@ -37,7 +39,7 @@ except ImportError:
 
 setup(
     name='astrid',
-    version='1.0.0-alpha-3',
+    version='1.0.0-alpha-4',
     description='Interactive computer music with Python',
     author='He Can Jog',
     author_email='erik@hecanjog.com',

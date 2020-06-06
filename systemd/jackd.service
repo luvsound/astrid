@@ -6,10 +6,10 @@ After=sound.target
 LimitRTPRIO=infinity
 LimitMEMLOCK=infinity
 User=hecanjog
-ExecStart=/usr/bin/jackd --realtime -P89 -d alsa -d hw:CODEC -r 44100
+#ExecStart=/usr/bin/jackd --realtime -P89 -d alsa -d hw:CODEC -r 44100
 #ExecStart=/usr/bin/jackd --realtime -P89 -d alsa -d hw:CODEC -r 48000
 #ExecStart=/usr/bin/jackd --realtime -P89 -d alsa -d hw:AVB -r 44100
-#ExecStart=/usr/bin/jackd --realtime -P89 -d alsa -d hw:T6 -r 44100
+ExecStart=/usr/bin/jackd --realtime -P89 -d alsa -d hw:T6 -r 44100
 Environment=JACK_NO_AUDIO_RESERVATION=1
 Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
 ExecStartPost=/usr/bin/jack_wait -w -t 10

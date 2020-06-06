@@ -22,6 +22,7 @@ from . import io
 from . import orc
 from . import names
 from . import voices
+from .defaults import DEFAULT_CHANNELS
 from .logger import logger
 from .circle import Circle
 from .sampler import Sampler
@@ -38,12 +39,16 @@ BANNER = """
 ╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═════╝ 
 """                         
 
+<<<<<<< Updated upstream
 CHANNELS = 2
 
+=======
+>>>>>>> Stashed changes
 class AstridServer:
     def __init__(self):
         self.cwd = os.getcwd()
         self.listeners = {}
+        self.channels = DEFAULT_CHANNELS
 
     @contextmanager
     def msg_context(self):
@@ -139,15 +144,15 @@ class AstridServer:
             r.start()
             self.renderers += [ r ]
 
-        # FIXME get number of hardware channels
-        for channel in range(CHANNELS):
-            self.jack_client.inports.register('input_{0}'.format(channel))
-            self.jack_client.outports.register('output_{0}'.format(channel))
-
         self.block_size = self.jack_client.blocksize
         self.channels = len(self.jack_client.outports)
         self.samplerate = self.jack_client.samplerate
         self.RUNNING = True
+
+        # FIXME get number of hardware channels
+        for channel in range(self.channels):
+            self.jack_client.inports.register('input_{0}'.format(channel))
+            self.jack_client.outports.register('output_{0}'.format(channel))
 
         self.redis.set('SAMPLERATE', self.samplerate)
         self.redis.set('CHANNELS', self.channels)
@@ -162,8 +167,8 @@ class AstridServer:
                     port.get_array().fill(0)
                 raise jack.CallbackExit
 
-            cdef double[:,:] inbuf = np.zeros((self.jack_client.blocksize, CHANNELS), dtype='d')
-            cdef double[:,:] outbuf = np.zeros((self.jack_client.blocksize, CHANNELS), dtype='d')
+            cdef double[:,:] inbuf = np.zeros((self.jack_client.blocksize, self.channels), dtype='d')
+            cdef double[:,:] outbuf = np.zeros((self.jack_client.blocksize, self.channels), dtype='d')
             cdef double[:,:] next_block
             cdef int blocklen
 
