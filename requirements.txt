@@ -1,4 +1,4 @@
-Cython==0.29.19
+Cython==3.0a5
 JACK-Client==0.5.2
 mido==1.2.9
 msgpack-python==0.5.6
@@ -7,3 +7,5 @@ python-rtmidi==1.2.1
 pyzmq==19.0.1
 service==0.6.0
 watchdog==0.10.2
+redis==3.5.3
+sounddevice==0.3.15

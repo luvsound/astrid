@@ -44,7 +44,7 @@ cdef void play_sequence(buf_q, object player, EventContext ctx, object onsets, b
     cdef double onset = 0
     cdef double start_time = time.clock_gettime(time.CLOCK_MONOTONIC_RAW)
 
-    #logger.info('begin play_sequence %s' % ctx.instrument_name)
+    logger.info('begin play_sequence %s' % ctx.instrument_name)
 
     for onset in onsets:
         generator = player(ctx)
@@ -62,7 +62,7 @@ cdef void play_sequence(buf_q, object player, EventContext ctx, object onsets, b
     if loop:
         delay.wait(timeout=<double>(overlap * snd.dur))
 
-    #logger.info('play_sequence complete %s' % ctx.instrument_name)
+    logger.info('play_sequence complete %s' % ctx.instrument_name)
     #elapsed = time.clock_gettime(time.CLOCK_MONOTONIC_RAW) - start_time
 
 def wait_for_messages(stop_me, instrument_name):

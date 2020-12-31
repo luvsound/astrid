@@ -39,11 +39,7 @@ BANNER = """
 ╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═════╝ 
 """                         
 
-<<<<<<< Updated upstream
-CHANNELS = 2
 
-=======
->>>>>>> Stashed changes
 class AstridServer:
     def __init__(self):
         self.cwd = os.getcwd()
@@ -96,6 +92,7 @@ class AstridServer:
                 break
 
             with buflock:
+                logger.info('Adding to buf q: %s %s %s' % (msg.start_time, msg.onset, msg.pos))
                 buffers += [ msg ]
 
     def wait_for_params(self, param_q):
@@ -189,14 +186,17 @@ class AstridServer:
                     del self.buffers[i]
 
             for channel, port in enumerate(self.jack_client.outports):
-                port.get_array()[:] = np.array(outbuf[:,channel % self.channels]).astype('f')
+                if channel < self.channels:
+                    port.get_array()[:] = np.array(outbuf[:,channel]).astype('f')
 
+            """
             for channel, port in enumerate(self.jack_client.inports):
                 inblock = port.get_array().astype('d')
                 for i in range(self.block_size):
                     inbuf[i,channel] = inblock[i]
 
             self.circle.add(inbuf)
+            """
 
         self.jack_client.set_process_callback(jack_callback)
 
