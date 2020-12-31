@@ -1,0 +1,3 @@
+[submodule "modules/miniaudio"]
+	path = modules/miniaudio
+	url = git@github.com:luvsound/miniaudio.git
