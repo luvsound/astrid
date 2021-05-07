@@ -231,6 +231,7 @@ class AstridServer:
                 cmd = self.msgsock.recv()
                 #cmd = msgpack.unpackb(cmd, encoding='utf-8')
                 cmd = msgpack.unpackb(cmd)
+                logger.debug(cmd)
 
                 if len(cmd) == 0:
                     action = None

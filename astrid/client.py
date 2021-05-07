@@ -24,7 +24,6 @@ class AstridClient:
         with self.get_client() as client:
             client.send(msg)
             resp = client.recv()
-            #resp = msgpack.unpackb(resp, encoding='utf-8')
             resp = msgpack.unpackb(resp)
             logger.debug(names.cton(resp))
 
@@ -34,7 +33,6 @@ class AstridClient:
             client.send(msg)
             instruments = client.recv()
             logger.debug(('!!list instruments', instruments))
-            #instruments = msgpack.unpackb(instruments, encoding='utf-8')
             instruments = msgpack.unpackb(instruments)
             logger.debug(('!!list instruments', instruments))
             return instruments      
