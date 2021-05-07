@@ -1,0 +1,162 @@
+#:import tune pippi.tune
+
+<HeaderBar>:
+    size_hint: (1, None)
+    height: '20dp'
+
+    canvas:
+        Color:
+            rgba: 0.1,0.1,0.1,1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    Label:
+        text: self.parent.statusline
+        color: 1, 1, 1, 1
+        size: self.parent.size
+        text_size: self.size
+        size_hint: (None, None)
+        font_size: '10sp'
+        bold: True
+        pos: ('2dp', self.parent.pos[1])
+        valign: 'middle'
+        halign: 'left'
+
+    BoxLayout:
+        width: '340dp'
+        size_hint: (None, 1)
+        pos: (root.width - self.width, self.parent.pos[1])
+        orientation: 'horizontal'
+
+        SnapCheckBox:
+            text: 'Snap  '
+            size_hint: (1.5, 1)
+            font_size: '10sp'
+            text_size: self.size
+            color: 1,1,1,1
+            valign: 'middle'
+            halign: 'left'
+
+        SelectAllButton:
+            font_size: '10sp'
+            size_hint: (2, 1)
+            text: 'Select (A)ll'
+            on_press: app.select_all()
+
+        ClearButton:
+            font_size: '10sp'
+            size_hint: (2, 1)
+            text: '(C)lear Selections'
+            on_press: app.clear_selections()
+
+        RenderButton:
+            font_size: '10sp'
+            size_hint: (2, 1)
+            text: '(R)ender & Play'
+            on_press: app.offline_render()
+
+        TuningDropDown:
+            text: 'Select Tuning'
+            size_hint: (2, 1)
+
+<Note>:
+    height: '12dp'
+    minimum_width: '5dp'
+    canvas:
+        Color:
+            rgba: (0,0,0.5,0.5) if self.highlighted else (0.75,0,0.75,0.5)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+        Color:
+            rgba: (0,0,0.5,0.25) if self.highlighted else (0.75,0,0.75,0.25)
+        Rectangle:
+            pos: (self.pos[0]+2, self.pos[1]-2)
+            size: self.size
+
+    Label:
+        text: ' ' + self.parent.freq
+        color: 1, 1, 1, 1
+        pos: self.parent.pos
+        size: self.parent.size
+        size_hint: (None, 1)
+        font_size: '8sp'
+        bold: True
+        valign: 'middle'
+        halign: 'left'
+
+<CommandOverlay>:
+    text_size: root.size
+    font_size: '18sp'
+    bold: True
+    valign: 'middle'
+    halign: 'center'
+    color: 1,1,1,1
+    canvas.before:
+        Color:
+            rgba: 0,0,0.75,0.75
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<NoteLanes>:
+    pos: (0, self.scroll_offset)
+
+<NoteLane>:
+    width: root.width
+    height: '12dp'
+    size_hint: (1, None)
+    pos: (0, (self.index * 13))
+    freq: '%5.2f  ' % tune.ntf(self.note.lower(), self.octave)
+
+    canvas:
+        Color:
+            rgba: (0.85,0.85,0.85,0.75) if self.note.lower() == 'c' else (0.9,0.9,0.9,0.75)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    PianoKey:
+        pos: (0, self.parent.pos[1])
+        note: self.parent.note
+        octave: self.parent.octave
+        freq: self.parent.freq
+        width: '60dp'
+        height: '12dp'
+        size_hint: (None, None)
+
+        canvas:
+            Color:
+                rgba: (1,1,1,1) if len(self.note) == 1 else (0,0,0,1)
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        Label:
+            text: self.parent.freq
+            color: 0.5, 0.5, 0.5, 1
+            pos: self.parent.pos
+            size: self.parent.size
+            text_size: self.size
+            size_hint: (None, 1)
+            font_size: '8sp'
+            bold: True
+            pos: (2, self.parent.pos[1])
+            valign: 'middle'
+            halign: 'right'
+
+        Label:
+            text: '' if self.parent.note.lower() != 'c' else '%s%s' % (self.parent.note, self.parent.octave)
+            color: (0,0,0,1) if len(self.parent.note) == 1 else (1,1,1,1)
+            pos: self.parent.pos
+            size: self.parent.size
+            text_size: self.size
+            size_hint: (None, 1)
+            font_size: '8sp'
+            bold: True
+            pos: (2, self.parent.pos[1])
+            valign: 'middle'
+            halign: 'left'
+
+

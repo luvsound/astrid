@@ -1,41 +1,38 @@
 #!/usr/bin/env python
 from setuptools import setup
+from Cython.Build import cythonize
+from setuptools.extension import Extension
+import numpy as np
 
-try:
-    from Cython.Build import cythonize
-    import numpy as np
-    ext_modules = cythonize([
-        'astrid/circle.pyx', 
-        'astrid/defaults.pyx', 
-        'astrid/io.pyx', 
-        'astrid/logger.pyx', 
-        'astrid/orc.pyx', 
-        'astrid/midi.pyx', 
-        'astrid/names.pyx', 
-        'astrid/sampler.pyx', 
-        'astrid/server.pyx', 
-        'astrid/voices.pyx', 
-    ], include_path=[np.get_include()], annotate=True) 
+ext_modules = cythonize([
+    'astrid/circle.pyx', 
+    'astrid/defaults.pyx', 
+    'astrid/io.pyx', 
+    'astrid/logger.pyx', 
+    'astrid/orc.pyx', 
+    'astrid/midi.pyx', 
+    'astrid/names.pyx', 
+    'astrid/sampler.pyx', 
+    'astrid/server.pyx', 
+    'astrid/voices.pyx', 
+], include_path=[np.get_include()], annotate=True) 
 
-except ImportError:
-    from setuptools.extension import Extension
-    ext_modules = [
-        Extension('astrid.circle', ['astrid/circle.c']), 
-        Extension('astrid.defaults', ['astrid/defaults.c']), 
-        Extension('astrid.io', 
-                 ['astrid/io.c'], 
-                 extra_compile_args=['-fopenmp'], 
-                 extra_link_args=['-fopenmp']
-        ), 
-        Extension('astrid.logger', ['astrid/logger.c']), 
-        Extension('astrid.orc', ['astrid/orc.c']), 
-        Extension('astrid.midi', ['astrid/midi.c']), 
-        Extension('astrid.names', ['astrid/names.c']), 
-        Extension('astrid.sampler', ['astrid/sampler.c']), 
-        Extension('astrid.server', ['astrid/server.c']), 
-        Extension('astrid.voices', ['astrid/voices.c']), 
-    ]
-
+ext_modules = [
+    Extension('astrid.circle', ['astrid/circle.c']), 
+    Extension('astrid.defaults', ['astrid/defaults.c']), 
+    Extension('astrid.io', 
+             ['astrid/io.c'], 
+             extra_compile_args=['-fopenmp'], 
+             extra_link_args=['-fopenmp']
+    ), 
+    Extension('astrid.logger', ['astrid/logger.c']), 
+    Extension('astrid.orc', ['astrid/orc.c']), 
+    Extension('astrid.midi', ['astrid/midi.c']), 
+    Extension('astrid.names', ['astrid/names.c']), 
+    Extension('astrid.sampler', ['astrid/sampler.c']), 
+    Extension('astrid.server', ['astrid/server.c']), 
+    Extension('astrid.voices', ['astrid/voices.c']), 
+]
 
 setup(
     name='astrid',

@@ -35,7 +35,7 @@ def make_note(freq, amp, length):
 
 def play(ctx):
     mpk = ctx.m('MPK')
-    freqs = tune.fromdegrees([1,2,3,5,6,8,9], octave=random.randint(1, 5), root='c')
+    freqs = tune.degrees([1,2,3,5,6,8,9], octave=random.randint(1, 5), key='c')
     numvoices = random.randint(1, 3)
     length = random.triangular(0.15, 3.5)
 

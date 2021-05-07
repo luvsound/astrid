@@ -1,17 +1,24 @@
 .PHONY: test build
 
 install:
-	pip install -r requirements.txt
-	git submodule update --init
-	python setup.py develop
+	./scripts/init.sh
+
+update:
+	./scripts/update.sh
 
 test:
-	python -m unittest discover -s tests -p 'test_*.py' -v
+	./venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v
 
 clean:
 	rm -rf build/
 	rm -rf astrid/*.c
 	rm -rf astrid/*.so
 
+run:
+	./venv/bin/astrid server
+
+console:
+	./venv/bin/astrid console
+
 build:
-	python setup.py develop
+	./venv/bin/python setup.py develop
